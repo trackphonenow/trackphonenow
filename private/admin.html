@@ -830,7 +830,7 @@
     async function initAdminAuth() {
       const token = getAuthToken();
       if (!token) {
-        window.location.href = '/auth.html?redirect=/admin.html';
+        window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.pathname);
         return false;
       }
 
@@ -856,7 +856,7 @@
             return true;
           }
         } else {
-          window.location.href = '/auth.html?redirect=/admin.html';
+          window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.pathname);
           return false;
         }
       } catch (err) {

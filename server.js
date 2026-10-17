@@ -41,6 +41,21 @@ app.get('/blog/:slug', (req, res, next) => {
   next();
 });
 
+// ================= STEALTH ADMIN PORTAL & 404 CLOAKING =================
+const ADMIN_SLUG = process.env.ADMIN_ROUTE_SLUG || 'console-x92';
+
+// 1. Cloak /admin and /admin.html with realistic 404 (pretend page does not exist)
+app.all(['/admin', '/admin.html', '/admin/*', '/administrator', '/wp-admin'], (req, res) => {
+  res.status(404).send('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Error 404 (Not Found)</title></head><body><h1>404 Not Found</h1><p>The requested URL was not found on this server.</p></body></html>');
+});
+
+// 2. Secret Protected Admin Route: /console-x92
+app.get([`/${ADMIN_SLUG}`, `/${ADMIN_SLUG}.html`], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  res.sendFile(path.join(__dirname, 'private', 'admin.html'));
+});
+
 // Static assets with smart caching
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: '1d',
