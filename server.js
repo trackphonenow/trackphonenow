@@ -744,6 +744,204 @@ app.post('/api/admin/claim-role', requireAuth, (req, res) => {
   }
 });
 
+// 11. Visitor Attribution & Traffic Analytics (Local & Unblockable)
+const ipGeoCache = new Map();
+
+function parseVisitorAttribution(referrer, utmSource) {
+  if (utmSource && utmSource.trim()) {
+    return {
+      source: 'campaign',
+      sourceLabel: `Campaign (${utmSource.trim()})`,
+      sourceDomain: utmSource.trim()
+    };
+  }
+
+  if (!referrer || !referrer.trim()) {
+    return {
+      source: 'direct',
+      sourceLabel: 'Direct / Bookmark',
+      sourceDomain: 'direct'
+    };
+  }
+
+  try {
+    let cleanRef = referrer.trim();
+    if (!cleanRef.startsWith('http://') && !cleanRef.startsWith('https://')) {
+      cleanRef = 'https://' + cleanRef;
+    }
+    const url = new URL(cleanRef);
+    const host = url.hostname.toLowerCase();
+
+    // AI Search Engines & LLMs
+    if (host.includes('chatgpt.com') || host.includes('chat.openai.com')) {
+      return { source: 'chatgpt', sourceLabel: 'ChatGPT AI', sourceDomain: 'chatgpt.com' };
+    }
+    if (host.includes('perplexity.ai')) {
+      return { source: 'perplexity', sourceLabel: 'Perplexity AI', sourceDomain: 'perplexity.ai' };
+    }
+    if (host.includes('claude.ai')) {
+      return { source: 'claude', sourceLabel: 'Claude AI', sourceDomain: 'claude.ai' };
+    }
+    if (host.includes('copilot.microsoft.com') || (host.includes('bing.com') && url.pathname.includes('/chat'))) {
+      return { source: 'copilot', sourceLabel: 'Microsoft Copilot', sourceDomain: 'copilot.microsoft.com' };
+    }
+    if (host.includes('gemini.google.com')) {
+      return { source: 'gemini', sourceLabel: 'Google Gemini AI', sourceDomain: 'gemini.google.com' };
+    }
+
+    // Traditional Search Engines
+    if (host.includes('google.')) {
+      return { source: 'google', sourceLabel: 'Google Search', sourceDomain: 'google.com' };
+    }
+    if (host.includes('bing.com')) {
+      return { source: 'bing', sourceLabel: 'Bing Search', sourceDomain: 'bing.com' };
+    }
+    if (host.includes('duckduckgo.com')) {
+      return { source: 'duckduckgo', sourceLabel: 'DuckDuckGo', sourceDomain: 'duckduckgo.com' };
+    }
+    if (host.includes('yahoo.')) {
+      return { source: 'yahoo', sourceLabel: 'Yahoo Search', sourceDomain: 'yahoo.com' };
+    }
+    if (host.includes('yandex.')) {
+      return { source: 'yandex', sourceLabel: 'Yandex Search', sourceDomain: 'yandex.com' };
+    }
+    if (host.includes('ecosia.org')) {
+      return { source: 'ecosia', sourceLabel: 'Ecosia Search', sourceDomain: 'ecosia.org' };
+    }
+
+    // Social Platforms
+    if (host.includes('t.co') || host.includes('twitter.com') || host.includes('x.com')) {
+      return { source: 'twitter', sourceLabel: 'X (Twitter)', sourceDomain: 'x.com' };
+    }
+    if (host.includes('facebook.com') || host.includes('fb.com')) {
+      return { source: 'facebook', sourceLabel: 'Facebook', sourceDomain: 'facebook.com' };
+    }
+    if (host.includes('instagram.com')) {
+      return { source: 'instagram', sourceLabel: 'Instagram', sourceDomain: 'instagram.com' };
+    }
+    if (host.includes('tiktok.com')) {
+      return { source: 'tiktok', sourceLabel: 'TikTok', sourceDomain: 'tiktok.com' };
+    }
+    if (host.includes('reddit.com')) {
+      return { source: 'reddit', sourceLabel: 'Reddit', sourceDomain: 'reddit.com' };
+    }
+    if (host.includes('youtube.com')) {
+      return { source: 'youtube', sourceLabel: 'YouTube', sourceDomain: 'youtube.com' };
+    }
+    if (host.includes('linkedin.com')) {
+      return { source: 'linkedin', sourceLabel: 'LinkedIn', sourceDomain: 'linkedin.com' };
+    }
+
+    // Internal navigation
+    if (host.includes('trackphonenow.com') || host === 'localhost' || host === '127.0.0.1') {
+      return { source: 'internal', sourceLabel: 'Internal Navigation', sourceDomain: host };
+    }
+
+    const cleanHost = host.replace(/^www\./, '');
+    return { source: 'referral', sourceLabel: `Referral (${cleanHost})`, sourceDomain: cleanHost };
+  } catch (e) {
+    return { source: 'direct', sourceLabel: 'Direct / Unknown', sourceDomain: 'direct' };
+  }
+}
+
+function parseDevice(ua, screenWidth) {
+  let deviceType = 'desktop';
+  if (screenWidth && screenWidth < 768) {
+    deviceType = 'mobile';
+  } else if (screenWidth && screenWidth <= 1024) {
+    deviceType = 'tablet';
+  } else if (/iPad|Tablet/i.test(ua)) {
+    deviceType = 'tablet';
+  } else if (/Mobile|Android|iPhone|iPod/i.test(ua)) {
+    deviceType = 'mobile';
+  }
+
+  let browser = 'Unknown';
+  if (/Edg/i.test(ua)) browser = 'Edge';
+  else if (/Chrome/i.test(ua)) browser = 'Chrome';
+  else if (/Safari/i.test(ua)) browser = 'Safari';
+  else if (/Firefox/i.test(ua)) browser = 'Firefox';
+  else if (/Opera|OPR/i.test(ua)) browser = 'Opera';
+
+  let os = 'Unknown';
+  if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+  else if (/Android/i.test(ua)) os = 'Android';
+  else if (/Windows/i.test(ua)) os = 'Windows';
+  else if (/Macintosh|Mac OS/i.test(ua)) os = 'macOS';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+
+  return { deviceType, browser, os };
+}
+
+app.post('/api/track-visitor', async (req, res) => {
+  try {
+    const { sessionId, referrer, landingPage, screenWidth, utmSource, utmMedium, utmCampaign } = req.body || {};
+    const ua = req.headers['user-agent'] || '';
+
+    // Filter automated search crawler bots
+    if (/bot|crawler|spider|crawling|slurp|duckduckbot|baiduspider|yandexbot/i.test(ua)) {
+      return res.json({ success: true, bot: true });
+    }
+
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip = forwarded ? forwarded.split(',')[0].trim() : req.socket.remoteAddress;
+
+    const attribution = parseVisitorAttribution(referrer, utmSource);
+    if (attribution.source === 'internal') {
+      return res.json({ success: true, internal: true });
+    }
+
+    const device = parseDevice(ua, screenWidth);
+
+    // Geo resolution
+    let country = req.headers['cf-ipcountry'] || '';
+    let city = req.headers['cf-ipcity'] || '';
+    let countryCode = country ? country.toUpperCase() : '';
+
+    if (!countryCode && ip && ip !== '127.0.0.1' && ip !== '::1') {
+      if (ipGeoCache.has(ip)) {
+        const cached = ipGeoCache.get(ip);
+        country = cached.country;
+        city = cached.city;
+        countryCode = cached.countryCode;
+      }
+    }
+
+    const visitorRecord = Store.recordVisitor({
+      sessionId,
+      ip: ip || 'Unknown',
+      source: attribution.source,
+      sourceLabel: attribution.sourceLabel,
+      sourceDomain: attribution.sourceDomain,
+      referrerUrl: referrer || null,
+      landingPage: landingPage || '/',
+      country: country || 'Detected Visitor',
+      countryCode: countryCode || 'UN',
+      city: city || 'City Area',
+      deviceType: device.deviceType,
+      browser: device.browser,
+      os: device.os,
+      utmSource,
+      utmMedium,
+      utmCampaign
+    });
+
+    res.json({ success: true, visitor: visitorRecord });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
+// Admin Traffic Stats API
+app.get('/api/admin/traffic-stats', requireAdmin, (req, res) => {
+  try {
+    const stats = Store.getTrafficStats(req.query.period || '7d');
+    res.json({ success: true, stats });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 // ================= GEOLOCATION & TRACKING APIS =================
 

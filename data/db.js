@@ -66,6 +66,30 @@ db.exec(`
     status TEXT NOT NULL DEFAULT 'CONFIRMED',
     created_at TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS visitors (
+    id TEXT PRIMARY KEY,
+    session_id TEXT,
+    ip TEXT,
+    source TEXT NOT NULL,
+    source_label TEXT NOT NULL,
+    source_domain TEXT,
+    referrer_url TEXT,
+    landing_page TEXT NOT NULL,
+    country TEXT,
+    country_code TEXT,
+    city TEXT,
+    device_type TEXT,
+    browser TEXT,
+    os TEXT,
+    utm_source TEXT,
+    utm_medium TEXT,
+    utm_campaign TEXT,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_visitors_created_at ON visitors(created_at);
+  CREATE INDEX IF NOT EXISTS idx_visitors_source ON visitors(source);
 `);
 
 // Ensure role column exists in existing database
@@ -199,6 +223,50 @@ async function initTursoCloudSync() {
         );
       } catch (e) {}
     }
+
+    // 5. Ensure visitors table exists in Turso and hydrate
+    await turso.execute(`
+      CREATE TABLE IF NOT EXISTS visitors (
+        id TEXT PRIMARY KEY,
+        session_id TEXT,
+        ip TEXT,
+        source TEXT NOT NULL,
+        source_label TEXT NOT NULL,
+        source_domain TEXT,
+        referrer_url TEXT,
+        landing_page TEXT NOT NULL,
+        country TEXT,
+        country_code TEXT,
+        city TEXT,
+        device_type TEXT,
+        browser TEXT,
+        os TEXT,
+        utm_source TEXT,
+        utm_medium TEXT,
+        utm_campaign TEXT,
+        created_at TEXT NOT NULL
+      );
+    `);
+
+    try {
+      const visitorsResult = await turso.execute('SELECT * FROM visitors ORDER BY created_at DESC LIMIT 500;');
+      const insertVis = db.prepare(`
+        INSERT OR REPLACE INTO visitors (
+          id, session_id, ip, source, source_label, source_domain,
+          referrer_url, landing_page, country, country_code, city,
+          device_type, browser, os, utm_source, utm_medium, utm_campaign, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      for (const v of visitorsResult.rows) {
+        try {
+          insertVis.run(
+            v.id, v.session_id, v.ip, v.source, v.source_label, v.source_domain,
+            v.referrer_url, v.landing_page, v.country, v.country_code, v.city,
+            v.device_type, v.browser, v.os, v.utm_source, v.utm_medium, v.utm_campaign, v.created_at
+          );
+        } catch (e) {}
+      }
+    } catch (e) {}
 
     // Two-way sync: Push local users that might not be in cloud
     const localUsers = db.prepare('SELECT * FROM users;').all();
@@ -801,6 +869,150 @@ const DB = {
       throw new Error('Clé secrète Administrateur invalide.');
     }
     return this.updateUserRole(userId, 'admin');
+  },
+
+  recordVisitor(data) {
+    const id = 'vis_' + crypto.randomBytes(8).toString('hex');
+    const createdAt = new Date().toISOString();
+
+    const stmt = db.prepare(`
+      INSERT INTO visitors (
+        id, session_id, ip, source, source_label, source_domain,
+        referrer_url, landing_page, country, country_code, city,
+        device_type, browser, os, utm_source, utm_medium, utm_campaign, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      id,
+      data.sessionId || null,
+      data.ip || 'Unknown',
+      data.source || 'direct',
+      data.sourceLabel || 'Direct / Bookmark',
+      data.sourceDomain || null,
+      data.referrerUrl || null,
+      data.landingPage || '/',
+      data.country || 'Unknown',
+      data.countryCode || 'UN',
+      data.city || 'Unknown',
+      data.deviceType || 'desktop',
+      data.browser || 'Unknown',
+      data.os || 'Unknown',
+      data.utmSource || null,
+      data.utmMedium || null,
+      data.utmCampaign || null,
+      createdAt
+    );
+
+    // Sync to Turso Cloud (fire-and-forget)
+    syncToTurso(`
+      INSERT OR REPLACE INTO visitors (
+        id, session_id, ip, source, source_label, source_domain,
+        referrer_url, landing_page, country, country_code, city,
+        device_type, browser, os, utm_source, utm_medium, utm_campaign, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      id, data.sessionId || null, data.ip || 'Unknown', data.source || 'direct',
+      data.sourceLabel || 'Direct / Bookmark', data.sourceDomain || null,
+      data.referrerUrl || null, data.landingPage || '/', data.country || 'Unknown',
+      data.countryCode || 'UN', data.city || 'Unknown', data.deviceType || 'desktop',
+      data.browser || 'Unknown', data.os || 'Unknown', data.utmSource || null,
+      data.utmMedium || null, data.utmCampaign || null, createdAt
+    ]);
+
+    return { id, createdAt, ...data };
+  },
+
+  getTrafficStats(period = '7d') {
+    // 1. Total counts
+    const totalAllTime = db.prepare('SELECT COUNT(*) as count FROM visitors').get().count;
+    
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const totalToday = db.prepare('SELECT COUNT(*) as count FROM visitors WHERE created_at >= ?').get(todayStart).count;
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const totalWeek = db.prepare('SELECT COUNT(*) as count FROM visitors WHERE created_at >= ?').get(sevenDaysAgo).count;
+
+    // 2. Breakdown by major category: AI vs Search vs Social vs Direct vs Referral
+    const byCategoryRows = db.prepare(`
+      SELECT 
+        CASE 
+          WHEN source IN ('chatgpt', 'perplexity', 'claude', 'copilot', 'gemini') THEN 'ai'
+          WHEN source IN ('google', 'bing', 'yahoo', 'duckduckgo', 'yandex', 'ecosia') THEN 'search'
+          WHEN source IN ('twitter', 'facebook', 'tiktok', 'instagram', 'reddit', 'youtube', 'linkedin') THEN 'social'
+          WHEN source = 'direct' THEN 'direct'
+          ELSE 'referral'
+        END as category,
+        COUNT(*) as count
+      FROM visitors
+      GROUP BY category
+    `).all();
+
+    const categoryMap = { ai: 0, search: 0, social: 0, direct: 0, referral: 0 };
+    byCategoryRows.forEach(r => { categoryMap[r.category] = r.count; });
+
+    // 3. Breakdown by specific source
+    const bySource = db.prepare(`
+      SELECT source, source_label, COUNT(*) as count 
+      FROM visitors 
+      GROUP BY source, source_label 
+      ORDER BY count DESC 
+      LIMIT 10
+    `).all();
+
+    // 4. Breakdown by country
+    const byCountry = db.prepare(`
+      SELECT country, country_code, COUNT(*) as count 
+      FROM visitors 
+      GROUP BY country, country_code 
+      ORDER BY count DESC 
+      LIMIT 10
+    `).all();
+
+    // 5. Breakdown by device
+    const byDevice = db.prepare(`
+      SELECT device_type, COUNT(*) as count 
+      FROM visitors 
+      GROUP BY device_type 
+      ORDER BY count DESC
+    `).all();
+
+    // 6. Top landing pages
+    const topPages = db.prepare(`
+      SELECT landing_page, COUNT(*) as count 
+      FROM visitors 
+      GROUP BY landing_page 
+      ORDER BY count DESC 
+      LIMIT 8
+    `).all();
+
+    // 7. Recent 50 live visitors
+    const recentVisitors = db.prepare(`
+      SELECT * FROM visitors 
+      ORDER BY created_at DESC 
+      LIMIT 50
+    `).all();
+
+    return {
+      totals: {
+        allTime: totalAllTime,
+        today: totalToday,
+        week: totalWeek
+      },
+      byCategory: categoryMap,
+      summary: {
+        totalAllTime,
+        totalToday,
+        totalWeek,
+        categories: categoryMap
+      },
+      bySource,
+      byCountry,
+      byDevice,
+      topPages,
+      recentVisitors
+    };
   }
 };
 

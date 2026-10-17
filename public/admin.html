@@ -251,6 +251,15 @@
         </button>
 
         <button 
+          onclick="switchAdminTab('traffic')" 
+          id="adminTab-traffic" 
+          class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-900"
+        >
+          <i class="ph-bold ph-chart-polar text-sm text-cyan-400"></i>
+          <span>Traffic & AI Radar (<span id="tabCountTraffic">0</span>)</span>
+        </button>
+
+        <button 
           onclick="switchAdminTab('system')" 
           id="adminTab-system" 
           class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-900"
@@ -377,6 +386,262 @@
             </thead>
             <tbody id="paymentsTableBody" class="divide-y divide-slate-800/60 text-xs">
               <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. TAB CONTENT: TRAFFIC & ACQUISITION RADAR -->
+    <div id="viewTraffic" class="space-y-6 hidden">
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-950/70 border border-slate-800 rounded-2xl p-5 backdrop-blur-sm">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+              <i class="ph-bold ph-radar text-xl"></i>
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-white flex items-center gap-2">
+                <span>Traffic & Attribution Radar</span>
+                <span class="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  100% Unblockable First-Party
+                </span>
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">Real-time attribution telemetry capturing AI search queries, search engines, and direct referrals immune to ad-blockers.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>BEACON ACTIVE</span>
+          </div>
+          <button onclick="loadTrafficStats()" class="px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-cyan-600/30">
+            <i class="ph-bold ph-arrows-clockwise text-sm"></i>
+            <span>Refresh Radar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Traffic KPI Cards (4 cards) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Visits -->
+        <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden backdrop-blur-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Visits (7D)</span>
+            <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
+              <i class="ph-bold ph-globe-hemisphere-west text-base"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-white font-mono" id="trStatTotalWeek">0</span>
+            <span class="text-xs text-emerald-400 font-mono" id="trStatTotalToday">+0 today</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-400 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            <span id="trStatAllTime">All-Time: 0 hits</span>
+          </div>
+        </div>
+
+        <!-- AI Engines -->
+        <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden backdrop-blur-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">AI Search Referrals</span>
+            <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+              <i class="ph-bold ph-cpu text-base"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-cyan-300 font-mono" id="trStatAICount">0</span>
+            <span class="text-xs text-cyan-400 font-mono" id="trStatAIPct">0%</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-400 truncate">
+            ChatGPT · Perplexity · Claude · Copilot
+          </div>
+        </div>
+
+        <!-- Search Engines -->
+        <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden backdrop-blur-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Organic Search</span>
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <i class="ph-bold ph-magnifying-glass text-base"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-emerald-300 font-mono" id="trStatSearchCount">0</span>
+            <span class="text-xs text-emerald-400 font-mono" id="trStatSearchPct">0%</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-400 truncate">
+            Google · Bing · DuckDuckGo · Yahoo
+          </div>
+        </div>
+
+        <!-- Direct & Referral -->
+        <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden backdrop-blur-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Direct & Social</span>
+            <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+              <i class="ph-bold ph-arrow-square-out text-base"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-purple-300 font-mono" id="trStatDirectCount">0</span>
+            <span class="text-xs text-purple-400 font-mono" id="trStatDirectPct">0%</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-400 truncate">
+            Direct navigation · Bookmarks · Social
+          </div>
+        </div>
+      </div>
+
+      <!-- Acquisition Visualizer Bar -->
+      <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 space-y-3 backdrop-blur-sm">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-white flex items-center gap-2">
+            <i class="ph-bold ph-chart-bar text-cyan-400"></i>
+            <span>Channel Acquisition Breakdown</span>
+          </span>
+          <span class="text-slate-400 font-mono text-[11px]">Server Attribution Model</span>
+        </div>
+
+        <!-- Multi-segment bar -->
+        <div class="w-full h-4 bg-slate-900 rounded-full overflow-hidden flex border border-slate-800" id="trCategoryBar">
+          <div id="barAI" style="width: 0%" class="bg-cyan-500 transition-all duration-500" title="AI Search"></div>
+          <div id="barSearch" style="width: 0%" class="bg-emerald-500 transition-all duration-500" title="Organic Search"></div>
+          <div id="barSocial" style="width: 0%" class="bg-purple-500 transition-all duration-500" title="Social"></div>
+          <div id="barDirect" style="width: 0%" class="bg-slate-600 transition-all duration-500" title="Direct"></div>
+          <div id="barReferral" style="width: 0%" class="bg-amber-500 transition-all duration-500" title="Referral"></div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex flex-wrap items-center gap-4 text-xs font-mono pt-1 text-slate-400">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-cyan-500 shrink-0"></span>
+            <span>AI Search: <strong class="text-white" id="legendAI">0 (0%)</strong></span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
+            <span>Google & Search: <strong class="text-white" id="legendSearch">0 (0%)</strong></span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-purple-500 shrink-0"></span>
+            <span>Social: <strong class="text-white" id="legendSocial">0 (0%)</strong></span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-slate-500 shrink-0"></span>
+            <span>Direct: <strong class="text-white" id="legendDirect">0 (0%)</strong></span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
+            <span>Referrals: <strong class="text-white" id="legendReferral">0 (0%)</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2-Column Analytics: Top Sources & Top Landing Pages -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Sources Box -->
+        <div class="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+          <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="ph-bold ph-funnel text-cyan-400"></i>
+              <span>Top Referring Sources</span>
+            </h3>
+            <span class="text-[11px] font-mono text-slate-400">Hits</span>
+          </div>
+          <div class="p-4">
+            <div id="trTopSourcesList" class="space-y-2.5">
+              <div class="text-xs text-slate-500 font-mono text-center py-6">Loading acquisition sources...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Landing Pages Box -->
+        <div class="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+          <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="ph-bold ph-browsers text-blue-400"></i>
+              <span>Top Entry Landing Pages</span>
+            </h3>
+            <span class="text-[11px] font-mono text-slate-400">Hits</span>
+          </div>
+          <div class="p-4">
+            <div id="trTopPagesList" class="space-y-2.5">
+              <div class="text-xs text-slate-500 font-mono text-center py-6">Loading entry pages...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secondary Row: Top Countries & Devices -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Countries -->
+        <div class="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+          <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="ph-bold ph-globe text-emerald-400"></i>
+              <span>Top Visitor Geographic Locations</span>
+            </h3>
+          </div>
+          <div class="p-4">
+            <div id="trTopCountriesList" class="space-y-2.5">
+              <div class="text-xs text-slate-500 font-mono text-center py-4">Loading geography...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Devices & Operating Systems -->
+        <div class="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+          <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="ph-bold ph-devices text-purple-400"></i>
+              <span>Client Devices & Form Factors</span>
+            </h3>
+          </div>
+          <div class="p-4">
+            <div id="trTopDevicesList" class="space-y-2.5">
+              <div class="text-xs text-slate-500 font-mono text-center py-4">Loading client devices...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Live Visitor Stream (Last 50 Visits) -->
+      <div class="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+        <div class="px-5 py-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="ph-bold ph-broadcast text-cyan-400 animate-pulse"></i>
+              <span>Live Ingested Visitor Stream (Recent 50 Hits)</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Direct telemetry captured at edge ingress without third-party tracking cookies or ad-blocker dropouts.</p>
+          </div>
+          <span class="text-[11px] font-mono px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-400 self-start sm:self-auto">
+            Live Stream
+          </span>
+        </div>
+
+        <div class="overflow-x-auto custom-scroll">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] font-mono text-slate-400 bg-slate-900/50">
+                <th class="p-3.5 pl-5">TIME</th>
+                <th class="p-3.5">ATTRIBUTION / SOURCE</th>
+                <th class="p-3.5">LANDING PAGE</th>
+                <th class="p-3.5">LOCATION</th>
+                <th class="p-3.5">CLIENT PLATFORM</th>
+                <th class="p-3.5 pr-5 font-mono text-right">SESSION IP</th>
+              </tr>
+            </thead>
+            <tbody id="trVisitorsTableBody" class="divide-y divide-slate-800/60 text-xs">
+              <tr>
+                <td colspan="6" class="p-8 text-center text-slate-500 font-mono">
+                  Loading live visitor stream...
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1119,17 +1384,324 @@
 
     // Tabs switching
     function switchAdminTab(tabName) {
-      const tabs = ['users', 'sessions', 'payments', 'system'];
+      const tabs = ['users', 'sessions', 'payments', 'traffic', 'system'];
       tabs.forEach(t => {
         const btn = document.getElementById(`adminTab-${t}`);
         const view = document.getElementById(`view${t.charAt(0).toUpperCase() + t.slice(1)}`);
         if (t === tabName) {
           btn.className = "px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-blue-600 text-white shadow-md shadow-blue-600/30";
           if (view) view.classList.remove('hidden');
+          if (t === 'traffic') {
+            loadTrafficStats();
+          }
         } else {
           btn.className = "px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-900";
           if (view) view.classList.add('hidden');
         }
+      });
+    }
+
+    // Traffic Radar & Attribution Engine
+    let latestTrafficStats = null;
+
+    function formatRelativeTime(isoStr) {
+      if (!isoStr) return '--';
+      try {
+        const diffMs = Date.now() - new Date(isoStr).getTime();
+        const diffSec = Math.floor(diffMs / 1000);
+        if (diffSec < 45) return 'Just now';
+        const diffMin = Math.floor(diffSec / 60);
+        if (diffMin < 60) return `${diffMin}m ago`;
+        const diffHr = Math.floor(diffMin / 60);
+        if (diffHr < 24) return `${diffHr}h ago`;
+        const diffDay = Math.floor(diffHr / 24);
+        return `${diffDay}d ago`;
+      } catch (e) {
+        return isoStr;
+      }
+    }
+
+    function getSourceBadge(source, sourceLabel) {
+      const s = (source || '').toLowerCase();
+      const label = escapeHTML(sourceLabel || source || 'Direct');
+
+      // AI Search Platforms
+      if (['chatgpt', 'perplexity', 'claude', 'copilot', 'gemini'].includes(s)) {
+        let icon = 'ph-cpu';
+        if (s === 'perplexity') icon = 'ph-lightning';
+        if (s === 'claude') icon = 'ph-brain';
+        if (s === 'copilot') icon = 'ph-sparkle';
+        return `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 shadow-xs">
+            <i class="ph-bold ${icon} text-cyan-400"></i>
+            <span>${label}</span>
+          </span>
+        `;
+      }
+
+      // Search Engines
+      if (['google', 'bing', 'yahoo', 'duckduckgo', 'yandex', 'ecosia'].includes(s)) {
+        return `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+            <i class="ph-bold ph-magnifying-glass text-emerald-400"></i>
+            <span>${label}</span>
+          </span>
+        `;
+      }
+
+      // Social
+      if (['twitter', 'facebook', 'instagram', 'reddit', 'youtube', 'tiktok', 'linkedin'].includes(s)) {
+        return `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-purple-950/80 text-purple-300 border border-purple-500/40">
+            <i class="ph-bold ph-share-network text-purple-400"></i>
+            <span>${label}</span>
+          </span>
+        `;
+      }
+
+      // Direct
+      if (s === 'direct') {
+        return `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+            <i class="ph-bold ph-globe text-slate-400"></i>
+            <span>${label}</span>
+          </span>
+        `;
+      }
+
+      // Referral / Other
+      return `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-500/40">
+          <i class="ph-bold ph-arrow-square-out text-amber-400"></i>
+          <span>${label}</span>
+        </span>
+      `;
+    }
+
+    async function loadTrafficStats() {
+      const token = getAuthToken();
+      try {
+        const res = await fetch('/api/admin/traffic-stats?period=7d', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success && data.stats) {
+          latestTrafficStats = data.stats;
+          const totalHits = data.stats.totals.week || data.stats.totals.allTime || 0;
+          const badge = document.getElementById('tabCountTraffic');
+          if (badge) badge.textContent = totalHits;
+          renderTrafficStats(latestTrafficStats);
+        }
+      } catch (err) {
+        console.error('Failed to load traffic stats:', err);
+      }
+    }
+
+    function renderTrafficStats(stats) {
+      if (!stats) return;
+
+      const totals = stats.totals || { allTime: 0, today: 0, week: 0 };
+      const cat = stats.byCategory || { ai: 0, search: 0, social: 0, direct: 0, referral: 0 };
+      const totalCount = totals.allTime > 0 ? totals.allTime : 1;
+
+      // 1. KPI Cards
+      document.getElementById('trStatTotalWeek').textContent = totals.week;
+      document.getElementById('trStatTotalToday').textContent = `+${totals.today} today`;
+      document.getElementById('trStatAllTime').textContent = `All-Time: ${totals.allTime} hits`;
+
+      const aiCount = cat.ai || 0;
+      const searchCount = cat.search || 0;
+      const directSocialCount = (cat.direct || 0) + (cat.social || 0) + (cat.referral || 0);
+
+      const aiPct = Math.round((aiCount / totalCount) * 100);
+      const searchPct = Math.round((searchCount / totalCount) * 100);
+      const directPct = Math.round((directSocialCount / totalCount) * 100);
+
+      document.getElementById('trStatAICount').textContent = aiCount;
+      document.getElementById('trStatAIPct').textContent = `${aiPct}%`;
+      document.getElementById('trStatSearchCount').textContent = searchCount;
+      document.getElementById('trStatSearchPct').textContent = `${searchPct}%`;
+      document.getElementById('trStatDirectCount').textContent = directSocialCount;
+      document.getElementById('trStatDirectPct').textContent = `${directPct}%`;
+
+      // 2. Acquisition Bar
+      const pAI = ((cat.ai || 0) / totalCount) * 100;
+      const pSearch = ((cat.search || 0) / totalCount) * 100;
+      const pSocial = ((cat.social || 0) / totalCount) * 100;
+      const pDirect = ((cat.direct || 0) / totalCount) * 100;
+      const pRef = ((cat.referral || 0) / totalCount) * 100;
+
+      document.getElementById('barAI').style.width = `${pAI}%`;
+      document.getElementById('barSearch').style.width = `${pSearch}%`;
+      document.getElementById('barSocial').style.width = `${pSocial}%`;
+      document.getElementById('barDirect').style.width = `${pDirect}%`;
+      document.getElementById('barReferral').style.width = `${pRef}%`;
+
+      document.getElementById('legendAI').textContent = `${cat.ai || 0} (${Math.round(pAI)}%)`;
+      document.getElementById('legendSearch').textContent = `${cat.search || 0} (${Math.round(pSearch)}%)`;
+      document.getElementById('legendSocial').textContent = `${cat.social || 0} (${Math.round(pSocial)}%)`;
+      document.getElementById('legendDirect').textContent = `${cat.direct || 0} (${Math.round(pDirect)}%)`;
+      document.getElementById('legendReferral').textContent = `${cat.referral || 0} (${Math.round(pRef)}%)`;
+
+      // 3. Top Sources List
+      const sourcesBox = document.getElementById('trTopSourcesList');
+      if (stats.bySource && stats.bySource.length > 0) {
+        sourcesBox.innerHTML = stats.bySource.map(s => {
+          const pct = Math.round((s.count / totalCount) * 100);
+          return `
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5 min-w-0">
+                ${getSourceBadge(s.source, s.source_label)}
+              </div>
+              <div class="flex items-center gap-3 shrink-0 font-mono text-xs">
+                <div class="w-16 bg-slate-800 h-2 rounded-full overflow-hidden hidden sm:block">
+                  <div class="bg-cyan-500 h-full" style="width: ${pct}%"></div>
+                </div>
+                <span class="font-bold text-white">${s.count}</span>
+                <span class="text-slate-400 text-[11px] w-9 text-right">${pct}%</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        sourcesBox.innerHTML = `<div class="text-xs text-slate-500 font-mono text-center py-4">No visitor sources logged yet.</div>`;
+      }
+
+      // 4. Top Landing Pages
+      const pagesBox = document.getElementById('trTopPagesList');
+      if (stats.topPages && stats.topPages.length > 0) {
+        pagesBox.innerHTML = stats.topPages.map(p => {
+          const pct = Math.round((p.count / totalCount) * 100);
+          return `
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3">
+              <div class="font-mono text-xs text-blue-300 truncate" title="${escapeHTML(p.landing_page)}">
+                ${escapeHTML(p.landing_page)}
+              </div>
+              <div class="flex items-center gap-3 shrink-0 font-mono text-xs">
+                <div class="w-16 bg-slate-800 h-2 rounded-full overflow-hidden hidden sm:block">
+                  <div class="bg-blue-500 h-full" style="width: ${pct}%"></div>
+                </div>
+                <span class="font-bold text-white">${p.count}</span>
+                <span class="text-slate-400 text-[11px] w-9 text-right">${pct}%</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        pagesBox.innerHTML = `<div class="text-xs text-slate-500 font-mono text-center py-4">No page visits logged yet.</div>`;
+      }
+
+      // 5. Top Countries
+      const countriesBox = document.getElementById('trTopCountriesList');
+      if (stats.byCountry && stats.byCountry.length > 0) {
+        countriesBox.innerHTML = stats.byCountry.map(c => `
+          <div class="p-2 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between text-xs font-mono">
+            <div class="flex items-center gap-2">
+              <span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-emerald-400 font-bold border border-slate-700">${escapeHTML(c.country_code || 'UN')}</span>
+              <span class="text-slate-200">${escapeHTML(c.country || 'Unknown Location')}</span>
+            </div>
+            <span class="font-bold text-white">${c.count}</span>
+          </div>
+        `).join('');
+      } else {
+        countriesBox.innerHTML = `<div class="text-xs text-slate-500 font-mono text-center py-2">No country data yet.</div>`;
+      }
+
+      // 6. Devices
+      const devicesBox = document.getElementById('trTopDevicesList');
+      if (stats.byDevice && stats.byDevice.length > 0) {
+        devicesBox.innerHTML = stats.byDevice.map(d => {
+          let icon = 'ph-device-mobile';
+          if (d.device_type === 'desktop') icon = 'ph-desktop';
+          if (d.device_type === 'tablet') icon = 'ph-device-tablet-speaker';
+          return `
+            <div class="p-2 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between text-xs font-mono">
+              <div class="flex items-center gap-2">
+                <i class="ph-bold ${icon} text-purple-400 text-sm"></i>
+                <span class="text-slate-200 uppercase">${escapeHTML(d.device_type)}</span>
+              </div>
+              <span class="font-bold text-white">${d.count}</span>
+            </div>
+          `;
+        }).join('');
+      } else {
+        devicesBox.innerHTML = `<div class="text-xs text-slate-500 font-mono text-center py-2">No device data yet.</div>`;
+      }
+
+      // 7. Recent Visitors Table
+      renderVisitorsTable();
+    }
+
+    function renderVisitorsTable() {
+      const tbody = document.getElementById('trVisitorsTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (!latestTrafficStats || !latestTrafficStats.recentVisitors || latestTrafficStats.recentVisitors.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 font-mono">No live visitors recorded yet. Visit the homepage or blog to see real-time hits.</td></tr>`;
+        return;
+      }
+
+      let list = latestTrafficStats.recentVisitors;
+      if (currentFilter) {
+        const f = currentFilter.toLowerCase();
+        list = list.filter(v => 
+          (v.source && v.source.toLowerCase().includes(f)) ||
+          (v.source_label && v.source_label.toLowerCase().includes(f)) ||
+          (v.landing_page && v.landing_page.toLowerCase().includes(f)) ||
+          (v.country && v.country.toLowerCase().includes(f)) ||
+          (v.city && v.city.toLowerCase().includes(f)) ||
+          (v.ip && v.ip.toLowerCase().includes(f)) ||
+          (v.browser && v.browser.toLowerCase().includes(f)) ||
+          (v.os && v.os.toLowerCase().includes(f))
+        );
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 font-mono">No visitors match search query.</td></tr>`;
+        return;
+      }
+
+      list.forEach(v => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-900/60 transition";
+
+        let devIcon = 'ph-desktop';
+        if (v.device_type === 'mobile') devIcon = 'ph-device-mobile';
+        if (v.device_type === 'tablet') devIcon = 'ph-device-tablet-speaker';
+
+        tr.innerHTML = `
+          <td class="p-3.5 pl-5 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+            ${formatRelativeTime(v.created_at)}
+          </td>
+          <td class="p-3.5">
+            ${getSourceBadge(v.source, v.source_label)}
+            ${v.utm_campaign ? `<div class="text-[10px] text-cyan-400 font-mono mt-0.5">Campaign: ${escapeHTML(v.utm_campaign)}</div>` : ''}
+          </td>
+          <td class="p-3.5">
+            <span class="font-mono text-xs text-blue-300 hover:underline max-w-[200px] truncate block" title="${escapeHTML(v.landing_page)}">
+              ${escapeHTML(v.landing_page || '/')}
+            </span>
+          </td>
+          <td class="p-3.5 text-xs text-slate-300 font-mono">
+            <div class="flex items-center gap-1.5">
+              <span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-emerald-400 font-bold border border-slate-700">${escapeHTML(v.country_code || 'UN')}</span>
+              <span>${escapeHTML(v.city && v.city !== 'Unknown' ? `${v.city}, ` : '')}${escapeHTML(v.country || 'Global')}</span>
+            </div>
+          </td>
+          <td class="p-3.5 text-xs text-slate-300 font-mono">
+            <div class="flex items-center gap-1.5">
+              <i class="ph-bold ${devIcon} text-purple-400 text-sm"></i>
+              <span class="capitalize text-slate-200">${escapeHTML(v.os || 'OS')}</span>
+              <span class="text-slate-500">·</span>
+              <span class="text-slate-400">${escapeHTML(v.browser || 'Browser')}</span>
+            </div>
+          </td>
+          <td class="p-3.5 pr-5 text-right font-mono text-[11px] text-slate-400">
+            ${escapeHTML(v.ip || 'Unknown')}
+          </td>
+        `;
+        tbody.appendChild(tr);
       });
     }
 
@@ -1138,12 +1710,13 @@
       renderUsersTable();
       renderSessionsTable();
       renderPaymentsTable();
+      renderVisitorsTable();
     }
 
     async function refreshAllData() {
       const icon = document.getElementById('refreshIcon');
       if (icon) icon.classList.add('animate-spin');
-      await Promise.all([loadOverview(), loadUsers(), loadSessions(), loadPayments()]);
+      await Promise.all([loadOverview(), loadUsers(), loadSessions(), loadPayments(), loadTrafficStats()]);
       if (icon) icon.classList.remove('animate-spin');
       showToast('Console data refreshed.');
     }
@@ -1158,7 +1731,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const authorized = await initAdminAuth();
       if (authorized) {
-        await Promise.all([loadOverview(), loadUsers(), loadSessions(), loadPayments()]);
+        await Promise.all([loadOverview(), loadUsers(), loadSessions(), loadPayments(), loadTrafficStats()]);
       }
     });
   </script>
