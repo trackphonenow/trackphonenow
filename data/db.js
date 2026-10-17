@@ -240,9 +240,9 @@ const DB = {
     const id = 'usr_' + crypto.randomBytes(8).toString('hex');
     const createdAt = new Date().toISOString();
 
-    let assignedRole = role || 'user';
-    const adminEmailConfig = (process.env.ADMIN_EMAIL || 'admin@trackphonenow.com').toLowerCase();
-    if (cleanEmail === adminEmailConfig || cleanEmail.startsWith('admin@') || cleanEmail === 'client@trackphonenow.com') {
+    let assignedRole = 'user';
+    const adminEmailConfig = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.toLowerCase().trim() : null;
+    if (adminEmailConfig && cleanEmail === adminEmailConfig) {
       assignedRole = 'admin';
     }
 
@@ -314,9 +314,6 @@ const DB = {
 
   getUserByToken(token) {
     if (!token) return null;
-    if (token === 'tok_demo_preview') {
-      return this.getUserById('user_demo_01');
-    }
 
     const tokRow = db.prepare('SELECT user_id, expires_at FROM tokens WHERE token = ?').get(token);
     if (!tokRow) return null;
@@ -328,6 +325,13 @@ const DB = {
     }
 
     return this.getUserById(tokRow.user_id);
+  },
+
+  deleteToken(token) {
+    if (!token) return false;
+    db.prepare('DELETE FROM tokens WHERE token = ?').run(token);
+    syncToTurso('DELETE FROM tokens WHERE token = ?', [token]);
+    return true;
   },
 
   getUserById(id) {
@@ -717,6 +721,16 @@ const DB = {
   },
 
   updateUserRole(userId, newRole) {
+    const user = this.getUserById(userId);
+    if (!user) throw new Error('User not found.');
+
+    if (user.role === 'admin' && newRole === 'user') {
+      const adminCount = db.prepare("SELECT COUNT(*) as c FROM users WHERE role = 'admin'").get()?.c || 0;
+      if (adminCount <= 1) {
+        throw new Error('Action prohibited: Cannot demote the last remaining administrator.');
+      }
+    }
+
     const validRole = newRole === 'admin' ? 'admin' : 'user';
     db.prepare('UPDATE users SET role = ? WHERE id = ?').run(validRole, userId);
     syncToTurso('UPDATE users SET role = ? WHERE id = ?', [validRole, userId]);
@@ -749,6 +763,14 @@ const DB = {
     if (userId === 'user_demo_01') {
       throw new Error('Default root administrator user cannot be deleted.');
     }
+    const user = this.getUserById(userId);
+    if (user && user.role === 'admin') {
+      const adminCount = db.prepare("SELECT COUNT(*) as c FROM users WHERE role = 'admin'").get()?.c || 0;
+      if (adminCount <= 1) {
+        throw new Error('Action prohibited: Cannot delete the last remaining administrator.');
+      }
+    }
+
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM tokens WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM payments WHERE user_id = ?').run(userId);
@@ -770,7 +792,12 @@ const DB = {
 
   claimAdminRole(userId, secretKey) {
     const expectedSecret = process.env.ADMIN_SECRET || 'Admin_TrackPhoneNow_2026';
-    if (!secretKey || secretKey.trim() !== expectedSecret.trim()) {
+    if (!secretKey) {
+      throw new Error('Clé secrète Administrateur invalide.');
+    }
+    const bufA = Buffer.from(secretKey.trim());
+    const bufB = Buffer.from(expectedSecret.trim());
+    if (bufA.length !== bufB.length || !crypto.timingSafeEqual(bufA, bufB)) {
       throw new Error('Clé secrète Administrateur invalide.');
     }
     return this.updateUserRole(userId, 'admin');

@@ -248,9 +248,14 @@ app.post('/api/auth/cancel-subscription', requireAuth, (req, res) => {
   }
 });
 
-// Logout
+// Logout (Revoke token in database)
 app.post('/api/auth/logout', (req, res) => {
-  res.json({ success: true, message: 'Logged out successfully.' });
+  const authHeader = req.headers['authorization'];
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : req.query.token;
+  if (token) {
+    Store.deleteToken(token);
+  }
+  res.json({ success: true, message: 'Logged out and session revoked successfully.' });
 });
 
 // ================= CRYPTO PAYMENT APIS =================
@@ -631,6 +636,18 @@ app.get('/api/admin/payments', requireAdmin, (req, res) => {
   }
 });
 
+// In-memory rate limiter for administrative elevation
+const claimAttempts = new Map(); // ip -> { count, lastAttempt }
+
+function safeCompare(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  const crypto = require('crypto');
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 // 9. Confirm crypto payment (can be called by authenticated admin or with adminSecret)
 app.post('/api/admin/confirm-payment', (req, res) => {
   const { paymentId, adminSecret } = req.body;
@@ -639,7 +656,8 @@ app.post('/api/admin/confirm-payment', (req, res) => {
   const user = token ? Store.getUserByToken(token) : null;
   const configuredSecret = process.env.ADMIN_SECRET || 'Admin_TrackPhoneNow_2026';
 
-  const isAuthorized = (user && user.role === 'admin') || (adminSecret && adminSecret.trim() === configuredSecret);
+  const hasSecret = Boolean(adminSecret && safeCompare(adminSecret.trim(), configuredSecret.trim()));
+  const isAuthorized = (user && user.role === 'admin') || hasSecret;
   if (!isAuthorized) {
     return res.status(403).json({ success: false, error: 'Unauthorized: Admin authorization required.' });
   }
@@ -661,17 +679,27 @@ app.post('/api/admin/confirm-payment', (req, res) => {
   }
 });
 
-// 10. Self-claim admin role using Master Secret
+// 10. Self-claim admin role using Master Secret (Rate-limited & timing-safe)
 app.post('/api/admin/claim-role', requireAuth, (req, res) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const record = claimAttempts.get(ip) || { count: 0, lastAttempt: now };
+
+  if (record.count >= 5 && now - record.lastAttempt < 15 * 60 * 1000) {
+    return res.status(429).json({ success: false, error: 'Too many failed elevation attempts. Please try again in 15 minutes.' });
+  }
+
   const { secretKey } = req.body;
   try {
     const updatedUser = Store.claimAdminRole(req.user.id, secretKey);
+    claimAttempts.delete(ip);
     res.json({
       success: true,
       message: 'Admin authorization granted successfully.',
       user: updatedUser
     });
   } catch (err) {
+    claimAttempts.set(ip, { count: record.count + 1, lastAttempt: now });
     res.status(403).json({ success: false, error: err.message });
   }
 });
