@@ -1498,7 +1498,7 @@
   </div>
 
   <!-- MODAL: CONSOLE UPGRADE & CRYPTO CHECKOUT -->
-  <div id="upgradeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+  <div id="upgradeModal" onclick="if(event.target === this) closeUpgradeModal()" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
     <div class="bg-white max-w-2xl w-full rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xl relative my-6 animate-in fade-in zoom-in-95 duration-150">
       
       <!-- Close Button -->
@@ -1641,10 +1641,10 @@
               </div>
 
               <div class="flex items-center justify-between pt-1">
-                <span class="text-[10px] text-slate-500 font-medium flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>Direct Node · Auto-detected instantly</span>
-                </span>
+                <a id="upgradeExplorerLink" href="#" target="_blank" rel="noopener" class="text-[10px] text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1">
+                  <i class="ph-bold ph-arrow-square-out text-xs"></i>
+                  <span id="upgradeExplorerName">View on Explorer</span>
+                </a>
                 <span class="text-[10px] text-slate-400 font-mono">0% Network Fee</span>
               </div>
             </div>
@@ -3185,9 +3185,12 @@
       else if (defaultPlan === 'pro_6m') normalizedPlan = 'pro_6m';
       else if (defaultPlan === 'annual_enterprise' || defaultPlan === 'enterprise_lifetime') normalizedPlan = 'annual_enterprise';
       selectedUpgradePlan = normalizedPlan;
-      selectUpgradePlan(normalizedPlan);
 
-      // Reset modal view states
+      // 1. Unhide modal immediately so it is 100% visible to the user
+      const modal = document.getElementById('upgradeModal');
+      if (modal) modal.classList.remove('hidden');
+
+      // 2. Reset modal view states
       const checkoutStep = document.getElementById('upgradeModalCheckoutStep');
       const pendingStep = document.getElementById('upgradeModalPendingStep');
       if (checkoutStep) checkoutStep.classList.remove('hidden');
@@ -3195,11 +3198,16 @@
       const txInput = document.getElementById('upgradeTxInput');
       if (txInput) txInput.value = '';
 
-      document.getElementById('upgradeModal').classList.remove('hidden');
+      try {
+        selectUpgradePlan(normalizedPlan);
+      } catch (err) {
+        console.error('Error in selectUpgradePlan:', err);
+      }
     }
 
     function closeUpgradeModal() {
-      document.getElementById('upgradeModal').classList.add('hidden');
+      const modal = document.getElementById('upgradeModal');
+      if (modal) modal.classList.add('hidden');
     }
 
     function selectUpgradePlan(planId) {
@@ -3244,23 +3252,35 @@
       const wallet = UPGRADE_WALLETS[selectedUpgradeCurrency] || UPGRADE_WALLETS['usdt_trc20'];
 
       const amountFormatted = wallet.formatAmount(plan.usdPrice);
-      document.getElementById('upgradeAmountDisplay').textContent = `${amountFormatted} (${plan.usdLabel})`;
-      document.getElementById('upgradeWalletInput').value = wallet.address;
+      const amountEl = document.getElementById('upgradeAmountDisplay');
+      if (amountEl) amountEl.textContent = `${amountFormatted} (${plan.usdLabel})`;
+      
+      const walletInput = document.getElementById('upgradeWalletInput');
+      if (walletInput) walletInput.value = wallet.address;
       
       const explorerLink = document.getElementById('upgradeExplorerLink');
-      explorerLink.href = wallet.explorer;
-      document.getElementById('upgradeExplorerName').textContent = wallet.explorerName;
+      if (explorerLink) explorerLink.href = wallet.explorer;
+      const explorerName = document.getElementById('upgradeExplorerName');
+      if (explorerName) explorerName.textContent = wallet.explorerName;
 
-      // Render Dynamic QR
+      // Render Dynamic QR safely
       const qrBox = document.getElementById('upgradeQrCode');
-      qrBox.innerHTML = '';
-      new QRCode(qrBox, {
-        text: wallet.address,
-        width: 110,
-        height: 110,
-        colorDark: "#0f172a",
-        colorLight: "#ffffff"
-      });
+      if (qrBox) {
+        qrBox.innerHTML = '';
+        if (typeof QRCode !== 'undefined') {
+          try {
+            new QRCode(qrBox, {
+              text: wallet.address,
+              width: 110,
+              height: 110,
+              colorDark: "#0f172a",
+              colorLight: "#ffffff"
+            });
+          } catch (qrErr) {
+            console.warn('QRCode render error:', qrErr);
+          }
+        }
+      }
     }
 
     function copyUpgradeAddress() {
