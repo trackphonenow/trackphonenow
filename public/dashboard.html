@@ -2288,6 +2288,61 @@
       } catch (e) {}
     }
 
+    // Cache for client detected geolocation
+    let clientGeoLocation = {
+      lat: 33.5898,
+      lng: -7.6325,
+      city: 'Casablanca',
+      country: 'Morocco',
+      countryCode: 'MA',
+      isp: 'Maroc Telecom / Orange'
+    };
+
+    // Auto-detect visitor's real location by IP
+    async function detectClientLocation() {
+      try {
+        const res = await fetch('/api/geo-ip');
+        const data = await res.json();
+        if (data && data.success && data.lat && data.lng) {
+          clientGeoLocation = {
+            lat: parseFloat(data.lat),
+            lng: parseFloat(data.lng),
+            city: data.city || 'City Center',
+            country: data.country || 'Detected Region',
+            countryCode: (data.countryCode || 'MA').toUpperCase(),
+            isp: data.isp || 'Broadband Gateway'
+          };
+          
+          // Pre-populate telephone input prefix based on client country if not yet typed
+          const phoneInput = document.getElementById('standbyPhoneInput');
+          if (phoneInput && (!phoneInput.value || phoneInput.value === '+212 6')) {
+            const countryCodes = {
+              'MA': { dial: '+212 6', flag: '🇲🇦', carrier: 'Maroc Telecom (IAM)' },
+              'FR': { dial: '+33 6', flag: '🇫🇷', carrier: 'Orange France / SFR' },
+              'US': { dial: '+1 ', flag: '🇺🇸', carrier: 'Verizon / AT&T' },
+              'CA': { dial: '+1 ', flag: '🇨🇦', carrier: 'Rogers / Bell' },
+              'GB': { dial: '+44 7', flag: '🇬🇧', carrier: 'EE / Vodafone UK' },
+              'ES': { dial: '+34 6', flag: '🇪🇸', carrier: 'Movistar / Orange ES' },
+              'DE': { dial: '+49 1', flag: '🇩🇪', carrier: 'Deutsche Telekom' },
+              'SA': { dial: '+966 5', flag: '🇸🇦', carrier: 'STC (Saudi Telecom)' },
+              'AE': { dial: '+971 5', flag: '🇦🇪', carrier: 'e& (Etisalat) / du' },
+              'DZ': { dial: '+213 6', flag: '🇩🇿', carrier: 'Mobilis / Djezzy' },
+              'TN': { dial: '+216 2', flag: '🇹🇳', carrier: 'Tunisie Telecom / Ooredoo' }
+            };
+            const cInfo = countryCodes[clientGeoLocation.countryCode];
+            if (cInfo) {
+              phoneInput.value = cInfo.dial;
+              const flagEl = document.getElementById('standbyFlag');
+              const carrierEl = document.getElementById('standbyCarrierBadge');
+              if (flagEl) flagEl.textContent = cInfo.flag;
+              if (carrierEl) carrierEl.textContent = cInfo.carrier;
+            }
+          }
+        }
+      } catch (err) {}
+      return clientGeoLocation;
+    }
+
     // Triangulation Spectacle: 3 BTS Towers with Converging Lasers
     function renderCellTowerTriangulation(targetLat, targetLng) {
       if (!map) return;
@@ -2300,11 +2355,11 @@
 
       if (!showTriangulation) return;
 
-      // 3 realistic cellular towers around target
+      const city = clientGeoLocation.city || 'Cell';
       const towers = [
-        { name: 'IAM Tower #49281 (Maarif)', lat: targetLat + 0.0055, lng: targetLng - 0.0048, carrier: 'Maroc Telecom' },
-        { name: 'Orange BTS #1204 (Gauthier)', lat: targetLat - 0.0042, lng: targetLng + 0.0051, carrier: 'Orange Maroc' },
-        { name: 'Inwi Node #771 (Bd d\'Anfa)', lat: targetLat + 0.0048, lng: targetLng + 0.0042, carrier: 'Inwi GSM' }
+        { name: `${city} Central BTS #49281`, lat: targetLat + 0.0052, lng: targetLng - 0.0045, carrier: clientGeoLocation.isp || 'Telecom Gateway' },
+        { name: `${city} Micro-Cell #1204`, lat: targetLat - 0.0039, lng: targetLng + 0.0048, carrier: '4G/5G LTE Node' },
+        { name: `${city} Sector Tower #771`, lat: targetLat + 0.0044, lng: targetLng + 0.0038, carrier: 'SS7 Active Relay' }
       ];
 
       towers.forEach(t => {
@@ -2320,7 +2375,7 @@
         });
 
         const tm = L.marker([t.lat, t.lng], { icon: towerIcon }).addTo(map);
-        tm.bindPopup(`<b class="text-xs font-mono">${t.name}</b><br/><span class="text-[10px] text-slate-500">${t.carrier} · 4G/5G Active</span>`);
+        tm.bindPopup(`<b class="text-xs font-mono">${t.name}</b><br/><span class="text-[10px] text-slate-500">${t.carrier} · Active</span>`);
         towerMarkers.push(tm);
 
         // Converging line
@@ -2348,7 +2403,7 @@
       if (currentSession && currentSession.targetLocation) {
         renderCellTowerTriangulation(currentSession.targetLocation.latitude, currentSession.targetLocation.longitude);
       } else {
-        renderCellTowerTriangulation(33.5731, -7.5898);
+        renderCellTowerTriangulation(clientGeoLocation.lat, clientGeoLocation.lng);
       }
       showToast(showTriangulation ? 'Cell Triangulation Vectors Enabled' : 'Triangulation Vectors Hidden');
     }
@@ -2368,12 +2423,17 @@
         if (topHudStatus) topHudStatus.textContent = "GSM Triangulation Ready";
         if (bottomHud) bottomHud.classList.add('hidden');
 
-        // Live street overview on Casablanca / commercial district
+        // Real-time street overview dynamically centered on client's detected IP location
+        const targetLat = clientGeoLocation.lat || 33.5898;
+        const targetLng = clientGeoLocation.lng || -7.6325;
+        const targetCity = clientGeoLocation.city || 'City';
+        const targetCountry = clientGeoLocation.country || 'Region';
+
         if (!map) {
-          initMap(33.5898, -7.6325);
+          initMap(targetLat, targetLng);
           if (map) map.setZoom(16);
         } else {
-          map.setView([33.5898, -7.6325], 16);
+          map.setView([targetLat, targetLng], 16);
         }
         if (map) map.closePopup();
         if (targetMarker && map) { map.removeLayer(targetMarker); targetMarker = null; }
@@ -2383,8 +2443,11 @@
         towerMarkers = [];
         triangulationPolylines = [];
         
-        // Show demo pin on standby so map immediately feels alive and real
-        updateMapMarker(33.5898, -7.6325, 4.2);
+        // Show demo pin on client's city so map immediately reflects their region
+        updateMapMarker(targetLat, targetLng, 4.2);
+        if (topHudStatus) {
+          topHudStatus.textContent = `${targetCity}, ${targetCountry} · Gateway Active`;
+        }
       } else {
         if (deckStandby) deckStandby.classList.add('hidden');
         if (deckActive) deckActive.classList.remove('hidden');
@@ -3474,6 +3537,10 @@
         }, 500);
       }
 
+      // 1. Auto-detect visitor's exact IP location (City, Country & GPS Coordinates)
+      await detectClientLocation();
+
+      // 2. Load sessions & initialize localized map
       await loadSessions(targetId);
       await fetchPendingPayment();
       if (tabParam) switchTab(tabParam);

@@ -717,40 +717,90 @@ app.post('/api/lookup', (req, res) => {
   res.json({ success: true, data: info });
 });
 
-// 1.1 API: Auto-detect visitor's country by IP
+// 1.1 API: Auto-detect visitor's exact city, country & lat/lon by IP
 app.get('/api/geo-ip', async (req, res) => {
   try {
-    const cfCountry = req.headers['cf-ipcountry'];
-    if (cfCountry && cfCountry !== 'XX' && cfCountry !== 'T1') {
-      return res.json({ success: true, countryCode: cfCountry });
-    }
-
     const queryIp = req.query.ip;
     const forwarded = req.headers['x-forwarded-for'];
-    const ip = queryIp || (forwarded ? forwarded.split(',')[0].trim() : req.socket.remoteAddress);
+    const clientIp = queryIp || (forwarded ? forwarded.split(',')[0].trim() : req.socket.remoteAddress);
 
-    if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-      return res.json({ success: false, isLocal: true, lang: 'en' });
+    // Cloudflare Headers (Available when behind Cloudflare)
+    const cfCountry = req.headers['cf-ipcountry'];
+    const cfCity = req.headers['cf-ipcity'];
+    const cfLat = req.headers['cf-iplatitude'];
+    const cfLong = req.headers['cf-iplongitude'];
+
+    // Try ip-api.com for rich real-time city, lat, lon & ISP
+    let ipLookupUrl = 'http://ip-api.com/json/';
+    if (clientIp && clientIp !== '127.0.0.1' && clientIp !== '::1' && !clientIp.startsWith('192.168.') && !clientIp.startsWith('10.')) {
+      ipLookupUrl = `http://ip-api.com/json/${clientIp}`;
     }
 
-    const geoRes = await fetch(`https://api.country.is/${ip}`);
-    const data = await geoRes.json();
-    if (data && data.country) {
-      const cCode = data.country.toUpperCase();
-      let defaultLang = 'en';
-      if (['MA', 'DZ', 'TN', 'EG', 'SA', 'AE', 'QA', 'KW', 'OM', 'BH'].includes(cCode)) {
-        defaultLang = 'ar';
-      } else if (['FR', 'BE', 'CH', 'SN', 'CI', 'CM'].includes(cCode)) {
-        defaultLang = 'fr';
-      } else if (['ES', 'MX', 'AR', 'CO', 'CL'].includes(cCode)) {
-        defaultLang = 'es';
-      } else if (['DE', 'AT'].includes(cCode)) {
-        defaultLang = 'de';
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      const ipRes = await fetch(ipLookupUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      const geo = await ipRes.json();
+
+      if (geo && geo.status === 'success') {
+        const cCode = (geo.countryCode || cfCountry || 'US').toUpperCase();
+        let defaultLang = 'en';
+        if (['MA', 'DZ', 'TN', 'EG', 'SA', 'AE', 'QA', 'KW', 'OM', 'BH'].includes(cCode)) defaultLang = 'ar';
+        else if (['FR', 'BE', 'CH', 'SN', 'CI', 'CM'].includes(cCode)) defaultLang = 'fr';
+        else if (['ES', 'MX', 'AR', 'CO', 'CL'].includes(cCode)) defaultLang = 'es';
+        else if (['DE', 'AT'].includes(cCode)) defaultLang = 'de';
+
+        return res.json({
+          success: true,
+          ip: geo.query,
+          country: geo.country,
+          countryCode: cCode,
+          regionName: geo.regionName,
+          city: geo.city || cfCity || 'City Center',
+          lat: geo.lat || (cfLat ? parseFloat(cfLat) : 33.5731),
+          lng: geo.lon || (cfLong ? parseFloat(cfLong) : -7.5898),
+          isp: geo.isp || geo.org || 'Broadband ISP',
+          lang: defaultLang
+        });
       }
-      return res.json({ success: true, countryCode: cCode, lang: defaultLang });
+    } catch (apiErr) {}
+
+    // Fallback if ip-api rate-limited or local dev
+    if (cfCountry && cfCountry !== 'XX' && cfCountry !== 'T1') {
+      const cCode = cfCountry.toUpperCase();
+      let defaultLang = ['MA', 'DZ', 'TN'].includes(cCode) ? 'ar' : ['FR', 'BE'].includes(cCode) ? 'fr' : 'en';
+      return res.json({
+        success: true,
+        countryCode: cCode,
+        city: cfCity || 'Metropolitan Area',
+        lat: cfLat ? parseFloat(cfLat) : 33.5731,
+        lng: cfLong ? parseFloat(cfLong) : -7.5898,
+        lang: defaultLang
+      });
     }
-  } catch (err) {}
-  res.json({ success: false, lang: 'en' });
+
+    // Default Casablanca if local dev
+    res.json({
+      success: true,
+      country: 'Morocco',
+      countryCode: 'MA',
+      city: 'Casablanca',
+      lat: 33.5898,
+      lng: -7.6325,
+      isp: 'Maroc Telecom / Orange',
+      lang: 'ar'
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      countryCode: 'MA',
+      city: 'Casablanca',
+      lat: 33.5898,
+      lng: -7.6325,
+      lang: 'en'
+    });
+  }
 });
 
 // 2. API: Create a new tracking session
