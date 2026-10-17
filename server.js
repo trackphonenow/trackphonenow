@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const path = require('path');
+const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const Store = require('./data/db');
 
@@ -24,6 +25,20 @@ app.get('/sitemap.xml', (req, res) => {
   res.type('application/xml');
   res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
+
+// Blog Routes with Clean URLs support
+app.get('/blog', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'blog', 'index.html'));
+});
+
+app.get('/blog/:slug', (req, res, next) => {
+  const cleanSlug = req.params.slug.replace(/\.html$/, '');
+  const filePath = path.join(__dirname, 'public', 'blog', `${cleanSlug}.html`);
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  next();
 });
 
 // Static assets with smart caching
