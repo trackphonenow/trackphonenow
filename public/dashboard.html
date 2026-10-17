@@ -47,7 +47,99 @@
       border-radius: 4px;
     }
     
-    /* Radar Multi-Ring Wavefront */
+    /* Realistic Google Maps Pin & Pulse */
+    .realistic-pin-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translate(-50%, -100%);
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .realistic-pin-head {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .realistic-pin-wrapper:hover .realistic-pin-head {
+      transform: rotate(-45deg) scale(1.1);
+    }
+    .realistic-pin-inner {
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+      transform: rotate(45deg);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .realistic-pin-core {
+      width: 7px;
+      height: 7px;
+      background: #dc2626;
+      border-radius: 50%;
+    }
+    .realistic-pin-shadow {
+      width: 18px;
+      height: 6px;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 50%;
+      margin-top: -3px;
+      filter: blur(1.5px);
+    }
+    .realistic-pulse-ring {
+      position: absolute;
+      top: 30px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #ef4444;
+      animation: realisticPulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+      pointer-events: none;
+    }
+    @keyframes realisticPulse {
+      0% {
+        width: 16px;
+        height: 16px;
+        opacity: 0.9;
+        transform: translate(-50%, -50%) scale(0.6);
+      }
+      100% {
+        width: 70px;
+        height: 70px;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.6);
+      }
+    }
+
+    /* Clean Leaflet Popup Customization */
+    .leaflet-popup-content-wrapper {
+      border-radius: 16px !important;
+      padding: 0 !important;
+      box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.25) !important;
+      border: 1px solid #e2e8f0 !important;
+      overflow: hidden;
+    }
+    .leaflet-popup-content {
+      margin: 0 !important;
+      line-height: 1.4 !important;
+    }
+    .leaflet-popup-tip {
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    /* Radar Multi-Ring Wavefront (triangulation node) */
     .radar-beacon {
       position: relative;
       display: flex;
@@ -704,7 +796,7 @@
                 class="px-3.5 py-2 bg-white/95 hover:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 shadow-md backdrop-blur-md flex items-center gap-1.5 transition"
               >
                 <i class="ph-bold ph-stack text-sm text-blue-600"></i>
-                <span id="layerNameDisplay">Satellite</span>
+                <span id="layerNameDisplay">Satellite Hybrid</span>
               </button>
 
               <button 
@@ -1841,11 +1933,28 @@
       }, 2600);
     }
 
+    // Realistic Map Tile Layers
     const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap'
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
     });
-    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; Esri'
+
+    const esriBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: '&copy; Esri, Maxar, Earthstar Geographics'
+    });
+
+    const esriLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19
+    });
+
+    // True Satellite Hybrid (High-Res Aerial + Street Names & Borders)
+    const hybridLayer = L.layerGroup([esriBase, esriLabels]);
+
+    // Clean modern vector street style (Carto Voyager)
+    const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '&copy; CARTO'
     });
 
     // Check Authentication on Load
@@ -2046,90 +2155,137 @@
       }
     }
 
-    // Leaflet Map Initialization with Cell Tower Triangulation
+    // Leaflet Map Initialization with Realistic Aerial + Street Hybrid
     function initMap(lat = 33.5731, lng = -7.5898) {
       if (!map) {
         map = L.map('mapContainer', {
           zoomControl: false,
-          layers: [satelliteLayer]
-        }).setView([lat, lng], 15);
+          layers: [hybridLayer],
+          maxZoom: 19,
+          minZoom: 3
+        }).setView([lat, lng], 16);
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
+        currentLayer = 'hybrid';
       }
       updateMapMarker(lat, lng, 3.8);
       renderCellTowerTriangulation(lat, lng);
     }
 
+    // Toggle between Realistic Hybrid, Crisp Street Map, and Standard Satellite
     function toggleMapLayer() {
       playSound('click');
       if (!map) return;
       const display = document.getElementById('layerNameDisplay');
-      if (currentLayer === 'satellite') {
-        map.removeLayer(satelliteLayer);
+      
+      // Cycle: Hybrid -> Street -> Carto -> Hybrid
+      if (currentLayer === 'hybrid') {
+        map.removeLayer(hybridLayer);
         map.addLayer(streetLayer);
         currentLayer = 'street';
-        display.textContent = 'Street Layer';
-      } else {
+        if (display) display.textContent = 'Street (OSM)';
+      } else if (currentLayer === 'street') {
         map.removeLayer(streetLayer);
-        map.addLayer(satelliteLayer);
-        currentLayer = 'satellite';
-        display.textContent = 'Satellite Layer';
+        map.addLayer(cartoLayer);
+        currentLayer = 'carto';
+        if (display) display.textContent = 'Clean Road';
+      } else {
+        map.removeLayer(cartoLayer);
+        map.addLayer(hybridLayer);
+        currentLayer = 'hybrid';
+        if (display) display.textContent = 'Satellite Hybrid';
       }
     }
 
     function recenterMap() {
       playSound('click');
-      if (!map || !currentSession) return;
-      const lat = currentSession.targetLocation ? currentSession.targetLocation.latitude : 33.5731;
-      const lng = currentSession.targetLocation ? currentSession.targetLocation.longitude : -7.5898;
-      map.setView([lat, lng], 16, { animate: true });
+      if (!map) return;
+      const lat = (currentSession && currentSession.targetLocation) ? currentSession.targetLocation.latitude : 33.5731;
+      const lng = (currentSession && currentSession.targetLocation) ? currentSession.targetLocation.longitude : -7.5898;
+      map.setView([lat, lng], 17, { animate: true });
     }
 
-    // Custom Tactical Beacon Pin
+    // Realistic Google Maps Style Pin with Live Pulse
     function updateMapMarker(lat, lng, accuracy = 3.8) {
       if (!map) return;
       if (targetMarker) map.removeLayer(targetMarker);
       if (accuracyCircle) map.removeLayer(accuracyCircle);
 
-      const tacticalIcon = L.divIcon({
-        className: 'custom-pin',
+      const realisticIcon = L.divIcon({
+        className: 'realistic-pin-marker',
         html: `
-          <div class="radar-beacon">
-            <div class="radar-ring"></div>
-            <div class="radar-ring"></div>
-            <div class="radar-ring"></div>
-            <div class="w-8 h-8 rounded-full bg-blue-600 border-2 border-white shadow-2xl flex items-center justify-center text-xs text-white font-bold relative z-10">
-              <i class="ph-bold ph-crosshair text-sm"></i>
+          <div class="realistic-pin-wrapper">
+            <div class="realistic-pulse-ring"></div>
+            <div class="realistic-pin-head">
+              <div class="realistic-pin-inner">
+                <div class="realistic-pin-core"></div>
+              </div>
             </div>
+            <div class="realistic-pin-shadow"></div>
           </div>
         `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        iconSize: [36, 48],
+        iconAnchor: [18, 46],
+        popupAnchor: [0, -42]
       });
 
-      targetMarker = L.marker([lat, lng], { icon: tacticalIcon }).addTo(map);
-      targetMarker.bindPopup(`
-        <div class="text-xs font-sans text-slate-900 p-1">
-          <div class="font-bold text-blue-700 flex items-center gap-1.5 mb-1">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <b>Target GPS Locked</b>
+      targetMarker = L.marker([lat, lng], { icon: realisticIcon }).addTo(map);
+      
+      // Professional Google Maps Style Popup
+      const popupHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; width: 230px; background: #ffffff;">
+          <div style="background: #0f172a; color: #ffffff; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+              <span style="font-weight: 700; font-size: 11px; letter-spacing: 0.3px;">LIVE GPS FIX</span>
+            </div>
+            <span style="font-size: 10px; color: #94a3b8; font-family: monospace;">±${accuracy}m</span>
           </div>
-          <div>Lat: <b>${lat.toFixed(5)}</b></div>
-          <div>Lng: <b>${lng.toFixed(5)}</b></div>
-          <div>Precision: <b>±${accuracy}m (High Confidence)</b></div>
+          <div style="padding: 12px 14px; font-size: 11px; color: #334155; line-height: 1.5;">
+            <div style="font-weight: 700; color: #0f172a; font-size: 12px; margin-bottom: 4px;" id="popupAddressName">
+              📍 Accurate Street Location
+            </div>
+            <div style="color: #64748b; font-family: monospace; font-size: 10px; margin-bottom: 8px;">
+              ${lat.toFixed(5)}, ${lng.toFixed(5)}
+            </div>
+            <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 4px; color: #2563eb; font-weight: 700; font-size: 11px; text-decoration: none;">
+              Open in Google Maps &rarr;
+            </a>
+          </div>
         </div>
-      `).openPopup();
+      `;
+      targetMarker.bindPopup(popupHtml).openPopup();
 
+      // Precision Radius Circle (Gentle Google Maps Blue Glow)
       accuracyCircle = L.circle([lat, lng], {
-        color: '#2563eb',
-        fillColor: '#2563eb',
-        fillOpacity: 0.16,
+        color: '#3b82f6',
+        fillColor: '#60a5fa',
+        fillOpacity: 0.15,
         weight: 1.5,
-        radius: Math.max(accuracy, 22)
+        radius: Math.max(accuracy, 25)
       }).addTo(map);
 
-      map.setView([lat, lng], 16);
-      document.getElementById('hudCoords').textContent = `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° W`;
+      map.setView([lat, lng], 17);
+      
+      const hudCoords = document.getElementById('hudCoords');
+      if (hudCoords) hudCoords.textContent = `${lat.toFixed(5)}° N, ${Math.abs(lng).toFixed(5)}° W`;
+
+      // Optional reverse geocoding to show real street name
+      try {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+          .then(r => r.json())
+          .then(geo => {
+            if (geo && geo.display_name) {
+              const shortName = geo.address.road || geo.address.suburb || geo.address.neighbourhood || geo.display_name.split(',')[0];
+              const city = geo.address.city || geo.address.town || geo.address.state || '';
+              const addrEl = document.getElementById('popupAddressName');
+              if (addrEl) addrEl.textContent = shortName ? `📍 ${shortName}${city ? ', ' + city : ''}` : '📍 Exact GPS Fix';
+              
+              const hudStatus = document.getElementById('topHudStatusText');
+              if (hudStatus && shortName) hudStatus.textContent = `${shortName}${city ? ', ' + city : ''}`;
+            }
+          }).catch(() => {});
+      } catch (e) {}
     }
 
     // Triangulation Spectacle: 3 BTS Towers with Converging Lasers
@@ -2212,12 +2368,12 @@
         if (topHudStatus) topHudStatus.textContent = "GSM Triangulation Ready";
         if (bottomHud) bottomHud.classList.add('hidden');
 
-        // Regional map overview
+        // Live street overview on Casablanca / commercial district
         if (!map) {
-          initMap(31.7917, -7.0926);
-          if (map) map.setZoom(6);
+          initMap(33.5898, -7.6325);
+          if (map) map.setZoom(16);
         } else {
-          map.setView([31.7917, -7.0926], 6);
+          map.setView([33.5898, -7.6325], 16);
         }
         if (map) map.closePopup();
         if (targetMarker && map) { map.removeLayer(targetMarker); targetMarker = null; }
@@ -2226,6 +2382,9 @@
         triangulationPolylines.forEach(p => map && map.removeLayer(p));
         towerMarkers = [];
         triangulationPolylines = [];
+        
+        // Show demo pin on standby so map immediately feels alive and real
+        updateMapMarker(33.5898, -7.6325, 4.2);
       } else {
         if (deckStandby) deckStandby.classList.add('hidden');
         if (deckActive) deckActive.classList.remove('hidden');
