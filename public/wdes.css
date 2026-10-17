@@ -1,0 +1,763 @@
+/* ==========================================================================
+   Wdes Modern Precision Design System (Full-Width Responsive Architecture)
+   Applied cleanly to LocationTool Telecom Geolocation Platform
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Wdes Signature Canvas & Palette Tokens */
+  --pt-canvas: #f8fafc;
+  --pt-ink: #12152a;
+  --pt-muted: #565c7a;
+  --pt-muted-light: #c9d0ea;
+  
+  /* Wdes Royal Telecom Blue (Unified Sovereign Palette) */
+  --pt-accent: #2563eb;
+  --pt-accent-dark: #1d4ed8;
+  --pt-accent-soft: #eff6ff;
+  --pt-surface: #f8fafc;
+  --pt-surface-2: #f1f5f9;
+  
+  /* Wdes Gradients */
+  --pt-grad-hero: radial-gradient(1100px 700px at 80% 45%, #2563eb 0%, #1d4ed8 35%, #153c90 65%, #0a1633 100%);
+  --pt-grad-feature: linear-gradient(150deg, #2563eb, #1e3a8a);
+  --pt-grad-buy: linear-gradient(150deg, #2563eb, #172554);
+  --pt-grad-cta: linear-gradient(150deg, #2563eb, #0f172a);
+  
+  /* Radii & Shadows */
+  --pt-radius-xl: 32px;
+  --pt-radius-card: 20px;
+  --pt-pill: 999px;
+  --pt-shadow: 0 16px 34px rgba(8, 14, 40, 0.28);
+  --pt-shadow-sm: 0 4px 12px rgba(8, 14, 40, 0.04);
+  --pt-shadow-card: 0 10px 25px rgba(18, 21, 42, 0.06);
+  --pt-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html, body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--pt-ink);
+  background: var(--pt-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Full Width Page Structure */
+.wdes-page-wrap {
+  width: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+}
+
+/* Fluid Interior Container */
+.wdes-container {
+  width: 100%;
+  max-width: 1380px;
+  margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+@media (min-width: 768px) {
+  .wdes-container {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .wdes-container {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+
+/* Full Width Section Panels */
+.wdes-section-white {
+  width: 100%;
+  background: #ffffff;
+  padding-top: 80px;
+  padding-bottom: 80px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.wdes-section-alt {
+  width: 100%;
+  background: #f8fafc;
+  padding-top: 80px;
+  padding-bottom: 80px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.wdes-section-dark {
+  width: 100%;
+  background: var(--pt-ink);
+  color: #ffffff;
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+
+/* Wdes Eyebrow Pill */
+.wdes-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pt-accent);
+  padding: 7px 15px;
+  border-radius: var(--pt-pill);
+  background: var(--pt-accent-soft);
+}
+
+.wdes-eyebrow-light {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffffff;
+  padding: 7px 15px;
+  border-radius: var(--pt-pill);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+/* Wdes Headings */
+.wdes-h1 {
+  font-size: clamp(26px, 4.2vw, 56px);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.wdes-h2 {
+  font-size: clamp(24px, 3.2vw, 40px);
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+/* Wdes Buttons */
+.btn-wdes-white {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--pt-pill);
+  cursor: pointer;
+  background: #ffffff;
+  color: #1c2850;
+  padding: 14px 28px;
+  box-shadow: var(--pt-shadow);
+  transition: all 0.2s var(--pt-ease);
+  text-decoration: none;
+}
+
+.btn-wdes-white:hover {
+  background: #e9ecfa;
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(8, 14, 40, 0.35);
+}
+
+.btn-wdes-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--pt-pill);
+  cursor: pointer;
+  background: var(--pt-accent);
+  color: #ffffff;
+  padding: 14px 28px;
+  box-shadow: 0 10px 24px rgba(67, 94, 191, 0.35);
+  transition: all 0.2s var(--pt-ease);
+  text-decoration: none;
+}
+
+.btn-wdes-solid:hover {
+  background: var(--pt-accent-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(67, 94, 191, 0.45);
+}
+
+/* Full Width Hero seamlessly blended with Eyezy tracker artwork */
+.wdes-hero-full {
+  width: 100%;
+  background: 
+    radial-gradient(1100px 700px at 80% 45%, #2a6de8 0%, #1d52bf 35%, #153c90 65%, #0d2258 100%),
+    #0d2258;
+  color: #ffffff;
+  padding-top: 24px;
+  padding-bottom: 115px;
+  position: relative;
+  z-index: 30;
+}
+
+.hero-showcase-container {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 10px;
+}
+
+/* Ultra-Realistic iPhone 15 Pro Titanium Device Frame */
+.wdes-device-mockup {
+  width: 340px;
+  height: 680px;
+  max-width: 100%;
+  background: linear-gradient(145deg, #2a3142 0%, #151a24 50%, #202737 100%);
+  border-radius: 52px;
+  padding: 11px;
+  position: relative;
+  box-shadow: 
+    0 35px 80px -15px rgba(2, 8, 32, 0.85),
+    0 15px 30px -5px rgba(5, 18, 55, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.18),
+    inset 0 0 0 2px #0f131c;
+  user-select: none;
+  transition: transform 0.4s var(--pt-ease), box-shadow 0.4s var(--pt-ease);
+}
+
+@media (max-width: 640px) {
+  .wdes-device-mockup {
+    width: 300px;
+    height: 600px;
+    border-radius: 44px;
+    padding: 9px;
+  }
+}
+
+.wdes-device-mockup:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 
+    0 45px 95px -12px rgba(2, 8, 32, 0.95),
+    0 20px 40px -5px rgba(5, 18, 55, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.25),
+    inset 0 0 0 2px #0f131c;
+}
+
+/* Titanium Hardware Buttons */
+.wdes-device-mockup::before {
+  content: '';
+  position: absolute;
+  top: 120px;
+  left: -5px;
+  width: 4px;
+  height: 36px;
+  background: #3b4458;
+  border-radius: 3px 0 0 3px;
+  box-shadow: -1px 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.wdes-device-mockup::after {
+  content: '';
+  position: absolute;
+  top: 175px;
+  left: -5px;
+  width: 4px;
+  height: 52px;
+  background: #3b4458;
+  border-radius: 3px 0 0 3px;
+  box-shadow: -1px 0 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Screen Housing */
+.wdes-screen {
+  width: 100%;
+  height: 100%;
+  background: #eef2f6;
+  border-radius: 42px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Diagonal Glass Reflection */
+.wdes-screen-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.05) 26%,
+    transparent 45%,
+    transparent 100%
+  );
+  z-index: 30;
+}
+
+/* Dynamic Island */
+.wdes-dynamic-island {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 104px;
+  height: 27px;
+  background: #000000;
+  border-radius: 20px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.wdes-island-lens {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #0f172a;
+  border: 1.5px solid #1e293b;
+  box-shadow: inset 0 0 2px #38bdf8;
+}
+
+.wdes-island-sensor {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #059669;
+  box-shadow: 0 0 4px #10b981;
+}
+
+/* Screen Status Bar */
+.wdes-status-bar {
+  position: absolute;
+  top: 14px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e293b;
+  z-index: 35;
+}
+
+/* Screen Map Canvas Area */
+.wdes-map-canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Google Maps Top Search Header Pill */
+.wdes-map-search-bar {
+  position: absolute;
+  top: 52px;
+  left: 14px;
+  right: 14px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 8px 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 25;
+}
+
+@media (max-width: 640px) {
+  .wdes-device-mockup {
+    width: 310px;
+    height: 620px;
+  }
+}
+
+/* Wdes Top Brand Bar */
+.wdes-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 40px;
+}
+
+.wdes-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wdes-brand-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+/* Wdes Floating Search Box */
+.wdes-search-box {
+  background: #ffffff;
+  border-radius: var(--pt-pill);
+  padding: 8px 10px 8px 12px;
+  box-shadow: 0 20px 45px -8px rgba(3, 8, 30, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.35);
+  transition: all 0.25s var(--pt-ease);
+  width: 100%;
+  position: relative;
+  z-index: 40;
+}
+
+.wdes-search-box:focus-within {
+  box-shadow: 0 25px 60px -8px rgba(3, 8, 30, 0.55), 0 0 0 3.5px rgba(99, 102, 241, 0.45);
+  transform: translateY(-1.5px);
+}
+
+@media (max-width: 640px) {
+  .wdes-search-box {
+    border-radius: 24px;
+    padding: 12px;
+  }
+}
+
+/* Custom Scrollbar for Country Dropdown */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdownFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Wdes 4 Stat Cards Row */
+.wdes-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.wdes-stat-card {
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 16px 35px -8px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s var(--pt-ease), box-shadow 0.2s var(--pt-ease);
+}
+
+.wdes-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--pt-shadow-card);
+}
+
+.wdes-stat-card-dark {
+  background: var(--pt-ink);
+  color: #ffffff;
+  border-color: #2a2e4d;
+}
+
+.wdes-stat-num {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--pt-ink);
+}
+
+.wdes-stat-card-dark .wdes-stat-num {
+  color: #ffffff;
+}
+
+.wdes-stat-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--pt-muted);
+}
+
+.wdes-stat-card-dark .wdes-stat-label {
+  color: var(--pt-muted-light);
+}
+
+/* Wdes Bento Feature Grid & 3-Step Sequential Journey */
+.wdes-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.wdes-step-card {
+  border-radius: 24px;
+  background: #ffffff;
+  padding: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: var(--pt-shadow-sm);
+  transition: all 0.25s var(--pt-ease);
+  position: relative;
+}
+
+.wdes-step-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--pt-shadow-card);
+  transform: translateY(-3px);
+}
+
+.wdes-step-card-highlight {
+  border-color: #93c5fd;
+  box-shadow: 0 10px 30px -5px rgba(37, 99, 235, 0.12);
+}
+
+.wdes-feature-lead {
+  border-radius: 24px;
+  background: var(--pt-grad-feature);
+  color: #ffffff;
+  padding: 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--pt-shadow);
+}
+
+.wdes-subcard {
+  border-radius: 24px;
+  background: #ffffff;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: var(--pt-shadow-sm);
+  transition: all 0.2s var(--pt-ease);
+}
+
+.wdes-subcard:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--pt-shadow-card);
+  transform: translateY(-2px);
+}
+
+.wdes-icon-bubble {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--pt-pill);
+  background: var(--pt-surface-2);
+  color: var(--pt-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* Wdes Pricing Cards */
+.wdes-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.wdes-pricing-card-buy {
+  border-radius: 28px;
+  background: var(--pt-grad-buy);
+  color: #ffffff;
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  box-shadow: var(--pt-shadow);
+  height: 100%;
+}
+
+.wdes-pricing-info {
+  border-radius: 28px;
+  background: #ffffff;
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid #e2e8f0;
+  box-shadow: var(--pt-shadow-sm);
+  height: 100%;
+}
+
+/* Wdes FAQ Accordion */
+.wdes-faq-item {
+  border-radius: 20px;
+  background: #ffffff;
+  overflow: hidden;
+  margin-bottom: 12px;
+  transition: all 0.2s var(--pt-ease);
+  border: 1px solid #e2e8f0;
+}
+
+.wdes-faq-item:hover {
+  border-color: #cbd5e1;
+}
+
+.wdes-faq-trigger {
+  width: 100%;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 16.5px;
+  font-weight: 600;
+  color: var(--pt-ink);
+  transition: color 0.18s var(--pt-ease);
+  text-align: left;
+}
+
+.wdes-faq-trigger:hover {
+  color: var(--pt-accent);
+}
+
+.wdes-faq-sign {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--pt-pill);
+  background: var(--pt-surface-2);
+  color: var(--pt-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s var(--pt-ease);
+}
+
+.wdes-faq-item.active .wdes-faq-sign {
+  background: var(--pt-accent);
+  color: #ffffff;
+}
+
+.wdes-faq-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.32s var(--pt-ease), opacity 0.25s ease;
+}
+
+.wdes-faq-item.active .wdes-faq-content {
+  max-height: 250px;
+  opacity: 1;
+}
+
+.wdes-faq-body {
+  padding: 0 28px 24px;
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--pt-muted);
+}
+
+/* Wdes Signature Floating Sticky Pill Bar */
+.wdes-sticky-wrap {
+  position: fixed;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  z-index: 80;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.wdes-sticky-pill {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 900px;
+  border-radius: var(--pt-pill);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 20px 45px rgba(18, 21, 42, 0.22);
+  padding: 10px 16px 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Modal and Animations */
+.modal-enter {
+  animation: modalFadeIn 0.3s var(--pt-ease) forwards;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

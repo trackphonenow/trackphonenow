@@ -1,0 +1,589 @@
+/* ==========================================================================
+   GeoLanHub - FreelanHub Ultimate Design System & Interactive Styling
+   Awwwards-Level Typography, Micro-Interactions & Device Mockups
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* FreelanHub Core Color Tokens */
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --primary-light: #ecfdf5;
+  --primary-glow: rgba(16, 185, 129, 0.35);
+  
+  --dark-hero: #080e1a;
+  --dark-hero-surface: #0f172a;
+  --dark-card: #131f33;
+  
+  --surface: #f8fafc;
+  --surface-alt: #f1f5f9;
+  --line: #e2e8f0;
+  --line-dark: #334155;
+  --title: #0f172a;
+  --body: #334155;
+  --muted: #64748b;
+  
+  /* Elevation Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 12px 30px -10px rgba(15, 23, 42, 0.08);
+  --shadow-floating: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--body);
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* FreelanHub Hero Background Gradient */
+.bg-hero {
+  background: 
+    radial-gradient(circle at 85% 12%, rgba(16, 185, 129, 0.22) 0%, transparent 48%),
+    radial-gradient(circle at 12% 88%, rgba(56, 189, 248, 0.16) 0%, transparent 42%),
+    radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.4) 0%, transparent 70%),
+    var(--dark-hero);
+}
+
+.bg-surface {
+  background-color: var(--surface);
+}
+
+.border-line {
+  border-color: var(--line);
+}
+
+.border-light {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.rounded-20 {
+  border-radius: 20px;
+}
+
+.rounded-24 {
+  border-radius: 24px;
+}
+
+/* ==========================================================================
+   FreelanHub Signature Buttons
+   ========================================================================== */
+.button-main {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  padding: 13px 28px;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 14px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.35);
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.button-main:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -6px rgba(16, 185, 129, 0.48);
+  color: #ffffff;
+}
+
+.button-main:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 16px -4px rgba(16, 185, 129, 0.4);
+}
+
+.button-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  padding: 13px 26px;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   FreelanHub Signature Floating Search Component
+   ========================================================================== */
+.form_search_freelanhub {
+  box-shadow: 
+    0 24px 60px -12px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.12);
+  transition: box-shadow 0.3s ease;
+}
+
+.form_search_freelanhub:focus-within {
+  box-shadow: 
+    0 28px 70px -10px rgba(0, 0, 0, 0.55),
+    0 0 0 2px rgba(16, 185, 129, 0.45);
+}
+
+/* ==========================================================================
+   Ultra-Realistic iPhone 15 Pro Titanium Device Mockup
+   ========================================================================== */
+.iphone-frame {
+  width: 320px;
+  height: 640px;
+  background: linear-gradient(135deg, #44403c 0%, #1c1917 40%, #292524 70%, #57534e 100%);
+  border-radius: 54px;
+  padding: 12px;
+  box-shadow: 
+    0 0 0 1px #78716c,
+    0 0 0 3px #292524,
+    0 0 0 5px #1c1917,
+    0 30px 60px -12px rgba(0, 0, 0, 0.75),
+    0 10px 20px -5px rgba(16, 185, 129, 0.15);
+  position: relative;
+  margin: 0 auto;
+  user-select: none;
+}
+
+/* Titanium side buttons */
+.iphone-frame::before {
+  content: '';
+  position: absolute;
+  top: 110px;
+  left: -7px;
+  width: 4px;
+  height: 38px;
+  background: #57534e;
+  border-radius: 3px 0 0 3px;
+  box-shadow: -1px 0 2px rgba(0,0,0,0.4);
+}
+
+.iphone-frame::after {
+  content: '';
+  position: absolute;
+  top: 165px;
+  left: -7px;
+  width: 4px;
+  height: 52px;
+  background: #57534e;
+  border-radius: 3px 0 0 3px;
+  box-shadow: -1px 0 2px rgba(0,0,0,0.4);
+}
+
+.iphone-screen {
+  width: 100%;
+  height: 100%;
+  background: #090e17;
+  border-radius: 43px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Screen Sheen / Diagonal Glass Reflection */
+.screen-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.03) 25%,
+    transparent 50%,
+    transparent 100%
+  );
+  z-index: 25;
+}
+
+/* iPhone Dynamic Island */
+.dynamic-island {
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 98px;
+  height: 27px;
+  background: #000000;
+  border-radius: 20px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  border: 0.5px solid rgba(255,255,255,0.06);
+}
+
+.dynamic-island-lens {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #0f172a;
+  border: 1.5px solid #1e293b;
+  box-shadow: inset 0 0 2px #38bdf8;
+}
+
+.dynamic-island-sensor {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #059669;
+  box-shadow: 0 0 4px #10b981;
+}
+
+/* iPhone Live Satellite Map Mockup */
+.mockup-map {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 50% 50%, #0c1a30 0%, #070d18 100%);
+  overflow: hidden;
+}
+
+/* Map Grid Matrix Lines */
+.map-grid-matrix {
+  position: absolute;
+  inset: 0;
+  background-size: 28px 28px;
+  background-image: 
+    linear-gradient(to right, rgba(56, 189, 248, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.06) 1px, transparent 1px);
+}
+
+/* Map Radial Range Circles */
+.range-circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(16, 185, 129, 0.25);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.range-circle-1 { width: 90px; height: 90px; }
+.range-circle-2 { width: 170px; height: 170px; border-style: solid; border-color: rgba(16, 185, 129, 0.15); }
+.range-circle-3 { width: 250px; height: 250px; }
+
+/* Target Lock Reticle */
+.target-reticle {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.target-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 15px #10b981, 0 0 25px #10b981;
+  position: relative;
+  z-index: 2;
+}
+
+.target-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.35);
+  animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes radar-ping {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Glass HUD Overlay inside iPhone */
+.hud-card {
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* ==========================================================================
+   Floating Badges & Micro-Interactions
+   ========================================================================== */
+@keyframes float-1 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(0.5deg); }
+}
+
+@keyframes float-2 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-0.5deg); }
+}
+
+.animate-float-1 {
+  animation: float-1 4.5s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float-2 5s ease-in-out infinite 1.8s;
+}
+
+.glass-floating-pill {
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 
+    0 16px 32px -8px rgba(0, 0, 0, 0.5),
+    0 0 1px 1px rgba(16, 185, 129, 0.2);
+}
+
+/* ==========================================================================
+   Live Activity Ticker
+   ========================================================================== */
+.ticker-wrap {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  background: #090e17;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ticker-wrap::before,
+.ticker-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 80px;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.ticker-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, #090e17 0%, transparent 100%);
+}
+
+.ticker-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, #090e17 0%, transparent 100%);
+}
+
+.ticker-track {
+  display: inline-flex;
+  gap: 2rem;
+  padding: 0.65rem 0;
+  animation: tickerScroll 42s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: #cbd5e1;
+}
+
+/* ==========================================================================
+   Protocol 4-Card Grid & Category Cards
+   ========================================================================== */
+.category_item {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.category_item:hover {
+  transform: translateY(-5px);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 20px 35px -8px rgba(15, 23, 42, 0.09), 0 0 1px 1px rgba(16, 185, 129, 0.15);
+}
+
+.category_item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981 0%, #38bdf8 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.category_item:hover::after {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Interactive FAQ Accordion
+   ========================================================================== */
+.faq-item {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  border-radius: 16px;
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.faq-item:hover {
+  border-color: #cbd5e1;
+}
+
+.faq-item.active {
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 10px 25px -8px rgba(16, 185, 129, 0.12);
+}
+
+.faq-button {
+  width: 100%;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  font-weight: 700;
+  color: var(--title);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.faq-button:hover {
+  color: var(--primary);
+}
+
+.faq-chevron {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.faq-item.active .faq-chevron {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.faq-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+.faq-item.active .faq-content {
+  max-height: 280px;
+  opacity: 1;
+}
+
+.faq-body {
+  padding: 0 1.5rem 1.35rem 1.5rem;
+  color: var(--body);
+  font-size: 0.925rem;
+  line-height: 1.65;
+}
+
+/* ==========================================================================
+   Mobile Sticky Bar
+   ========================================================================== */
+.mobile-sticky-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+  padding: 0.75rem 1rem;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 768px) {
+  .mobile-sticky-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+}
+
+/* ==========================================================================
+   Modal Animations & Dialogs
+   ========================================================================== */
+.modal-enter {
+  animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Custom Scrollbar for Terminal */
+#scanTerminalLogs::-webkit-scrollbar {
+  width: 5px;
+}
+#scanTerminalLogs::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+#scanTerminalLogs::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}

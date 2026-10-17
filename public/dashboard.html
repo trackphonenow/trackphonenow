@@ -1,0 +1,3296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrackPhoneNow - Pro Member Console</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Phosphor Icons -->
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" />
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- QRCode Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="wdes.css" />
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    #mapContainer {
+      height: 100%;
+      width: 100%;
+      min-height: 540px;
+      z-index: 10;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    
+    /* Radar Multi-Ring Wavefront */
+    .radar-beacon {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .radar-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1.5px solid #2563eb;
+      animation: radarPulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    .radar-ring:nth-child(2) {
+      animation-delay: 0.65s;
+    }
+    .radar-ring:nth-child(3) {
+      animation-delay: 1.3s;
+    }
+    @keyframes radarPulse {
+      0% {
+        width: 16px;
+        height: 16px;
+        opacity: 0.9;
+        transform: scale(0.6);
+      }
+      100% {
+        width: 76px;
+        height: 76px;
+        opacity: 0;
+        transform: scale(1.8);
+      }
+    }
+    
+    /* Printable Certificate Styling */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #forensicModal, #forensicModal * {
+        visibility: visible;
+      }
+      #forensicModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Floating Glass Toast Component (Replaces native alerts) -->
+  <div id="consoleToast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-slate-900/95 text-white shadow-2xl border border-white/15 backdrop-blur-md text-xs font-semibold">
+    <div id="toastIcon" class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+      <i class="ph-bold ph-check"></i>
+    </div>
+    <span id="toastText">Action completed</span>
+  </div>
+
+  <!-- 1. TOP PRO APP BAR (Harmonized Royal Telecom Palette) -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between shadow-xs">
+    
+    <!-- Left: Brand + Status -->
+    <div class="flex items-center gap-3 sm:gap-6">
+      <a href="/" class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-600/30">
+          <i class="ph-bold ph-crosshair text-xl"></i>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class="text-xl font-extrabold tracking-tight text-slate-900">Location</span>
+          <span class="text-xl font-extrabold tracking-tight text-blue-600">Tool</span>
+          <span class="text-[9px] uppercase tracking-wider font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded ml-1.5 hidden sm:inline">PRO CONSOLE</span>
+        </div>
+      </a>
+
+      <div class="h-5 w-px bg-slate-200 hidden md:block"></div>
+
+      <!-- Network Liveness Pill -->
+      <div class="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-700">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+        <span class="font-mono text-[11px]">GSM GATEWAY ONLINE · 32ms</span>
+      </div>
+    </div>
+
+    <!-- Right: Quick Action + Sound + User Menu -->
+    <div class="flex items-center gap-3">
+      
+      <!-- Audio Toggle -->
+      <button 
+        id="soundToggleBtn" 
+        onclick="toggleSound()" 
+        class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-600 transition"
+        title="Toggle Audio Feedback"
+      >
+        <i class="ph-bold ph-speaker-high text-blue-600"></i>
+        <span id="soundLabel">Audio: ON</span>
+      </button>
+
+      <button 
+        onclick="openNewTrackModal()" 
+        class="py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/25 flex items-center gap-2 transition transform active:scale-95"
+      >
+        <i class="ph-bold ph-plus-circle text-base"></i>
+        <span class="hidden sm:inline">Track New Phone</span>
+        <span class="sm:hidden">New</span>
+      </button>
+
+      <!-- Calm Institutional Status Pill -->
+      <div id="topPlanBadge" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-medium text-slate-600">
+        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+        <span id="topPlanText" class="font-mono text-[11px] font-semibold text-slate-700">Free Tier</span>
+      </div>
+
+      <!-- User Profile Dropdown Button -->
+      <div class="relative">
+        <button 
+          id="userMenuBtn" 
+          onclick="toggleUserMenu()" 
+          class="flex items-center gap-2.5 p-1.5 pl-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition"
+        >
+          <div class="w-7 h-7 rounded-lg bg-slate-900 text-white text-xs font-bold flex items-center justify-center font-mono" id="userAvatarInitials">
+            KA
+          </div>
+          <span class="text-xs font-bold text-slate-800 hidden md:inline max-w-[110px] truncate" id="topUserName">
+            Member
+          </span>
+          <i class="ph-bold ph-caret-down text-slate-400 text-xs"></i>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div 
+          id="userDropdown" 
+          class="hidden absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+        >
+          <div class="px-4 py-3 border-b border-slate-100">
+            <div class="text-xs font-extrabold text-slate-900" id="menuFullName">Karim Alaoui</div>
+            <div class="text-[11px] text-slate-500 font-mono truncate" id="menuEmail">client@trackphonenow.com</div>
+            <div class="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200" id="menuPlanStatus">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Pass Active</span>
+            </div>
+          </div>
+
+          <div class="py-1">
+            <button onclick="switchTab('billing')" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-semibold">
+              <i class="ph-bold ph-credit-card text-blue-600 text-base"></i>
+              <span>Subscription & Crypto Billing</span>
+            </button>
+            <button onclick="switchTab('settings')" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-semibold">
+              <i class="ph-bold ph-gear text-slate-400 text-base"></i>
+              <span>Account Settings</span>
+            </button>
+            <a href="/auth.html?mode=register" class="w-full text-left px-4 py-2.5 text-xs text-blue-600 hover:bg-blue-50 flex items-center gap-2.5 font-bold">
+              <i class="ph-bold ph-user-plus text-base"></i>
+              <span>Inscription (New Account)</span>
+            </a>
+          </div>
+
+          <div class="border-t border-slate-100 pt-1">
+            <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold">
+              <i class="ph-bold ph-sign-out text-base"></i>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- 2. MAIN CONSOLE CONTAINER (Sidebar + Workspace) -->
+  <div class="flex-grow flex flex-col md:flex-row h-[calc(100vh-61px)] overflow-hidden">
+    
+    <!-- LEFT NAVIGATION RAIL -->
+    <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex flex-row md:flex-col justify-between shrink-0 z-30">
+      
+      <!-- Nav Tabs -->
+      <nav class="p-3 space-y-1.5 w-full flex md:flex-col overflow-x-auto md:overflow-visible">
+        
+        <button 
+          id="navTab-radar" 
+          onclick="switchTab('radar')" 
+          class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition bg-blue-50 text-blue-700 border border-blue-200 shadow-xs"
+        >
+          <i class="ph-bold ph-radar text-lg text-blue-600"></i>
+          <span class="whitespace-nowrap">Live Target Radar</span>
+        </button>
+
+        <button 
+          id="navTab-history" 
+          onclick="switchTab('history')" 
+          class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-600 hover:bg-slate-100"
+        >
+          <i class="ph-bold ph-list-dashes text-lg text-slate-400"></i>
+          <span class="whitespace-nowrap">Target History</span>
+          <span id="historyBadgeCount" class="ml-auto bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-[10px] font-mono">1</span>
+        </button>
+
+        <button 
+          id="navTab-sms" 
+          onclick="switchTab('sms')" 
+          class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-600 hover:bg-slate-100"
+        >
+          <i class="ph-bold ph-chat-teardrop-text text-lg text-slate-400"></i>
+          <span class="whitespace-nowrap">Pretext SMS Studio</span>
+        </button>
+
+        <button 
+          id="navTab-billing" 
+          onclick="switchTab('billing')" 
+          class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-600 hover:bg-slate-100"
+        >
+          <i class="ph-bold ph-credit-card text-lg text-slate-400"></i>
+          <span class="whitespace-nowrap">Crypto Billing & Pass</span>
+        </button>
+
+        <button 
+          id="navTab-settings" 
+          onclick="switchTab('settings')" 
+          class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-600 hover:bg-slate-100"
+        >
+          <i class="ph-bold ph-shield-check text-lg text-slate-400"></i>
+          <span class="whitespace-nowrap">Security & Privacy</span>
+        </button>
+
+      </nav>
+
+
+
+      <!-- Sidebar Bottom System Summary (Desktop) -->
+      <div class="hidden md:block p-4 border-t border-slate-200 bg-slate-50/50 m-3 rounded-2xl border">
+        <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-2">
+          <span>TRIANGULATION NODES</span>
+          <span class="text-blue-600 font-mono font-bold">3 BTS Towers</span>
+        </div>
+        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+          <div class="bg-blue-600 h-full w-[96%]"></div>
+        </div>
+        <div class="mt-3 flex items-center justify-between text-[10px] text-slate-500">
+          <span>Carrier: IAM / Orange / Inwi</span>
+          <span class="text-slate-400 font-mono">v5.0 PRO</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT WORKSPACE: ACTIVE VIEW CONTAINER -->
+    <main class="flex-grow flex flex-col overflow-y-auto bg-slate-100 relative">
+
+      <!-- ================= TAB 1: LIVE RADAR & MAP ================= -->
+      <div id="view-radar" class="flex-grow flex flex-col lg:flex-row h-full">
+        
+        <!-- Target Telemetry & Dispatch Deck (Left of Map on Desktop) -->
+        <div class="w-full lg:w-96 bg-white border-r border-slate-200 flex flex-col justify-between overflow-y-auto p-4 space-y-4 shrink-0 custom-scrollbar">
+          
+          <!-- STAGE 0: TARGET ACQUISITION TERMINAL (STANDBY / PRE-PAYMENT) -->
+          <div id="deckStandby" class="flex flex-col justify-between space-y-4">
+            
+            <div class="space-y-4">
+              <!-- Terminal Header Card -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider font-mono">CORE TERMINAL · STANDBY</span>
+                  </div>
+                  <span class="text-[10px] font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                    SS7 / HLR ONLINE
+                  </span>
+                </div>
+                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Target Acquisition Console</h3>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Enter any mobile telephone number to initialize orbital satellite triangulation and lock onto GSM/LTE signal towers.
+                </p>
+              </div>
+
+              <!-- Onboarding Staged Target Notification Banner -->
+              <div id="standbyOnboardBanner" class="hidden p-3.5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-950 text-xs flex items-start gap-2.5 shadow-xs">
+                <div class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                  <i class="ph-bold ph-shield-check text-sm"></i>
+                </div>
+                <div class="leading-relaxed">
+                  <span class="font-extrabold text-blue-950">Target Staged in Triangulation Buffer</span>
+                  <p class="text-blue-800 text-[11px] mt-0.5 font-medium">Carrier and GSM routing parameters pre-configured. Select your dispatch pretext scenario below to initiate trace.</p>
+                </div>
+              </div>
+
+              <!-- Phone Input Card with Auto Carrier & Country Detection -->
+              <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                  TARGET MOBILE NUMBER
+                </label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-base" id="standbyFlag">
+                    🇲🇦
+                  </div>
+                  <input 
+                    type="tel" 
+                    id="standbyPhoneInput" 
+                    placeholder="+212 661-000000" 
+                    value="+212 6"
+                    oninput="handleStandbyPhoneInput(this.value)"
+                    class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono text-sm font-bold outline-none focus:border-blue-600 focus:bg-white transition"
+                  />
+                </div>
+
+                <!-- Carrier Badge -->
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                  <div class="flex items-center gap-2">
+                    <i class="ph-bold ph-broadcast text-blue-600 text-sm"></i>
+                    <span class="text-slate-500 text-[11px]">Detected Carrier:</span>
+                    <span id="standbyCarrierBadge" class="font-bold text-slate-800 font-mono text-[11px]">Maroc Telecom (IAM)</span>
+                  </div>
+                  <span id="standbyNetworkType" class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono">5G / 4G LTE</span>
+                </div>
+              </div>
+
+              <!-- Pretext Dispatch Hook Selector -->
+              <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+                <div class="flex items-center justify-between">
+                  <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                    DISPATCH PRETEXT SCENARIO
+                  </label>
+                  <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">High Open Rate</span>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="flex items-start gap-3 p-3 rounded-xl border border-blue-600 bg-blue-50/40 cursor-pointer hover:bg-blue-50 transition pretext-option" onclick="selectStandbyPretext(this, 'delivery')">
+                    <input type="radio" name="standbyPretext" value="delivery" checked class="mt-0.5 text-blue-600 focus:ring-blue-500">
+                    <div class="text-xs">
+                      <div class="font-extrabold text-slate-900 flex items-center gap-1.5">
+                        <span>📦</span> <span>FastTrack Express Package Delivery</span>
+                      </div>
+                      <div class="text-[11px] text-slate-500 mt-0.5 leading-snug">"Package #TRK-884920 is out for delivery. Confirm exact drop-off coordinates:"</div>
+                    </div>
+                  </label>
+
+                  <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition pretext-option" onclick="selectStandbyPretext(this, 'friend')">
+                    <input type="radio" name="standbyPretext" value="friend" class="mt-0.5 text-blue-600 focus:ring-blue-500">
+                    <div class="text-xs">
+                      <div class="font-extrabold text-slate-900 flex items-center gap-1.5">
+                        <span>📍</span> <span>Mutual Contact Location Sharing</span>
+                      </div>
+                      <div class="text-[11px] text-slate-500 mt-0.5 leading-snug">"A verified contact has shared their location and requested yours to meet up:"</div>
+                    </div>
+                  </label>
+
+                  <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition pretext-option" onclick="selectStandbyPretext(this, 'emergency')">
+                    <input type="radio" name="standbyPretext" value="emergency" class="mt-0.5 text-blue-600 focus:ring-blue-500">
+                    <div class="text-xs">
+                      <div class="font-extrabold text-slate-900 flex items-center gap-1.5">
+                        <span>🛡️</span> <span>Family & Emergency Safety Alert</span>
+                      </div>
+                      <div class="text-[11px] text-slate-500 mt-0.5 leading-snug">"[Urgent] A safety check-in has been requested by family. Please tap to verify:"</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Power-On Watchdog Option -->
+              <div class="p-3.5 rounded-2xl bg-slate-900 text-white border border-slate-800 shadow-xs space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <i class="ph-bold ph-power text-amber-400 text-sm"></i>
+                    <span class="text-xs font-bold text-white uppercase tracking-wider">OFFLINE AUTO-WAKE WATCHDOG</span>
+                  </div>
+                  <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded font-bold border border-emerald-500/30">ARMED</span>
+                </div>
+                <p class="text-[11px] text-slate-300 leading-snug">
+                  If the target handset is currently offline or powered down, the carrier gateway watchdog stays on standby. The instant the SIM card registers onto any cellular tower, an immediate ping and GPS dispatch alert is routed to your terminal.
+                </p>
+                <div class="pt-1">
+                  <input 
+                    type="tel" 
+                    id="standbyWatchdogPhone" 
+                    placeholder="Your WhatsApp number (+212...)" 
+                    class="w-full bg-slate-800 border border-slate-700 text-xs font-mono text-white p-2 rounded-xl outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button & Trust Strip -->
+            <div class="space-y-3 pt-2">
+              <button 
+                onclick="handleStandbyDispatch()" 
+                id="btnStandbyDispatch"
+                class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-extrabold text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2.5 transition transform active:scale-95 cursor-pointer"
+              >
+                <i class="ph-bold ph-crosshair text-lg"></i>
+                <span>Initiate Satellite Tracking</span>
+              </button>
+
+              <div class="flex items-center justify-center gap-4 text-[10px] text-slate-400 font-mono">
+                <span class="flex items-center gap-1"><i class="ph-bold ph-shield-check text-emerald-600"></i> 256-bit SS7</span>
+                <span>·</span>
+                <span class="flex items-center gap-1"><i class="ph-bold ph-eye-slash text-blue-600"></i> 100% Undetectable</span>
+                <span>·</span>
+                <span class="flex items-center gap-1"><i class="ph-bold ph-battery-full text-emerald-600"></i> 0% Drain</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- STAGE 1: ACTIVE TARGET TELEMETRY DECK (SHOWN POST-PAYMENT & DISPATCH) -->
+          <div id="deckActiveTarget" class="space-y-4 hidden">
+          
+          <!-- 1. Target Status & Geolocation Card -->
+          <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs">
+            
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">ACTIVE TARGET FEED</span>
+              <div id="liveStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <span id="statusText">SIGNAL LOCKED</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xl font-extrabold font-mono text-slate-900" id="currentPhoneDisplay">
+                  +212 661-234567
+                </div>
+                <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                  <span id="currentCountryFlag">🇲🇦</span>
+                  <span id="currentCarrierDisplay" class="font-bold text-slate-700">Maroc Telecom (IAM)</span>
+                </div>
+              </div>
+              <button onclick="openNewTrackModal()" class="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition" title="Change target">
+                <i class="ph-bold ph-pencil-simple text-base"></i>
+              </button>
+            </div>
+
+            <!-- GPS Coordinates Readout -->
+            <div class="mt-4 grid grid-cols-2 gap-2 text-xs font-mono bg-white p-3 rounded-xl border border-slate-200">
+              <div>
+                <span class="text-slate-400 block text-[9px] uppercase font-sans font-bold">LATITUDE</span>
+                <span id="latDisplay" class="text-slate-900 font-bold text-sm">33.57310</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[9px] uppercase font-sans font-bold">LONGITUDE</span>
+                <span id="lngDisplay" class="text-slate-900 font-bold text-sm">-7.58980</span>
+              </div>
+              <div class="mt-1">
+                <span class="text-slate-400 block text-[9px] uppercase font-sans font-bold">PRECISION RADIUS</span>
+                <span id="accuracyDisplay" class="text-emerald-600 font-bold">± 3.8 meters</span>
+              </div>
+              <div class="mt-1">
+                <span class="text-slate-400 block text-[9px] uppercase font-sans font-bold">SIGNAL FIX</span>
+                <span id="timeDisplay" class="text-slate-600">Real-Time GPS</span>
+              </div>
+            </div>
+
+            <!-- Reverse Geocoded Street Address -->
+            <div class="mt-3 p-3 bg-white rounded-xl border border-slate-200 text-xs">
+              <div class="text-[10px] uppercase font-bold text-slate-400 mb-1 flex items-center gap-1">
+                <i class="ph-bold ph-map-pin text-blue-600"></i>
+                <span>ESTIMATED STREET LOCATION</span>
+              </div>
+              <div id="addressDisplay" class="font-bold text-slate-800 leading-snug">
+                Boulevard d'Anfa, Maarif, Casablanca 20250, Morocco
+              </div>
+            </div>
+
+            <!-- RF Spectrum & Hardware Diagnostics -->
+            <div class="mt-3 bg-white p-3 rounded-xl border border-slate-200 text-xs space-y-1.5 font-mono text-[11px]">
+              <div class="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase font-sans border-b border-slate-100 pb-1">
+                <span>CELLULAR RF TELEMETRY</span>
+                <span class="text-blue-600">5G / 4G LTE</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Cell Tower ID:</span>
+                <span class="text-slate-800 font-bold" id="cellIdDisplay">CID: 49281-B (Sector 3)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Signal RSSI:</span>
+                <span class="text-emerald-600 font-bold" id="rssiDisplay">-64 dBm (High Quality)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Handset Model:</span>
+                <span id="deviceDisplay" class="text-slate-800 font-bold">iPhone 15 Pro (iOS 17.5)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Battery Level:</span>
+                <span id="batteryDisplay" class="text-emerald-600 font-bold">🔋 84% (Charging)</span>
+              </div>
+            </div>
+
+            <!-- Action Buttons: Copy GPS & Official PDF Forensic Report -->
+            <div class="mt-4 grid grid-cols-2 gap-2">
+              <button onclick="copyCoordinates()" class="py-2.5 px-3 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                <i class="ph-bold ph-copy text-sm text-blue-600"></i>
+                <span>Copy GPS</span>
+              </button>
+              <button onclick="openForensicPdfModal()" class="py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm">
+                <i class="ph-bold ph-file-pdf text-sm"></i>
+                <span>Forensic PDF</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- 2. OFFLINE TARGET AUTO-WAKE WATCHDOG (User requested feature!) -->
+          <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 text-white border border-slate-800 shadow-md space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs">
+                  <i class="ph-bold ph-power"></i>
+                </div>
+                <span class="text-xs font-bold text-white uppercase tracking-wider">OFFLINE POWER-ON WATCHDOG</span>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">
+                ACTIVE
+              </span>
+            </div>
+
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              If the target device is currently powered down (offline), the telecom carrier gateway maintains an active listener. <b>The instant the device reconnects to any cellular cell tower</b>, an automated WhatsApp dispatch and live GPS coordinates will be delivered to your terminal!
+            </p>
+
+            <div class="space-y-2 pt-1">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                  YOUR WHATSAPP NUMBER FOR INSTANT POWER-ON ALERT
+                </label>
+                <input 
+                  type="tel" 
+                  id="watchdogPhoneInput" 
+                  value="+212 600-000000" 
+                  class="w-full bg-slate-800 border border-slate-700 text-xs font-mono text-white p-2.5 rounded-xl outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div class="flex items-center justify-between pt-1">
+                <button 
+                  type="button" 
+                  onclick="simulateTargetPowerOn()" 
+                  class="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition"
+                >
+                  <i class="ph-bold ph-lightning text-sm text-amber-300"></i>
+                  <span>Test Power-On WhatsApp Trigger</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Target Tracking Link, 1-Click WhatsApp & SMS Dispatch -->
+          <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">1-CLICK TARGET DISPATCH</span>
+              <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">Auto-Pretext</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <input 
+                type="text" 
+                id="trackingUrlInput" 
+                readonly 
+                class="w-full bg-slate-50 text-xs font-mono text-slate-800 p-2.5 rounded-xl border border-slate-200 outline-none select-all font-semibold"
+              />
+              <button onclick="copyTrackingUrl()" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition" title="Copy Link">
+                <i class="ph-bold ph-copy text-base"></i>
+              </button>
+              <button onclick="openTargetLink()" class="p-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white transition" title="Open Link">
+                <i class="ph-bold ph-arrow-square-out text-base"></i>
+              </button>
+            </div>
+
+            <!-- Direct 1-Click WhatsApp & Native SMS Buttons -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button 
+                onclick="dispatchViaWhatsApp()" 
+                class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm"
+              >
+                <i class="ph-bold ph-whatsapp-logo text-base"></i>
+                <span>Send WhatsApp</span>
+              </button>
+
+              <button 
+                onclick="dispatchViaSms()" 
+                class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm"
+              >
+                <i class="ph-bold ph-chat-circle-dots text-base"></i>
+                <span>Send SMS</span>
+              </button>
+            </div>
+
+            <!-- QR Code -->
+            <div class="mt-2 flex flex-col items-center justify-center p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div id="qrcode" class="p-1.5 bg-white rounded-lg shadow-xs"></div>
+              <span class="text-[10px] text-slate-500 font-bold mt-2">SCAN TO TEST LIVE GPS CAPTURE</span>
+            </div>
+          </div>
+
+          <!-- 4. Live SSE Cellular Terminal -->
+          <div class="p-3 bg-slate-900 rounded-2xl text-slate-300 text-xs font-mono">
+            <div class="flex justify-between items-center text-slate-400 mb-1.5 pb-1 border-b border-white/10">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">CELLULAR TELEMETRY STREAM</span>
+              <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+            </div>
+            <div id="sseTerminal" class="h-24 overflow-y-auto space-y-1 text-[11px] custom-scrollbar">
+            </div>
+          </div>
+
+          </div>
+
+        </div>
+
+        <!-- Right Side: Interactive High-Precision Map with Triangulation & HUD -->
+        <div class="flex-grow flex flex-col relative bg-slate-100 min-h-[500px]">
+          
+          <!-- Tactical Flight & Triangulation Top HUD Strip -->
+          <div class="absolute top-4 left-4 right-4 z-30 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+            
+            <div class="bg-slate-900/90 backdrop-blur-md text-white text-[11px] font-mono px-3.5 py-2 rounded-xl shadow-lg border border-white/10 pointer-events-auto flex items-center gap-3">
+              <div class="flex items-center gap-1.5 text-blue-400">
+                <span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+                <span class="font-bold" id="topHudStatusText">3 BTS TOWERS CONVERGING</span>
+              </div>
+              <span class="text-slate-600">|</span>
+              <span class="text-slate-300">LATENCY: 28ms</span>
+              <span class="text-slate-600 hidden sm:inline">|</span>
+              <span class="text-slate-300 hidden sm:inline" id="topHudAzimuth">AZIMUTH: 142° SE</span>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-2 pointer-events-auto">
+              <button 
+                onclick="toggleTriangulationVectors()" 
+                id="btnTriangulation"
+                class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5"
+              >
+                <i class="ph-bold ph-broadcast"></i>
+                <span id="triangulationLabel">Triangulation: ON</span>
+              </button>
+
+              <button 
+                onclick="toggleMapLayer()" 
+                class="px-3.5 py-2 bg-white/95 hover:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 shadow-md backdrop-blur-md flex items-center gap-2 transition"
+              >
+                <i class="ph-bold ph-stack text-sm text-blue-600"></i>
+                <span id="layerNameDisplay">Satellite Layer</span>
+              </button>
+
+              <button 
+                onclick="recenterMap()" 
+                class="p-2 bg-white/95 hover:bg-white text-slate-800 rounded-xl border border-slate-200 shadow-md backdrop-blur-md transition" 
+                title="Recenter on Target"
+              >
+                <i class="ph-bold ph-crosshair text-lg text-blue-600"></i>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Standby Orbital Tactical Overlay (Active when 0 sessions tracked) -->
+          <div id="mapStandbyOverlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-slate-950/45 backdrop-blur-[2px]">
+            <!-- Radar Reticle Graphic -->
+            <div class="relative w-44 h-44 rounded-full border border-blue-500/30 flex items-center justify-center mb-5 pointer-events-none">
+              <div class="absolute inset-0 rounded-full border border-blue-400/20 animate-ping"></div>
+              <div class="w-28 h-28 rounded-full border border-blue-500/40 flex items-center justify-center">
+                <div class="w-14 h-14 rounded-full bg-blue-600/25 border border-blue-400/60 flex items-center justify-center text-blue-400">
+                  <i class="ph-bold ph-radar text-3xl animate-pulse"></i>
+                </div>
+              </div>
+              <div class="absolute top-0 bottom-0 w-px bg-blue-500/20"></div>
+              <div class="absolute left-0 right-0 h-px bg-blue-500/20"></div>
+            </div>
+
+            <!-- Glass Card -->
+            <div class="max-w-md w-full bg-slate-900/95 backdrop-blur-md rounded-3xl p-6 border border-white/10 shadow-2xl text-center space-y-4 pointer-events-auto">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[11px] font-mono font-bold">
+                <span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+                <span>ORBITAL SATELLITE STANDBY</span>
+              </div>
+
+              <h2 class="text-xl font-black text-white tracking-tight">
+                Triangulation Radar Awaiting Target
+              </h2>
+
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Live cellular coordinates, street location, and 3 BTS cell tower triangulation vectors will lock onto this map the moment a target telephone number is initiated.
+              </p>
+
+              <div class="grid grid-cols-2 gap-2 text-left pt-1">
+                <div class="p-2.5 rounded-xl bg-slate-800/80 border border-white/5 text-[11px]">
+                  <div class="text-slate-400 text-[9px] uppercase font-bold font-sans">RESOLUTION</div>
+                  <div class="font-bold text-emerald-400 font-mono mt-0.5">± 3.8 Meters (GPS)</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-800/80 border border-white/5 text-[11px]">
+                  <div class="text-slate-400 text-[9px] uppercase font-bold font-sans">COVERAGE</div>
+                  <div class="font-bold text-blue-400 font-mono mt-0.5">194 Countries Global</div>
+                </div>
+              </div>
+
+              <button 
+                onclick="document.getElementById('standbyPhoneInput').focus()" 
+                class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <i class="ph-bold ph-crosshair text-base"></i>
+                <span>Assign Target on Terminal</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom floating indicator -->
+          <div id="bottomHudIndicator" class="absolute bottom-4 left-4 z-30 bg-slate-900/90 backdrop-blur-md text-white text-[11px] font-mono px-3.5 py-2 rounded-xl shadow-lg border border-white/10 hidden sm:flex items-center gap-3">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="bottomHudSync">GPS SYNC ACTIVE</span>
+            </div>
+            <span class="text-slate-500">|</span>
+            <span id="hudCoords">33.5731° N, -7.5898° W</span>
+            <span class="text-slate-500">|</span>
+            <span class="text-emerald-400" id="bottomHudPrecision">PRECISION: ±3.8m</span>
+          </div>
+
+          <div id="mapContainer"></div>
+
+        </div>
+
+      </div>
+
+      <!-- ================= TAB 2: TRACKED DEVICES HISTORY ================= -->
+      <div id="view-history" class="p-6 max-w-6xl w-full mx-auto hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Tracked Devices History</h2>
+            <p class="text-xs text-slate-500">Manage all mobile targets, download forensic location logs, and view historical coordinate pings.</p>
+          </div>
+          <button onclick="openNewTrackModal()" class="py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition flex items-center gap-2">
+            <i class="ph-bold ph-plus text-base"></i>
+            <span>Track New Device</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-4 border-b border-slate-200 flex items-center justify-between gap-4">
+            <div class="relative w-full max-w-xs">
+              <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+              <input 
+                type="text" 
+                id="historySearchInput" 
+                oninput="renderHistoryTable()"
+                placeholder="Search phone number or carrier..." 
+                class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600"
+              />
+            </div>
+            <div class="text-xs text-slate-500 font-semibold" id="historyCounter">
+              Showing 1 device
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+                <tr>
+                  <th class="p-4">Target Phone</th>
+                  <th class="p-4">Operator & Country</th>
+                  <th class="p-4">Status</th>
+                  <th class="p-4">Last GPS Coordinates</th>
+                  <th class="p-4">Date Added</th>
+                  <th class="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody" class="divide-y divide-slate-100 font-medium text-slate-800">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= TAB 3: PRETEXT SMS STUDIO ================= -->
+      <div id="view-sms" class="p-6 max-w-5xl w-full mx-auto hidden space-y-6">
+        
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Pretext SMS Dispatcher Studio</h2>
+          <p class="text-xs text-slate-500">Configure high-converting SMS pretexts that trigger target interaction and instant GPS permission authorization.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Template selector -->
+          <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 space-y-5">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Choose Pretext Scenario</h3>
+            
+            <div class="space-y-3">
+              <label class="flex items-start gap-3 p-3.5 rounded-xl border border-blue-500 bg-blue-50/40 cursor-pointer">
+                <input type="radio" name="pretextTemplate" value="delivery" checked onchange="updateSmsPreview()" class="mt-1 text-blue-600 focus:ring-blue-500" />
+                <div>
+                  <div class="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <span>📦 FastTrack Global Express Delivery</span>
+                    <span class="text-[9px] bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded font-bold">Recommended (94% CTR)</span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-1">Package out for delivery. Request exact doorway drop-off coordinates.</p>
+                </div>
+              </label>
+
+              <label class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                <input type="radio" name="pretextTemplate" value="friend" onchange="updateSmsPreview()" class="mt-1 text-blue-600 focus:ring-blue-500" />
+                <div>
+                  <div class="text-xs font-bold text-slate-900">📍 FindContact Live Location Sharing</div>
+                  <p class="text-xs text-slate-500 mt-1">A mutual contact shared their coordinates to meet up with you.</p>
+                </div>
+              </label>
+
+              <label class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                <input type="radio" name="pretextTemplate" value="emergency" onchange="updateSmsPreview()" class="mt-1 text-blue-600 focus:ring-blue-500" />
+                <div>
+                  <div class="text-xs font-bold text-slate-900">🛡️ SafeGuard Emergency & Family Check-in</div>
+                  <p class="text-xs text-slate-500 mt-1">A safety alert check-in has been requested by a family member.</p>
+                </div>
+              </label>
+
+              <label class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                <input type="radio" name="pretextTemplate" value="custom" onchange="updateSmsPreview()" class="mt-1 text-blue-600 focus:ring-blue-500" />
+                <div>
+                  <div class="text-xs font-bold text-slate-900">✍️ Custom Message</div>
+                  <p class="text-xs text-slate-500 mt-1">Type your own tailor-made message text.</p>
+                </div>
+              </label>
+            </div>
+
+            <!-- Custom message field -->
+            <div id="customMessageContainer" class="hidden">
+              <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Custom Message Text</label>
+              <textarea 
+                id="customSmsInput" 
+                rows="3" 
+                oninput="updateSmsPreview()"
+                placeholder="Please tap to confirm your current location on the map:" 
+                class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600"
+              ></textarea>
+            </div>
+
+            <button onclick="testSendSmsSimulation()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition">
+              <i class="ph-bold ph-paper-plane-tilt text-base"></i>
+              <span>Save & Apply Pretext to Target Link</span>
+            </button>
+          </div>
+
+          <!-- Live Mobile SMS Preview -->
+          <div class="lg:col-span-5 flex flex-col items-center justify-center bg-slate-900 rounded-2xl p-6 text-white">
+            <div class="text-[10px] font-mono text-blue-400 font-bold uppercase tracking-wider mb-4">
+              RECEIVER PHONE DISPLAY PREVIEW
+            </div>
+
+            <!-- iPhone Mockup SMS Bubble -->
+            <div class="w-full max-w-xs bg-slate-800 rounded-3xl p-5 border border-slate-700 shadow-2xl relative">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-700/60 text-xs">
+                <span class="text-slate-400 font-mono">SMS Notification</span>
+                <span class="text-blue-400 font-bold">12:42 PM</span>
+              </div>
+
+              <div class="mt-4 bg-slate-700/60 p-4 rounded-2xl rounded-tl-sm text-xs leading-relaxed space-y-2 border border-slate-600/40">
+                <div class="font-bold text-white flex items-center gap-1.5" id="previewSender">
+                  📦 FastTrack Express
+                </div>
+                <p class="text-slate-300" id="previewBody">
+                  [Notice] Package #TRK-884920 is out for delivery. Confirm your exact drop-off coordinates:
+                </p>
+                <div class="text-blue-400 font-mono text-[11px] underline break-all" id="previewLink">
+                  https://trackphonenow.com/track.html?id=...
+                </div>
+              </div>
+
+              <div class="mt-4 text-[10px] text-center text-slate-500">
+                End-to-End GSM Carrier Encryption
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ================= TAB 4: BILLING & SUBSCRIPTION ================= -->
+      <div id="view-billing" class="p-6 max-w-5xl w-full mx-auto hidden space-y-6">
+        
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Subscription & Crypto Billing</h2>
+          <p class="text-xs text-slate-500">Manage your active pass, view invoices, or cancel auto-renewal with 1 click anytime.</p>
+        </div>
+
+        <!-- PENDING CRYPTO PAYMENT ALERT CARD -->
+        <div id="pendingPaymentBanner" class="hidden bg-gradient-to-r from-amber-50 via-amber-50/50 to-white border-2 border-amber-300 rounded-3xl p-6 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-amber-100 border border-amber-300 text-amber-700 flex items-center justify-center text-xl shrink-0">
+                <i class="ph-bold ph-hourglass-high animate-spin" style="animation-duration: 6s;"></i>
+              </div>
+              <div>
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black uppercase tracking-wider border border-amber-300 mb-1">
+                  <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                  <span>Confirmation Blockchain en cours</span>
+                </div>
+                <h4 class="text-base font-extrabold text-slate-900">Paiement Crypto En Cours de Validation</h4>
+                <p class="text-xs text-slate-600 mt-0.5">
+                  Une transaction pour votre surclassement est enregistrée. L'accès Pro s'activera dès la validation du bloc sur la blockchain.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 self-start sm:self-center shrink-0">
+              <button 
+                onclick="checkBillingBlockchainStatus()" 
+                id="btnCheckBillingPending"
+                class="py-2 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+              >
+                <i class="ph-bold ph-arrows-clockwise text-sm"></i>
+                <span>Vérifier Statut Blockchain</span>
+              </button>
+              <button 
+                onclick="cancelPendingPayment()" 
+                class="py-2 px-3 rounded-xl border border-slate-300 text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 font-bold text-xs transition cursor-pointer"
+                title="Annuler si vous avez entré un mauvais hash"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+
+          <!-- Pending Details Strip -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-white rounded-2xl border border-amber-200 text-xs font-mono">
+            <div>
+              <span class="text-slate-400 font-sans font-bold text-[10px] uppercase block">Pass Demandé</span>
+              <span class="font-bold text-slate-900" id="pendingBannerPlan">Pro 3-Mois ($49.99)</span>
+            </div>
+            <div>
+              <span class="text-slate-400 font-sans font-bold text-[10px] uppercase block">Devise / Réseau</span>
+              <span class="font-bold text-slate-900" id="pendingBannerCurrency">USDT (TRC-20)</span>
+            </div>
+            <div>
+              <span class="text-slate-400 font-sans font-bold text-[10px] uppercase block">Hash de Transaction (TXID)</span>
+              <a id="pendingBannerExplorerLink" href="#" target="_blank" class="text-blue-600 font-bold hover:underline truncate flex items-center gap-1">
+                <span id="pendingBannerTxHash" class="truncate">0x...</span>
+                <i class="ph-bold ph-arrow-square-out shrink-0"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan Status Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+          
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-xs font-bold border border-amber-300 mb-2" id="billingStatusPill">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span id="billingStatusText">Free Tier · Upgrade Required</span>
+              </div>
+              <h3 class="text-xl font-extrabold text-slate-900" id="billingPlanTitle">Free Member Tier (Upgrade Required)</h3>
+              <p class="text-xs text-slate-500 mt-1" id="billingRenewalNotice">
+                Activate a Pro Pass (1 Month $24.99, 3 Months $49.99, or 6 Months $89.99) to start tracking.
+              </p>
+            </div>
+
+            <!-- 1-Click Cancel or Upgrade Button -->
+            <div id="cancelContainer">
+              <button 
+                id="btnCancelSub" 
+                onclick="openUpgradeModal('pro_unlimited')" 
+                class="py-2.5 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition duration-150 flex items-center gap-2 cursor-pointer shadow-sm"
+              >
+                <i class="ph-bold ph-crown text-amber-300"></i>
+                <span>Upgrade Console Now</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Plan features -->
+          <div class="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+              <span class="text-slate-400 block text-[10px] font-bold uppercase">UNLIMITED LOCATIONS</span>
+              <span class="text-slate-900 font-extrabold text-sm mt-1 block">Active</span>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+              <span class="text-slate-400 block text-[10px] font-bold uppercase">SATELLITE ACCURACY</span>
+              <span class="text-blue-600 font-extrabold text-sm mt-1 block">± 3.5m Pinpoint</span>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+              <span class="text-slate-400 block text-[10px] font-bold uppercase">AUTO-RENEWAL STATUS</span>
+              <span id="billingAutoRenewLabel" class="text-slate-900 font-extrabold text-sm mt-1 block">Enabled</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Available Upgrade Plans Grid -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 mb-1">
+                <i class="ph-bold ph-crown text-xs"></i>
+                <span>CONSOLE SUBSCRIPTIONS & PASSES</span>
+              </div>
+              <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Available Plan Upgrades</h3>
+              <p class="text-xs text-slate-500">Upgrade your console to unlock unlimited concurrent targets, offline phone watchdog, and forensic certificates.</p>
+            </div>
+            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center gap-1.5 self-start sm:self-auto">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Zero-KYC Crypto Settlement</span>
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 pt-2 max-w-6xl mx-auto">
+
+            <!-- Plan 1: 1 Mois (Pro Monthly Pass - $24.99) -->
+            <div class="rounded-2xl border border-slate-200 p-5 bg-white flex flex-col justify-between relative shadow-xs hover:border-slate-300 transition">
+              <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-700 text-white text-[10px] font-extrabold uppercase px-3 py-0.5 rounded-full shadow-sm tracking-wide">
+                <span>1 MOIS · 30 DAYS</span>
+              </div>
+              <div>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">STANDARD PASS</span>
+                <h4 class="text-base font-extrabold text-slate-900 mt-1">Pro Monthly Pass</h4>
+                <div class="mt-3 flex items-baseline gap-1">
+                  <span class="text-3xl font-black text-slate-900">$24.99</span>
+                  <span class="text-xs text-slate-500 font-medium">/ 30 jours</span>
+                </div>
+                <div class="text-[11px] text-slate-500 font-medium mt-0.5">$24.99 / mois · Tarif standard</div>
+                <ul class="mt-4 space-y-2 text-xs text-slate-700 font-medium">
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-emerald-600"></i> <b>Unlimited</b> Simultaneous Targets</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-emerald-600"></i> <b>3 BTS Towers</b> Triangulation (±3.5m)</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-emerald-600"></i> <b>WhatsApp & SMS</b> Signal Dispatch</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-emerald-600"></i> 1-Click Cancel Anytime</li>
+                </ul>
+              </div>
+              <button onclick="openUpgradeModal('pro_1m')" class="mt-6 w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-1.5 transition cursor-pointer">
+                <span>Activer 1 Mois ($24.99)</span>
+              </button>
+            </div>
+
+            <!-- Plan 2: 3 Mois (Quarterly Pass - $49.99 with 33% REMISE) [HIGHLIGHTED] -->
+            <div class="rounded-2xl border-2 border-blue-600 p-5 bg-gradient-to-b from-blue-50/60 to-white flex flex-col justify-between relative shadow-lg shadow-blue-500/10">
+              <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-extrabold uppercase px-3 py-0.5 rounded-full shadow-sm tracking-wide flex items-center gap-1">
+                <i class="ph-bold ph-fire text-amber-300"></i>
+                <span>3 MOIS · REMISE -33%</span>
+              </div>
+              <div>
+                <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">LE PLUS POPULAIRE</span>
+                <h4 class="text-base font-extrabold text-slate-900 mt-1">Pro 3-Month Pass</h4>
+                <div class="mt-3 flex items-baseline gap-2">
+                  <span class="text-3xl font-black text-blue-700">$49.99</span>
+                  <span class="text-xs text-slate-400 line-through font-semibold">$74.97</span>
+                  <span class="text-xs text-slate-500 font-medium">/ 90 jours</span>
+                </div>
+                <div class="text-[11px] text-emerald-600 font-bold mt-0.5">Seulement $16.66 / mois · Économisez $25</div>
+                <ul class="mt-4 space-y-2 text-xs text-slate-700 font-medium">
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-blue-600"></i> Tout ce qui est inclus dans 1 Mois</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-blue-600"></i> <b>Remise -33%</b> appliquée immédiatement</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-blue-600"></i> <b>Offline Watchdog</b> + WhatsApp Alarms</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-blue-600"></i> <b>Multi-Opérateurs</b> SS7 Routing VIP</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-blue-600"></i> Support Prioritaire Dédié</li>
+                </ul>
+              </div>
+              <button onclick="openUpgradeModal('pro_3m')" class="mt-6 w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-600/25 flex items-center justify-center gap-1.5 transition cursor-pointer">
+                <i class="ph-bold ph-crown text-amber-300"></i>
+                <span>Activer 3 Mois ($49.99)</span>
+              </button>
+            </div>
+
+            <!-- Plan 3: 6 Mois (Semi-Annual Pass - $89.99 with 40% REMISE) -->
+            <div class="rounded-2xl border border-slate-900 p-5 bg-gradient-to-b from-slate-900 to-slate-950 text-white flex flex-col justify-between relative shadow-xl">
+              <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-3 py-0.5 rounded-full shadow-sm tracking-wide">
+                <span>6 MOIS · REMISE -40%</span>
+              </div>
+              <div>
+                <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">MEILLEURE RENTABILITÉ</span>
+                <h4 class="text-base font-extrabold text-white mt-1">Pro 6-Month Pass</h4>
+                <div class="mt-3 flex items-baseline gap-2">
+                  <span class="text-3xl font-black text-white">$89.99</span>
+                  <span class="text-xs text-slate-500 line-through font-semibold">$149.94</span>
+                  <span class="text-xs text-slate-400 font-medium">/ 180 jours</span>
+                </div>
+                <div class="text-[11px] text-amber-400 font-bold mt-0.5">Seulement $14.99 / mois · Économisez $60</div>
+                <ul class="mt-4 space-y-2 text-xs text-slate-300">
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-amber-400"></i> Tout ce qui est inclus dans 3 Mois</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-amber-400"></i> <b>Remise -40% Maximale</b></li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-amber-400"></i> <b>Rapports Forensics PDF</b> (SHA-256)</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-amber-400"></i> Dossiers certifiés Police & Assurance</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-amber-400"></i> <b>Queue SS7 / HLR Dédiée</b> Haute Priorité</li>
+                </ul>
+              </div>
+              <button onclick="openUpgradeModal('pro_6m')" class="mt-6 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="ph-bold ph-shield-check text-slate-950"></i>
+                <span>Activer 6 Mois ($89.99)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Official Crypto Payment Wallets & Explorers -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <i class="ph-bold ph-currency-circle-dollar text-blue-600 text-lg"></i>
+                <span>Crypto Deposit Wallets & Explorers (Paiement Crypto)</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Send renewals or pass top-ups directly via any of the supported blockchain networks:
+              </p>
+            </div>
+            <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+              Live Explorers
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
+            
+            <!-- USDT TRC-20 -->
+            <div class="p-4 rounded-xl border border-blue-300 bg-blue-50/30 flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-slate-900">USDT (TRC-20)</span>
+                <span class="text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full font-bold">Recommended</span>
+              </div>
+              <div class="font-mono text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200 flex items-center justify-between">
+                <span class="truncate mr-2">TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX</span>
+                <button onclick="navigator.clipboard.writeText('TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX'); showToast('USDT TRC20 Address Copied!');" class="text-blue-600 font-bold hover:text-blue-800">
+                  <i class="ph-bold ph-copy"></i>
+                </button>
+              </div>
+              <a href="https://tronscan.org/address/TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX/transactions" target="_blank" class="text-[11px] text-blue-700 hover:underline flex items-center gap-1 font-semibold">
+                <i class="ph-bold ph-arrow-square-out"></i>
+                <span>TronScan Explorer</span>
+              </a>
+            </div>
+
+            <!-- USDT BEP-20 -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-slate-900">USDT (BEP-20)</span>
+                <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">BNB Chain</span>
+              </div>
+              <div class="font-mono text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200 flex items-center justify-between">
+                <span class="truncate mr-2">0x35dd60066ae6337b4D0273b129c0E222235B9F8C</span>
+                <button onclick="navigator.clipboard.writeText('0x35dd60066ae6337b4D0273b129c0E222235B9F8C'); showToast('USDT BEP20 Address Copied!');" class="text-slate-600 font-bold hover:text-slate-900">
+                  <i class="ph-bold ph-copy"></i>
+                </button>
+              </div>
+              <a href="https://bscscan.com/token/0x55d398326f99059fF775485246999027B3197955?a=0x35dd60066ae6337b4D0273b129c0E222235B9F8C#transactions" target="_blank" class="text-[11px] text-amber-700 hover:underline flex items-center gap-1 font-semibold">
+                <i class="ph-bold ph-arrow-square-out"></i>
+                <span>BscScan Explorer</span>
+              </a>
+            </div>
+
+            <!-- USDT ERC-20 -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-slate-900">USDT (ERC-20)</span>
+                <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">Ethereum</span>
+              </div>
+              <div class="font-mono text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200 flex items-center justify-between">
+                <span class="truncate mr-2">0x35dd60066ae6337b4D0273b129c0E222235B9F8C</span>
+                <button onclick="navigator.clipboard.writeText('0x35dd60066ae6337b4D0273b129c0E222235B9F8C'); showToast('USDT ERC20 Address Copied!');" class="text-slate-600 font-bold hover:text-slate-900">
+                  <i class="ph-bold ph-copy"></i>
+                </button>
+              </div>
+              <a href="https://etherscan.io/token/0xdAC17F958D2ee523a2206206994597C13D831ec7?a=0x35dd60066ae6337b4D0273b129c0E222235B9F8C#transactions" target="_blank" class="text-[11px] text-blue-700 hover:underline flex items-center gap-1 font-semibold">
+                <i class="ph-bold ph-arrow-square-out"></i>
+                <span>Etherscan Explorer</span>
+              </a>
+            </div>
+
+            <!-- Bitcoin BTC -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-slate-900">Bitcoin (BTC)</span>
+                <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">SegWit</span>
+              </div>
+              <div class="font-mono text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200 flex items-center justify-between">
+                <span class="truncate mr-2">bc1q0v3g205psatdcj09ufzczahq50jusvvnlzsygu</span>
+                <button onclick="navigator.clipboard.writeText('bc1q0v3g205psatdcj09ufzczahq50jusvvnlzsygu'); showToast('BTC Address Copied!');" class="text-slate-600 font-bold hover:text-slate-900">
+                  <i class="ph-bold ph-copy"></i>
+                </button>
+              </div>
+              <a href="https://mempool.space/address/bc1q0v3g205psatdcj09ufzczahq50jusvvnlzsygu" target="_blank" class="text-[11px] text-amber-700 hover:underline flex items-center gap-1 font-semibold">
+                <i class="ph-bold ph-arrow-square-out"></i>
+                <span>Mempool Space Explorer</span>
+              </a>
+            </div>
+
+            <!-- Ethereum ETH -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-slate-900">Ethereum (ETH)</span>
+                <span class="text-[10px] bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-bold">Mainnet</span>
+              </div>
+              <div class="font-mono text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200 flex items-center justify-between">
+                <span class="truncate mr-2">0x35dd60066ae6337b4D0273b129c0E222235B9F8C</span>
+                <button onclick="navigator.clipboard.writeText('0x35dd60066ae6337b4D0273b129c0E222235B9F8C'); showToast('ETH Address Copied!');" class="text-slate-600 font-bold hover:text-slate-900">
+                  <i class="ph-bold ph-copy"></i>
+                </button>
+              </div>
+              <a href="https://etherscan.io/address/0x35dd60066ae6337b4D0273b129c0E222235B9F8C" target="_blank" class="text-[11px] text-indigo-700 hover:underline flex items-center gap-1 font-semibold">
+                <i class="ph-bold ph-arrow-square-out"></i>
+                <span>Etherscan Explorer</span>
+              </a>
+            </div>
+
+            <!-- Solana SOL -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-slate-900">Solana (SOL)</span>
+                <span class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-bold">Fast</span>
+              </div>
+              <div class="font-mono text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200 flex items-center justify-between">
+                <span class="truncate mr-2">t9QLb3arVUMcQ8JALe3Ptz318GfZkzmRAXvoM8yANFe</span>
+                <button onclick="navigator.clipboard.writeText('t9QLb3arVUMcQ8JALe3Ptz318GfZkzmRAXvoM8yANFe'); showToast('SOL Address Copied!');" class="text-slate-600 font-bold hover:text-slate-900">
+                  <i class="ph-bold ph-copy"></i>
+                </button>
+              </div>
+              <a href="https://solscan.io/account/t9QLb3arVUMcQ8JALe3Ptz318GfZkzmRAXvoM8yANFe" target="_blank" class="text-[11px] text-purple-700 hover:underline flex items-center gap-1 font-semibold">
+                <i class="ph-bold ph-arrow-square-out"></i>
+                <span>Solscan Explorer</span>
+              </a>
+            </div>
+
+            <!-- Litecoin LTC -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2 col-span-1 md:col-span-2">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-slate-900">Litecoin (LTC)</span>
+                <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">Lowest Fee</span>
+              </div>
+              <div class="font-mono text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200 flex items-center justify-between">
+                <span class="truncate mr-2">LVW74nrfMVpsTY7Kd62tkzfNF5aasM7ieS</span>
+                <button onclick="navigator.clipboard.writeText('LVW74nrfMVpsTY7Kd62tkzfNF5aasM7ieS'); showToast('LTC Address Copied!');" class="text-slate-600 font-bold hover:text-slate-900">
+                  <i class="ph-bold ph-copy"></i>
+                </button>
+              </div>
+              <a href="https://litecoinspace.org/address/LVW74nrfMVpsTY7Kd62tkzfNF5aasM7ieS" target="_blank" class="text-[11px] text-blue-700 hover:underline flex items-center gap-1 font-semibold">
+                <i class="ph-bold ph-arrow-square-out"></i>
+                <span>LitecoinSpace Explorer</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Invoices List -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Payment Invoices & Blockchain Receipts</h3>
+          
+          <div class="divide-y divide-slate-100 text-xs">
+            <div class="py-3 flex items-center justify-between">
+              <div>
+                <span class="font-bold text-slate-800 block">Pro Monthly Console Pass</span>
+                <span class="text-slate-400 text-[11px]">Paid via USDT TRC-20 · Oct 7, 2026</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="font-extrabold text-slate-900">$19.99 (USDT)</span>
+                <a href="https://tronscan.org/address/TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX/transactions" target="_blank" class="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1">
+                  <i class="ph-bold ph-arrow-square-out"></i>
+                  <span>Tx Hash</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= TAB 5: SECURITY & PRIVACY ================= -->
+      <div id="view-settings" class="p-6 max-w-4xl w-full mx-auto hidden space-y-6">
+        
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Security & Privacy Settings</h2>
+          <p class="text-xs text-slate-500">Manage your member account, password, and GDPR telecom privacy controls.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Profile Information</h3>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block text-slate-500 font-bold mb-1">MEMBER NAME</label>
+              <input type="text" id="settingsNameInput" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold" value="Karim Alaoui" />
+            </div>
+            <div>
+              <label class="block text-slate-500 font-bold mb-1">EMAIL ADDRESS</label>
+              <input type="email" id="settingsEmailInput" readonly class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 font-mono" value="client@trackphonenow.com" />
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button onclick="showToast('Profile updated successfully!')" class="py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition">
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- GDPR Wipe Data -->
+        <div class="bg-white rounded-2xl border border-red-200 p-6 shadow-xs">
+          <h3 class="text-sm font-bold text-red-600 uppercase tracking-wider mb-2">GDPR Data Deletion & Privacy</h3>
+          <p class="text-xs text-slate-500 mb-4">
+            Under European GDPR and International Telecom regulations, you have the right to erase all tracked target phone history, GPS coordinates, and IP telemetry logs immediately.
+          </p>
+          <button onclick="handleWipeAllData()" class="py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold text-xs transition">
+            Purge All Geolocation History Now
+          </button>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- MODAL 1: FORENSIC GEOLOCATION AUDIT CERTIFICATE (Official Printable PDF) -->
+  <div id="forensicModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+    <div class="bg-white max-w-2xl w-full rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative my-6">
+      
+      <!-- Close (no print) -->
+      <button onclick="closeForensicPdfModal()" class="no-print absolute right-5 top-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm">
+        ✕
+      </button>
+
+      <!-- Certificate Header -->
+      <div class="flex items-start justify-between border-b-2 border-slate-900 pb-4 mb-5">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs font-mono font-bold bg-slate-900 text-white px-2 py-0.5 rounded">GSMA / ISO 27001</span>
+            <span class="text-xs font-mono text-slate-500">AUDIT REF: #GEO-2026-9812</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            TELECOMMUNICATION FORENSIC AUDIT CERTIFICATE
+          </h2>
+          <div class="text-[11px] text-slate-500 font-mono mt-0.5">
+            CRYPTOGRAPHIC SHA-256 INTEGRITY VERIFICATION REPORT
+          </div>
+        </div>
+
+        <div class="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center text-3xl shrink-0">
+          <i class="ph-bold ph-shield-check"></i>
+        </div>
+      </div>
+
+      <!-- Report Details Grid -->
+      <div class="grid grid-cols-2 gap-3 text-xs font-mono bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-4">
+        <div>
+          <span class="text-slate-400 block text-[10px] font-sans font-bold">TARGET HANDSET NUMBER</span>
+          <span class="font-bold text-slate-900 text-sm" id="certPhone">+212 661-234567</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] font-sans font-bold">CARRIER OPERATOR</span>
+          <span class="font-bold text-blue-700 text-sm" id="certCarrier">Maroc Telecom (IAM)</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] font-sans font-bold">LATITUDE</span>
+          <span class="font-bold text-slate-900" id="certLat">33.57310° N</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] font-sans font-bold">LONGITUDE</span>
+          <span class="font-bold text-slate-900" id="certLng">-7.58980° W</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] font-sans font-bold">ESTIMATED ACCURACY</span>
+          <span class="font-bold text-emerald-600">± 3.8 Meters (Pinpoint)</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] font-sans font-bold">TRIANGULATION METHOD</span>
+          <span class="font-bold text-slate-800">Assisted-GPS + 3 BTS Nodes</span>
+        </div>
+      </div>
+
+      <!-- Verified Address Block -->
+      <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs mb-4">
+        <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">VERIFIED STREET ADDRESS</span>
+        <div class="font-bold text-slate-900 text-sm" id="certAddress">
+          Boulevard d'Anfa, Maarif, Casablanca 20250, Morocco
+        </div>
+      </div>
+
+      <!-- Cryptographic Proof Hash -->
+      <div class="p-3 bg-slate-900 rounded-xl text-slate-300 font-mono text-[10px] break-all mb-5">
+        <span class="text-blue-400 block font-bold mb-0.5">SHA-256 DIGITAL EVIDENCE HASH:</span>
+        7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069
+      </div>
+
+      <!-- Official Signatures Block -->
+      <div class="flex items-center justify-between text-xs border-t border-slate-200 pt-4 mb-4">
+        <div>
+          <span class="text-[10px] text-slate-400 block font-bold">VALIDATION TIMESTAMP</span>
+          <span class="font-mono text-slate-800 font-bold" id="certTimestamp">Oct 7, 2026 · 17:20:41 GMT+1</span>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-slate-400 block font-bold">OFFICIAL AUTHORITY</span>
+          <span class="font-bold text-blue-700">GSMA Network Forensic Hub</span>
+        </div>
+      </div>
+
+      <!-- Print Action Buttons (no print) -->
+      <div class="no-print flex items-center justify-end gap-3 pt-2">
+        <button onclick="closeForensicPdfModal()" class="py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition">
+          Close Preview
+        </button>
+        <button onclick="window.print()" class="py-2.5 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-2 shadow-md transition">
+          <i class="ph-bold ph-printer text-base"></i>
+          <span>Print / Save as PDF Certificate</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: CONSOLE UPGRADE & CRYPTO CHECKOUT -->
+  <div id="upgradeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+    <div class="bg-white max-w-2xl w-full rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xl relative my-6 animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Close Button -->
+      <button onclick="closeUpgradeModal()" class="absolute right-5 top-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm transition">
+        ✕
+      </button>
+
+      <!-- Modal Header -->
+      <div class="flex items-center gap-3.5 mb-5 pb-4 border-b border-slate-100">
+        <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center text-2xl shadow-xs shrink-0">
+          <i class="ph-bold ph-shield-check"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Console Subscription & Pass</h3>
+          <p class="text-xs text-slate-500">Official Telecom Geolocation Service · Direct Blockchain Settlement</p>
+        </div>
+      </div>
+
+      <!-- Modal Step A: Checkout & TXID Input Form -->
+      <div id="upgradeModalCheckoutStep" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-2">
+            1. SELECT UPGRADE TIER
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+
+            <!-- 1 Mois: Pro Monthly Pass ($24.99) -->
+            <button 
+              type="button" 
+              onclick="selectUpgradePlan('pro_1m')" 
+              id="planCard-pro_1m"
+              class="p-3 rounded-2xl border-2 border-slate-200 text-left hover:border-slate-300 transition relative cursor-pointer"
+            >
+              <div class="absolute -top-2 right-2 bg-slate-700 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                30 DAYS
+              </div>
+              <div class="text-[9px] font-bold text-slate-500 uppercase">1 MOIS</div>
+              <div class="text-xs font-extrabold text-slate-900 mt-0.5">Pro 1-Mois</div>
+              <div class="text-base font-black text-slate-900 mt-1">$24.99 <span class="text-[9px] font-normal text-slate-500">/ 30j</span></div>
+              <div class="text-[9px] text-slate-500 mt-0.5">Tarif Standard</div>
+            </button>
+
+            <!-- 3 Mois: Pro 3-Month Pass ($49.99 - REMISE 33%) [DEFAULT / HIGHLIGHTED] -->
+            <button 
+              type="button" 
+              onclick="selectUpgradePlan('pro_3m')" 
+              id="planCard-pro_3m"
+              class="p-3 rounded-2xl border-2 border-blue-600 bg-blue-50/50 text-left transition relative shadow-sm cursor-pointer"
+            >
+              <div class="absolute -top-2 right-2 bg-blue-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                REMISE 33%
+              </div>
+              <div class="text-[9px] font-bold text-blue-600 uppercase">3 MOIS · POPULAIRE</div>
+              <div class="text-xs font-extrabold text-slate-900 mt-0.5">Pro 3-Mois</div>
+              <div class="text-base font-black text-blue-700 mt-1">$49.99 <span class="text-[9px] font-normal text-slate-500">/ 90j</span></div>
+              <div class="text-[9px] text-emerald-600 font-bold mt-0.5">$16.66/mo (Éco $25)</div>
+            </button>
+
+            <!-- 6 Mois: Pro 6-Month Pass ($89.99 - REMISE 40%) -->
+            <button 
+              type="button" 
+              onclick="selectUpgradePlan('pro_6m')" 
+              id="planCard-pro_6m"
+              class="p-3 rounded-2xl border-2 border-slate-200 text-left hover:border-slate-300 transition relative cursor-pointer"
+            >
+              <div class="absolute -top-2 right-2 bg-amber-500 text-slate-950 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                REMISE 40%
+              </div>
+              <div class="text-[9px] font-bold text-amber-600 uppercase">6 MOIS · MAX VALUE</div>
+              <div class="text-xs font-extrabold text-slate-900 mt-0.5">Pro 6-Mois</div>
+              <div class="text-base font-black text-slate-900 mt-1">$89.99 <span class="text-[9px] font-normal text-slate-500">/ 180j</span></div>
+              <div class="text-[9px] text-amber-600 font-bold mt-0.5">$14.99/mo (Éco $60)</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Crypto Payment Selection -->
+        <div>
+          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-2">
+            2. CHOOSE CRYPTO PAYMENT METHOD
+          </label>
+          <div class="flex flex-wrap gap-1.5" id="upgradeCurrencyTabs">
+            <button onclick="selectUpgradeCurrency('usdt_trc20')" id="upgradeTab-usdt_trc20" class="py-1.5 px-3 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-xs">
+              USDT (TRC-20) ⚡
+            </button>
+            <button onclick="selectUpgradeCurrency('usdt_bep20')" id="upgradeTab-usdt_bep20" class="py-1.5 px-3 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+              USDT (BEP-20)
+            </button>
+            <button onclick="selectUpgradeCurrency('usdt_erc20')" id="upgradeTab-usdt_erc20" class="py-1.5 px-3 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+              USDT (ERC-20)
+            </button>
+            <button onclick="selectUpgradeCurrency('btc')" id="upgradeTab-btc" class="py-1.5 px-3 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+              Bitcoin (BTC)
+            </button>
+            <button onclick="selectUpgradeCurrency('eth')" id="upgradeTab-eth" class="py-1.5 px-3 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+              Ethereum (ETH)
+            </button>
+            <button onclick="selectUpgradeCurrency('sol')" id="upgradeTab-sol" class="py-1.5 px-3 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+              Solana (SOL)
+            </button>
+            <button onclick="selectUpgradeCurrency('ltc')" id="upgradeTab-ltc" class="py-1.5 px-3 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+              Litecoin (LTC)
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: QR Code & Wallet Box -->
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex flex-col sm:flex-row items-center gap-4">
+            <!-- Dynamic QR Container -->
+            <div class="p-2.5 bg-white rounded-2xl border border-slate-200 shadow-xs shrink-0 flex items-center justify-center">
+              <div id="upgradeQrCode"></div>
+            </div>
+
+            <!-- Amount & Deposit Details -->
+            <div class="space-y-2 flex-grow w-full">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase text-slate-400">AMOUNT TO TRANSFER</span>
+                <span id="upgradeAmountDisplay" class="font-mono text-base font-black text-slate-900">49.99 USDT ($49.99)</span>
+              </div>
+
+              <div>
+                <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">OFFICIAL RECEIVING ADDRESS</span>
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    id="upgradeWalletInput" 
+                    readonly 
+                    class="w-full bg-white p-2 text-xs font-mono font-bold text-slate-800 rounded-xl border border-slate-200 outline-none select-all"
+                  />
+                  <button 
+                    onclick="copyUpgradeAddress()" 
+                    class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition text-xs font-bold flex items-center gap-1 shrink-0"
+                    title="Copy Address"
+                  >
+                    <i class="ph-bold ph-copy text-base"></i>
+                    <span class="hidden sm:inline">Copy</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-1">
+                <a 
+                  id="upgradeExplorerLink" 
+                  href="#" 
+                  target="_blank" 
+                  class="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline"
+                >
+                  <i class="ph-bold ph-arrow-square-out"></i>
+                  <span id="upgradeExplorerName">View on TronScan Explorer</span>
+                </a>
+                <span class="text-[10px] text-slate-400 font-mono">Instant Mempool Detection</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Transaction Hash (TxID) & Confirm -->
+        <div class="space-y-3 pt-1">
+          <div>
+            <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
+              ENTER BLOCKCHAIN TRANSACTION HASH (TXID)
+            </label>
+            <input 
+              type="text" 
+              id="upgradeTxInput" 
+              placeholder="e.g. 7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3..." 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-mono text-xs outline-none focus:border-blue-600 focus:bg-white"
+            />
+          </div>
+
+          <button 
+            type="button" 
+            onclick="confirmUpgradePayment()" 
+            id="upgradeSubmitBtn"
+            class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-black text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition transform active:scale-95 cursor-pointer"
+          >
+            <i class="ph-bold ph-check-circle text-lg"></i>
+            <span>Confirm Payment & Check Blockchain</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Modal Step B: Blockchain Verification Pending Screen -->
+      <div id="upgradeModalPendingStep" class="hidden space-y-5 animate-in fade-in duration-200">
+        <div class="text-center p-6 bg-gradient-to-b from-amber-50/90 to-white border border-amber-200 rounded-3xl">
+          <div class="w-16 h-16 mx-auto rounded-full bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-amber-600 text-3xl mb-3 shadow-inner">
+            <i class="ph-bold ph-hourglass-high animate-spin" style="animation-duration: 5s;"></i>
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-black uppercase tracking-wider mb-2 border border-amber-300">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+            <span>En attente de validation Blockchain (Pending)</span>
+          </div>
+          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Paiement Détecté dans le Réseau</h3>
+          <p class="text-xs text-slate-600 max-w-md mx-auto mt-1 leading-relaxed">
+            Votre transaction est enregistrée. L'activation de la Console Pro s'effectuera dès la confirmation des blocs par les nœuds validateurs (généralement 1 à 3 minutes).
+          </p>
+        </div>
+
+        <!-- TX Information summary -->
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5 text-xs font-mono">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 font-sans font-bold text-[10px] uppercase">Pass & Montant</span>
+            <span class="font-bold text-slate-900" id="modalPendingAmountNetwork">USDT (TRC-20) · $49.99</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 font-sans font-bold text-[10px] uppercase">Transaction Hash (TXID)</span>
+            <a id="modalPendingTxLink" href="#" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1 font-bold truncate max-w-[240px]">
+              <span id="modalPendingTxHash" class="truncate">0x...</span>
+              <i class="ph-bold ph-arrow-square-out shrink-0"></i>
+            </a>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 font-sans font-bold text-[10px] uppercase">Statut Réseau</span>
+            <span class="text-amber-800 bg-amber-100 px-2 py-0.5 rounded font-bold text-[10px] flex items-center gap-1 border border-amber-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>Awaiting 1+ Node Confirmations</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <button 
+            type="button" 
+            onclick="verifyModalBlockchainStatus()" 
+            id="modalVerifyBtn"
+            class="w-full py-3 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-600/25 flex items-center justify-center gap-2 transition cursor-pointer"
+          >
+            <i class="ph-bold ph-arrows-clockwise text-base"></i>
+            <span>Vérifier le statut Blockchain maintenant</span>
+          </button>
+          <button 
+            type="button" 
+            onclick="closeUpgradeModal(); switchTab('billing');" 
+            class="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition cursor-pointer"
+          >
+            Fermer et suivre dans l'onglet Facturation
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 2: TRACK NEW PHONE -->
+  <div id="newTrackModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+    <div class="bg-white max-w-md w-full rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xl relative">
+      
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 flex items-center justify-center">
+            <i class="ph-bold ph-crosshair text-lg"></i>
+          </div>
+          <span>Track New Phone Target</span>
+        </h3>
+        <button onclick="closeNewTrackModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold">
+          ✕
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            TARGET PHONE NUMBER
+          </label>
+          <input 
+            type="tel" 
+            id="modalPhoneInput" 
+            placeholder="+212 661-000000" 
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-mono text-sm font-bold outline-none focus:border-blue-600 focus:bg-white"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            PRETEXT SMS HOOK
+          </label>
+          <select id="modalPretextSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-xs font-bold outline-none focus:border-blue-600">
+            <option value="delivery">📦 FastTrack Express Delivery (Package drop-off)</option>
+            <option value="friend">📍 Mutual Friend Location Sharing</option>
+            <option value="emergency">🛡️ Emergency Family Safety Verification</option>
+            <option value="custom">✍️ Direct Telecom Verification Link</option>
+          </select>
+        </div>
+
+        <button 
+          onclick="submitNewTrack()" 
+          id="modalSubmitBtn"
+          class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition transform active:scale-95"
+        >
+          <span>Dispatch & Open Live Radar</span>
+          <i class="ph-bold ph-arrow-right text-base"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    let map = null;
+    let targetMarker = null;
+    let accuracyCircle = null;
+    let towerMarkers = [];
+    let triangulationPolylines = [];
+    let showTriangulation = true;
+    let currentSession = null;
+    let allSessions = [];
+    let sseSource = null;
+    let currentLayer = 'satellite';
+    let currentUser = null;
+    let audioEnabled = true;
+
+    // Tactical Web Audio Procedural Synthesizer
+    let audioCtx = null;
+    function isUserUpgraded() {
+      return Boolean(currentUser && currentUser.planStatus === 'active' && currentUser.plan !== 'free');
+    }
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playSound(type) {
+      if (!audioEnabled) return;
+      try {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+
+        if (type === 'radar') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(540, now);
+          osc.frequency.exponentialRampToValueAtTime(1080, now + 0.15);
+          gain.gain.setValueAtTime(0.04, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.18);
+        } else if (type === 'lock') {
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + i * 0.08);
+            gain.gain.setValueAtTime(0.06, now + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.08);
+            osc.stop(now + 0.5);
+          });
+        } else if (type === 'click') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, now);
+          gain.gain.setValueAtTime(0.02, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        }
+      } catch (e) {}
+    }
+
+    function toggleSound() {
+      audioEnabled = !audioEnabled;
+      const label = document.getElementById('soundLabel');
+      if (label) label.textContent = audioEnabled ? 'Audio: ON' : 'Audio: OFF';
+      showToast(audioEnabled ? 'Tactical Audio: Enabled' : 'Tactical Audio: Muted');
+    }
+
+    // Toast Component
+    let toastTimer = null;
+    function showToast(text, isError = false) {
+      const toast = document.getElementById('consoleToast');
+      const toastText = document.getElementById('toastText');
+      const toastIcon = document.getElementById('toastIcon');
+      if (!toast) return;
+
+      toastText.textContent = text;
+      if (isError) {
+        toastIcon.className = "w-6 h-6 rounded-lg bg-red-600 text-white flex items-center justify-center shrink-0";
+        toastIcon.innerHTML = `<i class="ph-bold ph-warning"></i>`;
+      } else {
+        toastIcon.className = "w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0";
+        toastIcon.innerHTML = `<i class="ph-bold ph-check"></i>`;
+      }
+
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 2600);
+    }
+
+    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    });
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri'
+    });
+
+    // Check Authentication on Load
+    async function checkAuth() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let token = localStorage.getItem('authToken') || urlParams.get('token');
+      
+      // Purge legacy demo preview token so users must register before accessing console
+      if (token === 'tok_demo_preview' && urlParams.get('demo') !== '1') {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
+        token = null;
+      }
+
+      // If unauthenticated, redirect directly to Inscription (Create Account)
+      if (!token && urlParams.get('demo') !== '1') {
+        const pendingPhone = urlParams.get('targetPhone') || localStorage.getItem('pendingTargetPhone') || '';
+        const redirectUrl = '/auth.html?mode=register' + (pendingPhone ? `&phone=${encodeURIComponent(pendingPhone)}` : '');
+        window.location.href = redirectUrl;
+        return false;
+      }
+
+      // Explicit demo mode sandbox only when ?demo=1 is in URL
+      if (!token && urlParams.get('demo') === '1') {
+        token = 'tok_demo_preview';
+        localStorage.setItem('authToken', token);
+      }
+
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          currentUser = data.user;
+          updateUserUI(data.user);
+          return true;
+        } else {
+          // Token expired or invalid
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('authUser');
+          const pendingPhone = urlParams.get('targetPhone') || localStorage.getItem('pendingTargetPhone') || '';
+          window.location.href = '/auth.html' + (pendingPhone ? `?phone=${encodeURIComponent(pendingPhone)}` : '');
+          return false;
+        }
+      } catch (err) {
+        console.error('Auth verification network error:', err);
+        // Fallback for temporary network glitch
+        const storedUser = localStorage.getItem('authUser');
+        if (storedUser) {
+          try {
+            currentUser = JSON.parse(storedUser);
+            updateUserUI(currentUser);
+            return true;
+          } catch(e) {}
+        }
+        return true;
+      }
+    }
+
+    function updateUserUI(user) {
+      if (!user) return;
+      const initials = user.name ? user.name.split(' ').map(n=>n[0]).join('').substring(0, 2).toUpperCase() : 'ME';
+      document.getElementById('userAvatarInitials').textContent = initials;
+      document.getElementById('topUserName').textContent = user.name || 'Member';
+      document.getElementById('menuFullName').textContent = user.name || 'Member';
+      document.getElementById('menuEmail').textContent = user.email || '';
+      
+      const planTitle = document.getElementById('billingPlanTitle');
+      if (planTitle) planTitle.textContent = user.planName || 'Free Tier (Upgrade Required)';
+
+      const banner = document.getElementById('radarUpgradeBanner');
+      const isUpgraded = isUserUpgraded();
+
+      if (banner) {
+        if (isUpgraded) {
+          banner.classList.add('hidden');
+        } else {
+          banner.classList.remove('hidden');
+        }
+      }
+
+      const liveBadge = document.getElementById('liveStatusBadge');
+      const statusTxt = document.getElementById('statusText');
+      if (liveBadge && statusTxt) {
+        if (!isUpgraded) {
+          liveBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300";
+          statusTxt.textContent = "LOCKED (UPGRADE REQUIRED)";
+        } else {
+          liveBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200";
+          statusTxt.textContent = "SIGNAL LOCKED";
+        }
+      }
+
+      const topBadge = document.getElementById('topPlanBadge');
+      if (topBadge) {
+        if (!isUpgraded) {
+          topBadge.className = "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-medium text-slate-600";
+          topBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span><span id="topPlanText" class="font-mono text-[11px] text-slate-700">Free Tier</span>`;
+        } else if (user.plan === 'enterprise_lifetime' || user.plan === 'annual_enterprise') {
+          topBadge.className = "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700";
+          topBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-600"></span><span id="topPlanText" class="font-mono text-[11px] text-blue-800">Annual Corporate Active</span>`;
+        } else if (user.plan === 'pro_unlimited') {
+          topBadge.className = "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700";
+          topBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span id="topPlanText" class="font-mono text-[11px] text-emerald-800">Pro Pass Active</span>`;
+        } else {
+          topBadge.className = "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-medium text-slate-600";
+          topBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span id="topPlanText" class="font-mono text-[11px] text-slate-700">${user.planName || 'Active'}</span>`;
+        }
+      }
+
+      if (user.planStatus === 'canceled_at_period_end') {
+        const statusPill = document.getElementById('billingStatusPill');
+        if (statusPill) {
+          statusPill.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 mb-2";
+          document.getElementById('billingStatusText').textContent = "Auto-Renewal Cancelled";
+        }
+        const autoRenewLabel = document.getElementById('billingAutoRenewLabel');
+        if (autoRenewLabel) autoRenewLabel.textContent = "Disabled (No Further Charges)";
+        
+        const cancelBtn = document.getElementById('btnCancelSub');
+        if (cancelBtn) {
+          cancelBtn.disabled = true;
+          cancelBtn.className = "py-2.5 px-5 rounded-xl border border-slate-200 bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed";
+          cancelBtn.innerHTML = `<span>Subscription Cancelled</span>`;
+        }
+      }
+    }
+
+    function toggleUserMenu() {
+      const menu = document.getElementById('userDropdown');
+      menu.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const btn = document.getElementById('userMenuBtn');
+      const menu = document.getElementById('userDropdown');
+      if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+
+    function handleLogout() {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('authUser');
+      window.location.href = '/auth.html';
+    }
+
+    // Switch Console Tabs
+    function switchTab(tabId) {
+      playSound('click');
+      const tabs = ['radar', 'history', 'sms', 'billing', 'settings'];
+      tabs.forEach(t => {
+        const view = document.getElementById(`view-${t}`);
+        const btn = document.getElementById(`navTab-${t}`);
+        if (view) {
+          if (t === tabId) {
+            view.classList.remove('hidden');
+          } else {
+            view.classList.add('hidden');
+          }
+        }
+        if (btn) {
+          if (t === tabId) {
+            btn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition bg-blue-50 text-blue-700 border border-blue-200 shadow-xs";
+            const icon = btn.querySelector('i');
+            if (icon) icon.className = icon.className.replace('text-slate-400', 'text-blue-600');
+          } else {
+            btn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-600 hover:bg-slate-100";
+            const icon = btn.querySelector('i');
+            if (icon) icon.className = icon.className.replace('text-blue-600', 'text-slate-400');
+          }
+        }
+      });
+
+      if (tabId === 'radar' && map) {
+        setTimeout(() => map.invalidateSize(), 150);
+      }
+      if (tabId === 'billing') {
+        fetchPendingPayment();
+      }
+    }
+
+    // Leaflet Map Initialization with Cell Tower Triangulation
+    function initMap(lat = 33.5731, lng = -7.5898) {
+      if (!map) {
+        map = L.map('mapContainer', {
+          zoomControl: false,
+          layers: [satelliteLayer]
+        }).setView([lat, lng], 15);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+      }
+      updateMapMarker(lat, lng, 3.8);
+      renderCellTowerTriangulation(lat, lng);
+    }
+
+    function toggleMapLayer() {
+      playSound('click');
+      if (!map) return;
+      const display = document.getElementById('layerNameDisplay');
+      if (currentLayer === 'satellite') {
+        map.removeLayer(satelliteLayer);
+        map.addLayer(streetLayer);
+        currentLayer = 'street';
+        display.textContent = 'Street Layer';
+      } else {
+        map.removeLayer(streetLayer);
+        map.addLayer(satelliteLayer);
+        currentLayer = 'satellite';
+        display.textContent = 'Satellite Layer';
+      }
+    }
+
+    function recenterMap() {
+      playSound('click');
+      if (!map || !currentSession) return;
+      const lat = currentSession.targetLocation ? currentSession.targetLocation.latitude : 33.5731;
+      const lng = currentSession.targetLocation ? currentSession.targetLocation.longitude : -7.5898;
+      map.setView([lat, lng], 16, { animate: true });
+    }
+
+    // Custom Tactical Beacon Pin
+    function updateMapMarker(lat, lng, accuracy = 3.8) {
+      if (!map) return;
+      if (targetMarker) map.removeLayer(targetMarker);
+      if (accuracyCircle) map.removeLayer(accuracyCircle);
+
+      const tacticalIcon = L.divIcon({
+        className: 'custom-pin',
+        html: `
+          <div class="radar-beacon">
+            <div class="radar-ring"></div>
+            <div class="radar-ring"></div>
+            <div class="radar-ring"></div>
+            <div class="w-8 h-8 rounded-full bg-blue-600 border-2 border-white shadow-2xl flex items-center justify-center text-xs text-white font-bold relative z-10">
+              <i class="ph-bold ph-crosshair text-sm"></i>
+            </div>
+          </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+
+      targetMarker = L.marker([lat, lng], { icon: tacticalIcon }).addTo(map);
+      targetMarker.bindPopup(`
+        <div class="text-xs font-sans text-slate-900 p-1">
+          <div class="font-bold text-blue-700 flex items-center gap-1.5 mb-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <b>Target GPS Locked</b>
+          </div>
+          <div>Lat: <b>${lat.toFixed(5)}</b></div>
+          <div>Lng: <b>${lng.toFixed(5)}</b></div>
+          <div>Precision: <b>±${accuracy}m (High Confidence)</b></div>
+        </div>
+      `).openPopup();
+
+      accuracyCircle = L.circle([lat, lng], {
+        color: '#2563eb',
+        fillColor: '#2563eb',
+        fillOpacity: 0.16,
+        weight: 1.5,
+        radius: Math.max(accuracy, 22)
+      }).addTo(map);
+
+      map.setView([lat, lng], 16);
+      document.getElementById('hudCoords').textContent = `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° W`;
+    }
+
+    // Triangulation Spectacle: 3 BTS Towers with Converging Lasers
+    function renderCellTowerTriangulation(targetLat, targetLng) {
+      if (!map) return;
+
+      // Clear existing
+      towerMarkers.forEach(m => map.removeLayer(m));
+      triangulationPolylines.forEach(p => map.removeLayer(p));
+      towerMarkers = [];
+      triangulationPolylines = [];
+
+      if (!showTriangulation) return;
+
+      // 3 realistic cellular towers around target
+      const towers = [
+        { name: 'IAM Tower #49281 (Maarif)', lat: targetLat + 0.0055, lng: targetLng - 0.0048, carrier: 'Maroc Telecom' },
+        { name: 'Orange BTS #1204 (Gauthier)', lat: targetLat - 0.0042, lng: targetLng + 0.0051, carrier: 'Orange Maroc' },
+        { name: 'Inwi Node #771 (Bd d\'Anfa)', lat: targetLat + 0.0048, lng: targetLng + 0.0042, carrier: 'Inwi GSM' }
+      ];
+
+      towers.forEach(t => {
+        const towerIcon = L.divIcon({
+          className: 'tower-pin',
+          html: `
+            <div class="w-6 h-6 rounded-lg bg-slate-900 text-blue-400 border border-blue-400/60 shadow-md flex items-center justify-center text-xs">
+              <i class="ph-bold ph-broadcast"></i>
+            </div>
+          `,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        const tm = L.marker([t.lat, t.lng], { icon: towerIcon }).addTo(map);
+        tm.bindPopup(`<b class="text-xs font-mono">${t.name}</b><br/><span class="text-[10px] text-slate-500">${t.carrier} · 4G/5G Active</span>`);
+        towerMarkers.push(tm);
+
+        // Converging line
+        const line = L.polyline([[t.lat, t.lng], [targetLat, targetLng]], {
+          color: '#3b82f6',
+          weight: 2,
+          dashArray: '6, 8',
+          opacity: 0.85
+        }).addTo(map);
+        triangulationPolylines.push(line);
+      });
+    }
+
+    function toggleTriangulationVectors() {
+      showTriangulation = !showTriangulation;
+      const label = document.getElementById('triangulationLabel');
+      const btn = document.getElementById('btnTriangulation');
+      if (label) label.textContent = showTriangulation ? 'Triangulation: ON' : 'Triangulation: OFF';
+      if (btn) {
+        btn.className = showTriangulation ? 
+          "px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5" :
+          "px-3.5 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5";
+      }
+
+      if (currentSession && currentSession.targetLocation) {
+        renderCellTowerTriangulation(currentSession.targetLocation.latitude, currentSession.targetLocation.longitude);
+      } else {
+        renderCellTowerTriangulation(33.5731, -7.5898);
+      }
+      showToast(showTriangulation ? 'Cell Triangulation Vectors Enabled' : 'Triangulation Vectors Hidden');
+    }
+
+    // Standby & Acquisition Terminal State Management
+    function setStandbyMode(isStandby) {
+      const deckStandby = document.getElementById('deckStandby');
+      const deckActive = document.getElementById('deckActiveTarget');
+      const overlay = document.getElementById('mapStandbyOverlay');
+      const topHudStatus = document.getElementById('topHudStatusText');
+      const bottomHud = document.getElementById('bottomHudIndicator');
+
+      if (isStandby) {
+        if (deckStandby) deckStandby.classList.remove('hidden');
+        if (deckActive) deckActive.classList.add('hidden');
+        if (overlay) overlay.classList.remove('hidden');
+        if (topHudStatus) topHudStatus.textContent = "ORBITAL STANDBY · GATEWAY READY";
+        if (bottomHud) bottomHud.classList.add('hidden');
+
+        // Regional map overview
+        if (!map) {
+          initMap(31.7917, -7.0926);
+          if (map) map.setZoom(6);
+        } else {
+          map.setView([31.7917, -7.0926], 6);
+        }
+        if (map) map.closePopup();
+        if (targetMarker && map) { map.removeLayer(targetMarker); targetMarker = null; }
+        if (accuracyCircle && map) { map.removeLayer(accuracyCircle); accuracyCircle = null; }
+        towerMarkers.forEach(m => map && map.removeLayer(m));
+        triangulationPolylines.forEach(p => map && map.removeLayer(p));
+        towerMarkers = [];
+        triangulationPolylines = [];
+      } else {
+        if (deckStandby) deckStandby.classList.add('hidden');
+        if (deckActive) deckActive.classList.remove('hidden');
+        if (overlay) overlay.classList.add('hidden');
+        if (topHudStatus) topHudStatus.textContent = "3 BTS TOWERS CONVERGING";
+        if (bottomHud) bottomHud.classList.remove('hidden');
+      }
+    }
+
+    function handleStandbyPhoneInput(val) {
+      const clean = (val || '').replace(/\D/g, '');
+      const flagEl = document.getElementById('standbyFlag');
+      const carrierEl = document.getElementById('standbyCarrierBadge');
+
+      if (!clean) {
+        if (flagEl) flagEl.textContent = '🌐';
+        if (carrierEl) carrierEl.textContent = 'Awaiting number...';
+        return;
+      }
+
+      if (clean.startsWith('212')) {
+        if (flagEl) flagEl.textContent = '🇲🇦';
+        const p = clean.substring(3, 5);
+        if (['61', '62', '63', '64', '65', '68', '70', '71'].some(x => p.startsWith(x))) {
+          if (carrierEl) carrierEl.textContent = 'Maroc Telecom (IAM)';
+        } else if (['60', '66', '67', '76', '77'].some(x => p.startsWith(x))) {
+          if (carrierEl) carrierEl.textContent = 'Orange Maroc';
+        } else if (['69', '74', '75', '78'].some(x => p.startsWith(x))) {
+          if (carrierEl) carrierEl.textContent = 'Inwi (Wana)';
+        } else {
+          if (carrierEl) carrierEl.textContent = 'Maroc Telecom (GSM)';
+        }
+      } else if (clean.startsWith('33')) {
+        if (flagEl) flagEl.textContent = '🇫🇷';
+        if (carrierEl) carrierEl.textContent = 'Orange France / SFR';
+      } else if (clean.startsWith('1')) {
+        if (flagEl) flagEl.textContent = '🇺🇸';
+        if (carrierEl) carrierEl.textContent = 'Verizon / AT&T';
+      } else if (clean.startsWith('44')) {
+        if (flagEl) flagEl.textContent = '🇬🇧';
+        if (carrierEl) carrierEl.textContent = 'EE / Vodafone UK';
+      } else if (clean.startsWith('34')) {
+        if (flagEl) flagEl.textContent = '🇪🇸';
+        if (carrierEl) carrierEl.textContent = 'Movistar / Orange ES';
+      } else if (clean.startsWith('966')) {
+        if (flagEl) flagEl.textContent = '🇸🇦';
+        if (carrierEl) carrierEl.textContent = 'STC (Saudi Telecom)';
+      } else if (clean.startsWith('971')) {
+        if (flagEl) flagEl.textContent = '🇦🇪';
+        if (carrierEl) carrierEl.textContent = 'e& (Etisalat) / du';
+      } else {
+        if (flagEl) flagEl.textContent = '🌐';
+        if (carrierEl) carrierEl.textContent = 'GSM Global Network';
+      }
+    }
+
+    function selectStandbyPretext(labelEl, val) {
+      document.querySelectorAll('.pretext-option').forEach(el => {
+        el.className = "flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition pretext-option";
+      });
+      labelEl.className = "flex items-start gap-3 p-3 rounded-xl border border-blue-600 bg-blue-50/40 cursor-pointer hover:bg-blue-50 transition pretext-option";
+      const radio = labelEl.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+    }
+
+    function handleStandbyDispatch() {
+      const phoneInput = document.getElementById('standbyPhoneInput');
+      const phone = (phoneInput?.value || '').trim();
+      const pretextType = document.querySelector('input[name="standbyPretext"]:checked')?.value || 'delivery';
+      const watchdogPhone = (document.getElementById('standbyWatchdogPhone')?.value || '').trim();
+
+      if (!phone || phone.length < 8) {
+        showToast('Please enter a valid target mobile number.', true);
+        if (phoneInput) phoneInput.focus();
+        return;
+      }
+
+      // Save pending target so payment automatically activates it
+      window.pendingTarget = { phone, pretextType, watchdogPhone };
+
+      if (!isUserUpgraded()) {
+        playSound('radar');
+        showToast('⚠️ Plan Upgrade Required: Activate Pro Pass (1 Month $24.99, 3 Months $49.99, or 6 Months $89.99) to start tracking.', true);
+        openUpgradeModal('pro_3m');
+        return;
+      }
+
+      executeDispatchTarget(phone, pretextType, watchdogPhone);
+    }
+
+    async function executeDispatchTarget(phone, pretextType = 'delivery', watchdogPhone = '') {
+      const btn = document.getElementById('btnStandbyDispatch');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Dispatching Satellite Gateway...`;
+      }
+
+      const token = localStorage.getItem('authToken');
+      try {
+        const res = await fetch('/api/create-track', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ phone, pretextType })
+        });
+        const data = await res.json();
+        if (data.success && data.session) {
+          window.pendingTarget = null;
+          allSessions.unshift(data.session);
+          document.getElementById('historyBadgeCount').textContent = allSessions.length;
+          selectSession(data.session);
+          playSound('lock');
+          showToast(`🛰️ Target ${phone} registered! Live Radar engaged.`);
+        } else {
+          showToast(data.error || 'Failed to dispatch.', true);
+          if (data.requiresUpgrade) {
+            openUpgradeModal('pro_unlimited');
+          }
+        }
+      } catch (err) {
+        showToast('Connection error.', true);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="ph-bold ph-crosshair text-lg"></i> <span>Initiate Satellite Tracking</span>`;
+        }
+      }
+    }
+
+    // Sessions & Tracking Logic
+    async function loadSessions(targetId = null) {
+      const token = localStorage.getItem('authToken');
+      try {
+        const res = await fetch('/api/sessions', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        const data = await res.json();
+        if (data.success && data.sessions && data.sessions.length > 0) {
+          allSessions = data.sessions;
+          document.getElementById('historyBadgeCount').textContent = allSessions.length;
+          
+          let selected = allSessions[0];
+          if (targetId) {
+            const found = allSessions.find(s => s.id === targetId);
+            if (found) selected = found;
+          }
+          selectSession(selected);
+          renderHistoryTable();
+        } else {
+          allSessions = [];
+          document.getElementById('historyBadgeCount').textContent = '0';
+          setStandbyMode(true);
+          renderHistoryTable();
+        }
+      } catch (err) {
+        setStandbyMode(true);
+      }
+    }
+
+    function selectSession(session) {
+      currentSession = session;
+      setStandbyMode(false);
+      
+      document.getElementById('currentPhoneDisplay').textContent = session.phone;
+      if (session.phoneInfo) {
+        document.getElementById('currentCarrierDisplay').textContent = session.phoneInfo.carrier || 'Cellular 4G/5G';
+        document.getElementById('currentCountryFlag').textContent = session.phoneInfo.flag || '🌐';
+      }
+
+      const statusBadge = document.getElementById('liveStatusBadge');
+      const statusText = document.getElementById('statusText');
+
+      if (session.status === 'LOCATED') {
+        statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200";
+        statusText.textContent = "SIGNAL LOCKED";
+      } else {
+        statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200";
+        statusText.textContent = "WAITING FOR CLICK";
+      }
+
+      if (session.targetLocation) {
+        document.getElementById('latDisplay').textContent = session.targetLocation.latitude.toFixed(5);
+        document.getElementById('lngDisplay').textContent = session.targetLocation.longitude.toFixed(5);
+        document.getElementById('accuracyDisplay').textContent = `± ${session.targetLocation.accuracy || 3.5} meters`;
+        initMap(session.targetLocation.latitude, session.targetLocation.longitude);
+      } else if (session.phoneInfo && session.phoneInfo.approximateCoords) {
+        document.getElementById('latDisplay').textContent = session.phoneInfo.approximateCoords.lat.toFixed(5);
+        document.getElementById('lngDisplay').textContent = session.phoneInfo.approximateCoords.lng.toFixed(5);
+        document.getElementById('accuracyDisplay').textContent = `± 12.0 meters (Cell tower)`;
+        initMap(session.phoneInfo.approximateCoords.lat, session.phoneInfo.approximateCoords.lng);
+      } else {
+        initMap();
+      }
+
+      if (session.targetDeviceInfo) {
+        document.getElementById('deviceDisplay').textContent = session.targetDeviceInfo.platform || 'iPhone 15 Pro';
+        document.getElementById('batteryDisplay').textContent = session.targetDeviceInfo.battery ? `🔋 ${session.targetDeviceInfo.battery}` : '🔋 84% (Charging)';
+      }
+
+      // Tracking URL
+      const host = window.location.origin;
+      const trkUrl = `${host}/track.html?id=${session.id}`;
+      document.getElementById('trackingUrlInput').value = trkUrl;
+
+      // QR Code
+      const qrContainer = document.getElementById('qrcode');
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: trkUrl,
+        width: 110,
+        height: 110,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff"
+      });
+
+      // Terminal logs
+      const term = document.getElementById('sseTerminal');
+      term.innerHTML = '';
+      if (session.history) {
+        session.history.forEach(h => {
+          const l = document.createElement('div');
+          l.className = "text-slate-300 py-0.5";
+          l.innerHTML = `<span class="text-slate-500">[${new Date(h.timestamp).toLocaleTimeString()}]</span> <span>›</span> <span class="text-blue-400">${h.event}</span>`;
+          term.appendChild(l);
+        });
+        term.scrollTop = term.scrollHeight;
+      }
+
+      connectSSE(session.id);
+    }
+
+    function connectSSE(sessionId) {
+      if (sseSource) sseSource.close();
+      sseSource = new EventSource(`/api/stream/${sessionId}`);
+      sseSource.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.type === 'LOCATED' && payload.session) {
+            currentSession = payload.session;
+            playSound('lock');
+            showToast('Target Signal Locked via Cellular Triangulation!');
+            selectSession(payload.session);
+          }
+        } catch (e) {}
+      };
+    }
+
+    // Render History Table
+    function renderHistoryTable() {
+      const tbody = document.getElementById('historyTableBody');
+      const search = (document.getElementById('historySearchInput').value || '').toLowerCase();
+      tbody.innerHTML = '';
+
+      const filtered = allSessions.filter(s => {
+        return s.phone.toLowerCase().includes(search) || 
+               (s.phoneInfo && s.phoneInfo.carrier && s.phoneInfo.carrier.toLowerCase().includes(search));
+      });
+
+      document.getElementById('historyCounter').textContent = `Showing ${filtered.length} of ${allSessions.length} devices`;
+
+      filtered.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/80 transition";
+        const isLoc = s.status === 'LOCATED';
+        const lat = s.targetLocation ? s.targetLocation.latitude.toFixed(4) : (s.phoneInfo?.approximateCoords?.lat.toFixed(4) || '--');
+        const lng = s.targetLocation ? s.targetLocation.longitude.toFixed(4) : (s.phoneInfo?.approximateCoords?.lng.toFixed(4) || '--');
+
+        tr.innerHTML = `
+          <td class="p-4 font-mono font-bold text-slate-900">
+            ${s.phone}
+          </td>
+          <td class="p-4">
+            <div class="flex items-center gap-1.5">
+              <span>${s.phoneInfo?.flag || '🌐'}</span>
+              <span class="font-semibold text-slate-700">${s.phoneInfo?.carrier || 'GSM Network'}</span>
+            </div>
+          </td>
+          <td class="p-4">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isLoc ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isLoc ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+              ${isLoc ? 'Located (GPS)' : 'SMS Pending'}
+            </span>
+          </td>
+          <td class="p-4 font-mono text-[11px] text-slate-600">
+            ${lat}, ${lng}
+          </td>
+          <td class="p-4 text-slate-500 text-[11px]">
+            ${new Date(s.createdAt).toLocaleDateString()}
+          </td>
+          <td class="p-4 text-right space-x-2">
+            <button onclick="viewTargetOnRadar('${s.id}')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold transition">
+              View Map
+            </button>
+            <button onclick="deleteTarget('${s.id}')" class="p-1 text-slate-400 hover:text-red-600 transition" title="Delete">
+              <i class="ph-bold ph-trash text-sm"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function viewTargetOnRadar(id) {
+      const s = allSessions.find(x => x.id === id);
+      if (s) {
+        selectSession(s);
+        switchTab('radar');
+      }
+    }
+
+    async function deleteTarget(id) {
+      if (!confirm('Are you sure you want to remove this target from your console?')) return;
+      const token = localStorage.getItem('authToken');
+      try {
+        await fetch(`/api/session/${id}`, {
+          method: 'DELETE',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        allSessions = allSessions.filter(s => s.id !== id);
+        document.getElementById('historyBadgeCount').textContent = allSessions.length;
+        if (allSessions.length === 0) {
+          setStandbyMode(true);
+        } else if (currentSession && currentSession.id === id) {
+          selectSession(allSessions[0]);
+        }
+        renderHistoryTable();
+        showToast('Target removed from console.');
+      } catch (e) {}
+    }
+
+    // Modal: Track New Phone
+    function openNewTrackModal() {
+      if (!isUserUpgraded()) {
+        playSound('radar');
+        showToast('⚠️ Upgrade Required: You must activate an Express or Pro Pass to track phone numbers.', true);
+        openUpgradeModal('pro_unlimited');
+        return;
+      }
+      playSound('click');
+      document.getElementById('newTrackModal').classList.remove('hidden');
+      document.getElementById('modalPhoneInput').focus();
+    }
+
+    function closeNewTrackModal() {
+      document.getElementById('newTrackModal').classList.add('hidden');
+    }
+
+    async function submitNewTrack() {
+      if (!isUserUpgraded()) {
+        closeNewTrackModal();
+        showToast('⚠️ Upgrade Required: Activate a Pass before dispatching tracks.', true);
+        openUpgradeModal('pro_unlimited');
+        return;
+      }
+      const phone = document.getElementById('modalPhoneInput').value.trim();
+      const pretextType = document.getElementById('modalPretextSelect').value;
+      const btn = document.getElementById('modalSubmitBtn');
+
+      if (!phone) {
+        showToast('Please enter a target phone number.', true);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Dispatching...`;
+
+      const token = localStorage.getItem('authToken');
+      try {
+        const res = await fetch('/api/create-track', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ phone, pretextType })
+        });
+        const data = await res.json();
+        if (data.success && data.session) {
+          allSessions.unshift(data.session);
+          closeNewTrackModal();
+          selectSession(data.session);
+          switchTab('radar');
+          playSound('lock');
+          showToast(`Target ${phone} registered and active!`);
+        } else {
+          showToast(data.error || 'Failed to dispatch.', true);
+        }
+      } catch (err) {
+        showToast('Connection error.', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Dispatch & Open Live Radar</span> <i class="ph-bold ph-arrow-right text-base"></i>`;
+      }
+    }
+
+    // 1-Click WhatsApp & SMS Dispatch Actions
+    function dispatchViaWhatsApp() {
+      if (!isUserUpgraded()) {
+        showToast('⚠️ Upgrade Required: Activate a Pass to dispatch WhatsApp tracking links.', true);
+        openUpgradeModal('pro_unlimited');
+        return;
+      }
+      playSound('click');
+      const trkUrl = document.getElementById('trackingUrlInput').value;
+      const phone = currentSession ? currentSession.phone.replace(/\D/g, '') : '';
+      const pretextMsg = currentSession?.pretext?.smsBody || 'Your package is out for delivery. Confirm location:';
+      const fullText = encodeURIComponent(`${pretextMsg}\n${trkUrl}`);
+      
+      const waUrl = phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${fullText}` : `https://api.whatsapp.com/send?text=${fullText}`;
+      window.open(waUrl, '_blank');
+      showToast('Opening WhatsApp with pretext message...');
+    }
+
+    function dispatchViaSms() {
+      if (!isUserUpgraded()) {
+        showToast('⚠️ Upgrade Required: Activate a Pass to dispatch SMS tracking links.', true);
+        openUpgradeModal('pro_unlimited');
+        return;
+      }
+      playSound('click');
+      const trkUrl = document.getElementById('trackingUrlInput').value;
+      const phone = currentSession ? currentSession.phone : '';
+      const pretextMsg = currentSession?.pretext?.smsBody || 'Your delivery confirmation:';
+      const fullBody = encodeURIComponent(`${pretextMsg} ${trkUrl}`);
+      
+      window.location.href = `sms:${phone}?body=${fullBody}`;
+      showToast('Opening SMS composer with pre-filled pretext...');
+    }
+
+    // Offline Target Auto-Wake Simulator (User Requested Feature)
+    function simulateTargetPowerOn() {
+      if (!isUserUpgraded()) {
+        showToast('⚠️ Upgrade Required: Activate a Pass to enable Offline Target Watchdog alerts.', true);
+        openUpgradeModal('pro_unlimited');
+        return;
+      }
+      playSound('radar');
+      const notifyPhone = (document.getElementById('watchdogPhoneInput').value || '').trim();
+      showToast('Scanning GSM gateway for target device reconnection...');
+
+      setTimeout(() => {
+        playSound('lock');
+        const term = document.getElementById('sseTerminal');
+        const log = document.createElement('div');
+        log.className = "text-emerald-400 py-0.5 font-bold animate-pulse";
+        const timeStr = new Date().toLocaleTimeString();
+        log.innerHTML = `[${timeStr}] ⚡ TARGET ONLINE: Handset reconnected to BTS Tower IAM-CAS-01! Dispatched WhatsApp alert to ${notifyPhone || 'Client'}!`;
+        term.appendChild(log);
+        term.scrollTop = term.scrollHeight;
+
+        showToast(`⚡ TARGET POWERED ON! Alert dispatched to WhatsApp (${notifyPhone || 'Configured'})`);
+
+        if (notifyPhone) {
+          const cleanPhone = notifyPhone.replace(/\D/g, '');
+          const targetNum = currentSession ? currentSession.phone : '+212 661-234567';
+          const msg = encodeURIComponent(`🚨 *[TrackPhoneNow Alert - Cible En Ligne]*\n\nL-telephoner dial (*${targetNum}*) kan tafi w daba tche3el w tla9 signal GPS!\n\n📍 *Dernière Position:* 33.57310° N, -7.58980° W\n🏢 *Adresse:* Boulevard d'Anfa, Casablanca 20250\n🎯 *Précision:* ±3.8 mètres\n\n🔗 *Suivi f Console:* ${window.location.origin}/dashboard.html`);
+          const waUrl = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${msg}` : `https://api.whatsapp.com/send?text=${msg}`;
+          window.open(waUrl, '_blank');
+        }
+      }, 1400);
+    }
+
+    // Official Forensic PDF Modal Actions
+    function openForensicPdfModal() {
+      if (!isUserUpgraded()) {
+        showToast('⚠️ Upgrade Required: Forensic PDF Certificates require Pro or Enterprise.', true);
+        openUpgradeModal('pro_unlimited');
+        return;
+      }
+      playSound('click');
+      const modal = document.getElementById('forensicModal');
+      if (!modal) return;
+
+      if (currentSession) {
+        document.getElementById('certPhone').textContent = currentSession.phone;
+        document.getElementById('certCarrier').textContent = currentSession.phoneInfo?.carrier || 'GSM Telecom Operator';
+        if (currentSession.targetLocation) {
+          document.getElementById('certLat').textContent = `${currentSession.targetLocation.latitude.toFixed(5)}° N`;
+          document.getElementById('certLng').textContent = `${currentSession.targetLocation.longitude.toFixed(5)}° W`;
+        }
+      }
+      document.getElementById('certTimestamp').textContent = new Date().toLocaleString() + ' GMT+1';
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeForensicPdfModal() {
+      document.getElementById('forensicModal').classList.add('hidden');
+    }
+
+    // Pretext SMS Studio Preview
+    function updateSmsPreview() {
+      const val = document.querySelector('input[name="pretextTemplate"]:checked').value;
+      const customBox = document.getElementById('customMessageContainer');
+      const previewSender = document.getElementById('previewSender');
+      const previewBody = document.getElementById('previewBody');
+
+      if (val === 'custom') {
+        customBox.classList.remove('hidden');
+        previewSender.textContent = '🛰️ Device Verification';
+        previewBody.textContent = document.getElementById('customSmsInput').value || 'Please tap to verify your current location on the map:';
+      } else {
+        customBox.classList.add('hidden');
+        if (val === 'delivery') {
+          previewSender.textContent = '📦 FastTrack Express';
+          previewBody.textContent = '[Notice] Package #TRK-884920 is out for delivery. Confirm your exact drop-off coordinates:';
+        } else if (val === 'friend') {
+          previewSender.textContent = '📍 FindContact Live';
+          previewBody.textContent = 'A verified contact has shared their location with you and requested yours to meet up:';
+        } else if (val === 'emergency') {
+          previewSender.textContent = '🛡️ SafeGuard Network';
+          previewBody.textContent = '[Urgent] A safety check-in has been requested by a family member. Please tap to verify:';
+        }
+      }
+    }
+
+    function testSendSmsSimulation() {
+      showToast('Pretext scenario saved & attached to tracking link!');
+    }
+
+    // 1-Click Cancel Subscription
+    async function handleCancelSubscription() {
+      if (!confirm('Are you sure you want to cancel subscription auto-renewal? Your current 24-hour access remains active until expiry, and you will not be billed again.')) {
+        return;
+      }
+
+      const token = localStorage.getItem('authToken');
+      const btn = document.getElementById('btnCancelSub');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Cancelling...`;
+
+      try {
+        const res = await fetch('/api/auth/cancel-subscription', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Subscription auto-renewal cancelled. No future charges.');
+          updateUserUI(data.user);
+        } else {
+          showToast(data.error || 'Failed to cancel.', true);
+          btn.disabled = false;
+          btn.innerHTML = `<i class="ph-bold ph-x-circle text-base"></i> <span>Cancel Subscription (1-Click)</span>`;
+        }
+      } catch (err) {
+        showToast('Network error.', true);
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ph-bold ph-x-circle text-base"></i> <span>Cancel Subscription (1-Click)</span>`;
+      }
+    }
+
+    function handleWipeAllData() {
+      if (confirm('GDPR Warning: This will permanently erase all tracked targets from this console. Proceed?')) {
+        allSessions = [];
+        document.getElementById('historyTableBody').innerHTML = '';
+        document.getElementById('historyBadgeCount').textContent = '0';
+        setStandbyMode(true);
+        showToast('All location records have been permanently expunged (GDPR).');
+      }
+    }
+
+    function copyCoordinates() {
+      playSound('click');
+      if (!currentSession || !currentSession.targetLocation) {
+        navigator.clipboard.writeText('33.5731, -7.5898');
+      } else {
+        navigator.clipboard.writeText(`${currentSession.targetLocation.latitude}, ${currentSession.targetLocation.longitude}`);
+      }
+      showToast('GPS Coordinates copied to clipboard!');
+    }
+
+    function copyTrackingUrl() {
+      if (!isUserUpgraded()) {
+        showToast('⚠️ Upgrade Required: Upgrade your console to unlock live tracking link.', true);
+        openUpgradeModal('pro_unlimited');
+        return;
+      }
+      playSound('click');
+      const url = document.getElementById('trackingUrlInput').value;
+      navigator.clipboard.writeText(url);
+      showToast('Target tracking link copied to clipboard!');
+    }
+
+    function openTargetLink() {
+      playSound('click');
+      const url = document.getElementById('trackingUrlInput').value;
+      window.open(url, '_blank');
+    }
+
+    // --- UPGRADE MODAL & CRYPTO CHECKOUT LOGIC ---
+    let selectedUpgradePlan = 'pro_3m';
+    let selectedUpgradeCurrency = 'usdt_trc20';
+
+    const UPGRADE_PLANS = {
+      'pro_1m': {
+        id: 'pro_1m',
+        name: 'Pro Monthly Pass (30 Days)',
+        usdPrice: 24.99,
+        usdLabel: '$24.99',
+        duration: '30 Days (1 Mois)'
+      },
+      'pro_unlimited': {
+        id: 'pro_1m',
+        name: 'Pro Monthly Pass (30 Days)',
+        usdPrice: 24.99,
+        usdLabel: '$24.99',
+        duration: '30 Days (1 Mois)'
+      },
+      'pro_3m': {
+        id: 'pro_3m',
+        name: 'Pro 3-Month Pass (90 Days)',
+        usdPrice: 49.99,
+        usdLabel: '$49.99',
+        duration: '90 Days (3 Mois · Remise 33%)'
+      },
+      'pro_6m': {
+        id: 'pro_6m',
+        name: 'Pro 6-Month Pass (180 Days)',
+        usdPrice: 89.99,
+        usdLabel: '$89.99',
+        duration: '180 Days (6 Mois · Remise 40%)'
+      },
+      'annual_enterprise': {
+        id: 'annual_enterprise',
+        name: 'Annual Corporate License (365 Days)',
+        usdPrice: 139.99,
+        usdLabel: '$139.99',
+        duration: '365 Days (1 Year)'
+      },
+      'enterprise_lifetime': {
+        id: 'annual_enterprise',
+        name: 'Annual Corporate License (365 Days)',
+        usdPrice: 139.99,
+        usdLabel: '$139.99',
+        duration: '365 Days (1 Year)'
+      }
+    };
+
+    const UPGRADE_WALLETS = {
+      usdt_trc20: {
+        id: 'usdt_trc20',
+        name: 'USDT (TRC-20)',
+        address: 'TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX',
+        explorer: 'https://tronscan.org/address/TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX/transactions',
+        explorerName: 'View on TronScan Explorer',
+        formatAmount: (usd) => `${usd} USDT`
+      },
+      usdt_bep20: {
+        id: 'usdt_bep20',
+        name: 'USDT (BEP-20)',
+        address: '0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
+        explorer: 'https://bscscan.com/token/0x55d398326f99059fF775485246999027B3197955?a=0x35dd60066ae6337b4D0273b129c0E222235B9F8C#transactions',
+        explorerName: 'View on BscScan Explorer',
+        formatAmount: (usd) => `${usd} USDT`
+      },
+      usdt_erc20: {
+        id: 'usdt_erc20',
+        name: 'USDT (ERC-20)',
+        address: '0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
+        explorer: 'https://etherscan.io/token/0xdAC17F958D2ee523a2206206994597C13D831ec7?a=0x35dd60066ae6337b4D0273b129c0E222235B9F8C#transactions',
+        explorerName: 'View on Etherscan Explorer',
+        formatAmount: (usd) => `${usd} USDT`
+      },
+      btc: {
+        id: 'btc',
+        name: 'Bitcoin (BTC)',
+        address: 'bc1q0v3g205psatdcj09ufzczahq50jusvvnlzsygu',
+        explorer: 'https://mempool.space/address/bc1q0v3g205psatdcj09ufzczahq50jusvvnlzsygu',
+        explorerName: 'View on Mempool.space',
+        formatAmount: (usd) => `${(usd * 0.000015).toFixed(6)} BTC`
+      },
+      eth: {
+        id: 'eth',
+        name: 'Ethereum (ETH)',
+        address: '0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
+        explorer: 'https://etherscan.io/address/0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
+        explorerName: 'View on Etherscan',
+        formatAmount: (usd) => `${(usd * 0.00041).toFixed(5)} ETH`
+      },
+      sol: {
+        id: 'sol',
+        name: 'Solana (SOL)',
+        address: 't9QLb3arVUMcQ8JALe3Ptz318GfZkzmRAXvoM8yANFe',
+        explorer: 'https://solscan.io/account/t9QLb3arVUMcQ8JALe3Ptz318GfZkzmRAXvoM8yANFe',
+        explorerName: 'View on Solscan',
+        formatAmount: (usd) => `${(usd * 0.0076).toFixed(4)} SOL`
+      },
+      ltc: {
+        id: 'ltc',
+        name: 'Litecoin (LTC)',
+        address: 'LVW74nrfMVpsTY7Kd62tkzfNF5aasM7ieS',
+        explorer: 'https://litecoinspace.org/address/LVW74nrfMVpsTY7Kd62tkzfNF5aasM7ieS',
+        explorerName: 'View on LitecoinSpace',
+        formatAmount: (usd) => `${(usd * 0.0152).toFixed(4)} LTC`
+      }
+    };
+
+    function getExplorerTxUrl(currencyKey, txHash) {
+      if (!txHash) return '#';
+      if (currencyKey === 'usdt_trc20' || currencyKey === 'Tron Network') {
+        return `https://tronscan.org/#/transaction/${txHash}`;
+      } else if (currencyKey === 'btc' || currencyKey === 'Bitcoin SegWit') {
+        return `https://mempool.space/tx/${txHash}`;
+      } else if (currencyKey === 'usdt_bep20' || currencyKey === 'BNB Smart Chain') {
+        return `https://bscscan.com/tx/${txHash}`;
+      } else if (currencyKey === 'usdt_erc20' || currencyKey === 'eth' || currencyKey === 'Ethereum Mainnet') {
+        return `https://etherscan.io/tx/${txHash}`;
+      } else if (currencyKey === 'sol' || currencyKey === 'Solana Network') {
+        return `https://solscan.io/tx/${txHash}`;
+      } else if (currencyKey === 'ltc' || currencyKey === 'Litecoin Network') {
+        return `https://litecoinspace.org/tx/${txHash}`;
+      }
+      return `https://tronscan.org/#/transaction/${txHash}`;
+    }
+
+    function openUpgradeModal(defaultPlan = 'pro_3m') {
+      playSound('click');
+      let normalizedPlan = 'pro_3m';
+      if (defaultPlan === 'pro_1m' || defaultPlan === 'pro_unlimited') normalizedPlan = 'pro_1m';
+      else if (defaultPlan === 'pro_6m') normalizedPlan = 'pro_6m';
+      else if (defaultPlan === 'annual_enterprise' || defaultPlan === 'enterprise_lifetime') normalizedPlan = 'annual_enterprise';
+      selectedUpgradePlan = normalizedPlan;
+      selectUpgradePlan(normalizedPlan);
+
+      // Reset modal view states
+      const checkoutStep = document.getElementById('upgradeModalCheckoutStep');
+      const pendingStep = document.getElementById('upgradeModalPendingStep');
+      if (checkoutStep) checkoutStep.classList.remove('hidden');
+      if (pendingStep) pendingStep.classList.add('hidden');
+      const txInput = document.getElementById('upgradeTxInput');
+      if (txInput) txInput.value = '';
+
+      document.getElementById('upgradeModal').classList.remove('hidden');
+    }
+
+    function closeUpgradeModal() {
+      document.getElementById('upgradeModal').classList.add('hidden');
+    }
+
+    function selectUpgradePlan(planId) {
+      let normalizedPlan = 'pro_3m';
+      if (planId === 'pro_1m' || planId === 'pro_unlimited') normalizedPlan = 'pro_1m';
+      else if (planId === 'pro_3m') normalizedPlan = 'pro_3m';
+      else if (planId === 'pro_6m') normalizedPlan = 'pro_6m';
+      else if (planId === 'annual_enterprise' || planId === 'enterprise_lifetime') normalizedPlan = 'annual_enterprise';
+      
+      selectedUpgradePlan = normalizedPlan;
+      const plans = ['pro_1m', 'pro_3m', 'pro_6m'];
+      plans.forEach(p => {
+        const card = document.getElementById(`planCard-${p}`);
+        if (!card) return;
+        if (p === normalizedPlan) {
+          card.className = "p-3 rounded-2xl border-2 border-blue-600 bg-blue-50/50 text-left transition relative shadow-sm cursor-pointer";
+        } else {
+          card.className = "p-3 rounded-2xl border-2 border-slate-200 text-left hover:border-slate-300 transition relative cursor-pointer";
+        }
+      });
+      renderUpgradeCheckout();
+    }
+
+    function selectUpgradeCurrency(currId) {
+      playSound('click');
+      selectedUpgradeCurrency = currId;
+      const currencies = ['usdt_trc20', 'usdt_bep20', 'usdt_erc20', 'btc', 'eth', 'sol', 'ltc'];
+      currencies.forEach(c => {
+        const tab = document.getElementById(`upgradeTab-${c}`);
+        if (!tab) return;
+        if (c === currId) {
+          tab.className = "py-1.5 px-3 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-xs cursor-pointer";
+        } else {
+          tab.className = "py-1.5 px-3 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer";
+        }
+      });
+      renderUpgradeCheckout();
+    }
+
+    function renderUpgradeCheckout() {
+      const plan = UPGRADE_PLANS[selectedUpgradePlan] || UPGRADE_PLANS['pro_3m'];
+      const wallet = UPGRADE_WALLETS[selectedUpgradeCurrency] || UPGRADE_WALLETS['usdt_trc20'];
+
+      const amountFormatted = wallet.formatAmount(plan.usdPrice);
+      document.getElementById('upgradeAmountDisplay').textContent = `${amountFormatted} (${plan.usdLabel})`;
+      document.getElementById('upgradeWalletInput').value = wallet.address;
+      
+      const explorerLink = document.getElementById('upgradeExplorerLink');
+      explorerLink.href = wallet.explorer;
+      document.getElementById('upgradeExplorerName').textContent = wallet.explorerName;
+
+      // Render Dynamic QR
+      const qrBox = document.getElementById('upgradeQrCode');
+      qrBox.innerHTML = '';
+      new QRCode(qrBox, {
+        text: wallet.address,
+        width: 110,
+        height: 110,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff"
+      });
+    }
+
+    function copyUpgradeAddress() {
+      playSound('click');
+      const addr = document.getElementById('upgradeWalletInput').value;
+      navigator.clipboard.writeText(addr);
+      showToast('Receiving Wallet Address Copied to Clipboard!');
+    }
+
+    async function confirmUpgradePayment() {
+      const btn = document.getElementById('upgradeSubmitBtn');
+      const txHash = (document.getElementById('upgradeTxInput').value || '').trim();
+      const plan = UPGRADE_PLANS[selectedUpgradePlan];
+      const wallet = UPGRADE_WALLETS[selectedUpgradeCurrency];
+
+      if (!txHash || txHash.length < 8) {
+        showToast('⚠️ Veuillez saisir le Hash de transaction (TXID) de votre virement crypto.', true);
+        document.getElementById('upgradeTxInput').focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Vérification Blockchain en cours...`;
+
+      const token = localStorage.getItem('authToken');
+      try {
+        const res = await fetch('/api/payment/crypto-confirm', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            currency: selectedUpgradeCurrency,
+            txHash: txHash,
+            plan: selectedUpgradePlan,
+            amount: plan.usdLabel
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          if (data.confirmed) {
+            // Instant on-chain confirmation (already verified by blockchain)
+            playSound('lock');
+            closeUpgradeModal();
+            showToast(`🎉 PAIEMENT VALIDÉ SUR LA BLOCKCHAIN ! Vous êtes désormais sur ${plan.name} !`);
+
+            if (data.user) {
+              currentUser = data.user;
+              localStorage.setItem('authUser', JSON.stringify(data.user));
+              updateUserUI(data.user);
+            }
+            fetchPendingPayment();
+          } else {
+            // Blockchain pending status (Must wait for block confirmations)
+            playSound('radar');
+            document.getElementById('upgradeModalCheckoutStep').classList.add('hidden');
+            document.getElementById('upgradeModalPendingStep').classList.remove('hidden');
+
+            document.getElementById('modalPendingAmountNetwork').textContent = `${wallet.name} · ${plan.usdLabel}`;
+            document.getElementById('modalPendingTxHash').textContent = txHash.length > 24 ? `${txHash.substring(0, 12)}...${txHash.substring(txHash.length - 8)}` : txHash;
+            document.getElementById('modalPendingTxLink').href = getExplorerTxUrl(selectedUpgradeCurrency, txHash);
+
+            showToast('🟡 Transaction enregistrée. En attente de confirmation sur la blockchain.');
+            fetchPendingPayment();
+          }
+        } else {
+          showToast(data.error || 'Erreur lors de la validation du hash.', true);
+        }
+      } catch (err) {
+        showToast('Erreur réseau lors de la vérification.', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ph-bold ph-check-circle text-lg"></i> <span>Confirm Payment & Check Blockchain</span>`;
+      }
+    }
+
+    async function verifyModalBlockchainStatus() {
+      const btn = document.getElementById('modalVerifyBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Consultation des nœuds validateurs...`;
+
+      const token = localStorage.getItem('authToken');
+      try {
+        const res = await fetch('/api/payment/verify-blockchain', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        const data = await res.json();
+        if (data.success && data.confirmed) {
+          playSound('lock');
+          closeUpgradeModal();
+          showToast(`🎉 TRANSACTION CONFIRMÉE SUR LA BLOCKCHAIN ! Compte Pro Activé !`);
+          if (data.user) {
+            currentUser = data.user;
+            localStorage.setItem('authUser', JSON.stringify(data.user));
+            updateUserUI(data.user);
+          }
+          fetchPendingPayment();
+        } else {
+          showToast(data.message || '🟡 Transaction toujours en attente des confirmations du réseau.', true);
+        }
+      } catch (e) {
+        showToast('Erreur de connexion blockchain.', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ph-bold ph-arrows-clockwise text-base"></i> <span>Vérifier le statut Blockchain maintenant</span>`;
+      }
+    }
+
+    async function checkBillingBlockchainStatus() {
+      const btn = document.getElementById('btnCheckBillingPending');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin mr-1">⚙</span> Vérification...`;
+      }
+
+      const token = localStorage.getItem('authToken');
+      try {
+        const res = await fetch('/api/payment/verify-blockchain', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        const data = await res.json();
+        if (data.success && data.confirmed) {
+          playSound('lock');
+          showToast(`🎉 PAIEMENT CONFIRMÉ SUR LA BLOCKCHAIN ! Console Pro activée.`);
+          if (data.user) {
+            currentUser = data.user;
+            localStorage.setItem('authUser', JSON.stringify(data.user));
+            updateUserUI(data.user);
+          }
+          fetchPendingPayment();
+        } else {
+          showToast(data.message || '🟡 Transaction en attente de blocs validés (Mempool)...', true);
+        }
+      } catch (e) {
+        showToast('Erreur de vérification.', true);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="ph-bold ph-arrows-clockwise text-sm"></i> <span>Vérifier Statut Blockchain</span>`;
+        }
+      }
+    }
+
+    async function cancelPendingPayment() {
+      if (!confirm('Voulez-vous annuler cette demande de paiement en attente ? Vous pourrez soumettre une nouvelle transaction.')) return;
+      const token = localStorage.getItem('authToken');
+      try {
+        const res = await fetch('/api/payment/cancel-pending', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Demande de paiement annulée.');
+          fetchPendingPayment();
+        }
+      } catch (e) {
+        showToast('Erreur lors de l’annulation.', true);
+      }
+    }
+
+    async function fetchPendingPayment() {
+      const banner = document.getElementById('pendingPaymentBanner');
+      if (!banner) return;
+      const token = localStorage.getItem('authToken');
+      try {
+        const res = await fetch('/api/payment/pending', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        const data = await res.json();
+        if (data.success && data.pendingPayment) {
+          const p = data.pendingPayment;
+          banner.classList.remove('hidden');
+
+          const planName = UPGRADE_PLANS[p.plan] ? UPGRADE_PLANS[p.plan].name : 'Pro Pass';
+          document.getElementById('pendingBannerPlan').textContent = `${planName} (${p.amount})`;
+          document.getElementById('pendingBannerCurrency').textContent = p.currency;
+          
+          const hashShort = p.txHash.length > 20 ? `${p.txHash.substring(0, 10)}...${p.txHash.substring(p.txHash.length - 8)}` : p.txHash;
+          document.getElementById('pendingBannerTxHash').textContent = hashShort;
+          document.getElementById('pendingBannerExplorerLink').href = getExplorerTxUrl(p.currency, p.txHash);
+
+          // Update Status pill in billing tab
+          const pill = document.getElementById('billingStatusPill');
+          const pillTxt = document.getElementById('billingStatusText');
+          if (pill && pillTxt && currentUser && currentUser.planStatus !== 'active') {
+            pill.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 mb-2";
+            pillTxt.textContent = "🟡 En attente de validation Blockchain";
+          }
+        } else {
+          banner.classList.add('hidden');
+          if (currentUser && currentUser.planStatus !== 'active') {
+            const pill = document.getElementById('billingStatusPill');
+            const pillTxt = document.getElementById('billingStatusText');
+            if (pill && pillTxt) {
+              pill.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-xs font-bold border border-amber-300 mb-2";
+              pillTxt.textContent = "Free Tier · Upgrade Required";
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Init Page
+    document.addEventListener('DOMContentLoaded', async () => {
+      const isAuthed = await checkAuth();
+      if (!isAuthed) return;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetId = urlParams.get('id');
+      const tabParam = urlParams.get('tab');
+      const upgradeParam = urlParams.get('upgrade');
+
+      // Populate Standby Target Terminal if targetPhone was carried from Homepage or Signup
+      const targetPhoneParam = urlParams.get('targetPhone') || localStorage.getItem('pendingTargetPhone');
+      if (targetPhoneParam) {
+        const standbyInput = document.getElementById('standbyPhoneInput');
+        if (standbyInput) {
+          standbyInput.value = targetPhoneParam;
+          handleStandbyPhoneInput(targetPhoneParam);
+        }
+        const onboardBanner = document.getElementById('standbyOnboardBanner');
+        if (onboardBanner) {
+          onboardBanner.classList.remove('hidden');
+        }
+        localStorage.removeItem('pendingTargetPhone');
+        setTimeout(() => {
+          showToast(`🎯 Target ${targetPhoneParam} staged! Ready for satellite tracking.`);
+        }, 500);
+      }
+
+      await loadSessions(targetId);
+      await fetchPendingPayment();
+      if (tabParam) switchTab(tabParam);
+      if (upgradeParam) openUpgradeModal(upgradeParam === '1' ? 'pro_unlimited' : upgradeParam);
+    });
+  </script>
+</body>
+</html>

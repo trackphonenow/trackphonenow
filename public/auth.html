@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrackPhoneNow Console — Secure Authentication & Terminal Access</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Phosphor Icons -->
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" />
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f8fafc;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    /* Tab fade-slide keyframe */
+    .tab-pane-animate {
+      animation: tabFadeSlide 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes tabFadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white antialiased bg-slate-50">
+
+  <!-- 1. Header (Harmonized Sovereign Royal Navy #0d2258) -->
+  <header class="w-full border-b border-white/10 px-5 sm:px-8 py-3.5 z-30" style="background: #0d2258;">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 group-hover:scale-105 transition transform">
+          <i class="ph-bold ph-crosshair text-xl sm:text-2xl"></i>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">TrackPhone</span>
+          <span class="text-xl sm:text-2xl font-extrabold tracking-tight text-blue-300">Now</span>
+          <span class="text-[9px] uppercase tracking-wider font-mono font-bold text-blue-200 bg-white/10 px-2 py-0.5 rounded ml-1.5 hidden sm:inline-block border border-white/10">CONSOLE</span>
+        </div>
+      </a>
+
+      <div class="flex items-center gap-3 sm:gap-5 text-xs font-semibold">
+        <!-- Live Node Telemetry Indicator -->
+        <div class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-blue-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span>194 Countries Active</span>
+        </div>
+        
+        <a href="/" class="py-2 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white transition flex items-center gap-1.5 border border-white/15 active:scale-95">
+          <i class="ph-bold ph-arrow-left"></i>
+          <span>Back to Home</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. Main Auth Centered Container -->
+  <main class="flex-grow flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6">
+    <div class="w-full max-w-lg bg-white rounded-3xl shadow-xl shadow-slate-900/5 border border-slate-200/90 p-6 sm:p-9 relative">
+      
+      <!-- Header Text inside Card -->
+      <div class="text-center sm:text-left mb-6">
+          <h1 id="authMainTitle" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Create Free Member Account
+          </h1>
+          <p id="authSubTitle" class="text-xs sm:text-sm text-slate-500 mt-1">
+            Instantly deploy phone triangulation and inspect real-time radar coordinates.
+          </p>
+        </div>
+
+        <!-- Segmented Tab Switcher (Sleek Hardware Pill) -->
+        <div class="grid grid-cols-2 p-1.5 bg-slate-100 rounded-2xl mb-6 border border-slate-200/60">
+          <button 
+            id="tabRegisterBtn" 
+            type="button"
+            onclick="switchTab('register')" 
+            class="py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 bg-blue-600 text-white shadow-md shadow-blue-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <i class="ph-bold ph-user-plus text-sm"></i>
+            <span>Create Account</span>
+          </button>
+          <button 
+            id="tabLoginBtn" 
+            type="button"
+            onclick="switchTab('login')" 
+            class="py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <i class="ph-bold ph-sign-in text-sm"></i>
+            <span>Sign In</span>
+          </button>
+        </div>
+
+        <!-- Phone Pre-fill Banner (if redirected from search) -->
+        <div id="targetPhoneBanner" class="hidden mb-5 p-3.5 rounded-2xl bg-blue-50 border border-blue-200 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-600/20">
+            <i class="ph-bold ph-crosshair text-base"></i>
+          </div>
+          <div class="text-xs">
+            <div class="text-blue-950 font-bold">Target Handset Identified</div>
+            <div class="text-blue-700">Ready to triangulate <span id="bannerPhoneNum" class="font-mono font-bold text-blue-900"></span></div>
+          </div>
+        </div>
+
+        <!-- Dynamic Error / Success Alert Box -->
+        <div id="authAlert" class="hidden mb-5 p-3.5 rounded-xl text-xs font-semibold"></div>
+
+        <!-- ================= REGISTER FORM ================= -->
+        <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 tab-pane-animate">
+          
+          <!-- Full Name -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">
+              Full Name <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="regName" 
+                required
+                placeholder="e.g. Karim Alaoui" 
+                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition"
+              />
+            </div>
+          </div>
+
+          <!-- Email Address with Real-Time Validation Feedback -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs font-bold text-slate-700">
+                Email Address <span class="text-rose-500">*</span>
+              </label>
+              <span id="emailValidationFeedback" class="text-[11px] font-semibold hidden"></span>
+            </div>
+            <div class="relative">
+              <input 
+                type="email" 
+                id="regEmail" 
+                required
+                oninput="validateEmailField(this.value)"
+                placeholder="name@example.com" 
+                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition"
+              />
+              <div id="emailValidIcon" class="absolute right-3.5 top-1/2 -translate-y-1/2 hidden text-emerald-500 pointer-events-none">
+                <i class="ph-bold ph-check-circle text-lg"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password with Strength Meter -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">
+              Password <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <input 
+                type="password" 
+                id="regPassword" 
+                required
+                minlength="6"
+                oninput="handlePasswordStrength(this.value)"
+                placeholder="Minimum 6 characters" 
+                class="w-full px-4 pr-11 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition font-mono"
+              />
+              <button 
+                type="button" 
+                onclick="togglePasswordVisibility('regPassword', this)" 
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                aria-label="Toggle password visibility"
+              >
+                <i class="ph-bold ph-eye text-base"></i>
+              </button>
+            </div>
+
+            <!-- Password Strength Bar Micro-Interaction -->
+            <div class="mt-2">
+              <div class="grid grid-cols-4 gap-1.5 h-1.5">
+                <div id="pwdBar1" class="rounded-full bg-slate-200 transition-colors duration-300"></div>
+                <div id="pwdBar2" class="rounded-full bg-slate-200 transition-colors duration-300"></div>
+                <div id="pwdBar3" class="rounded-full bg-slate-200 transition-colors duration-300"></div>
+                <div id="pwdBar4" class="rounded-full bg-slate-200 transition-colors duration-300"></div>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1">
+                <span id="pwdStrengthLabel">Password security strength</span>
+                <span class="text-slate-400">At least 6 chars</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirm Password with Instant Match Feedback -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs font-bold text-slate-700">
+                Confirm Password <span class="text-rose-500">*</span>
+              </label>
+              <span id="confirmMatchFeedback" class="text-[11px] font-semibold hidden"></span>
+            </div>
+            <div class="relative">
+              <input 
+                type="password" 
+                id="regConfirmPassword" 
+                required
+                minlength="6"
+                oninput="checkPasswordMatch()"
+                placeholder="Re-enter password" 
+                class="w-full px-4 pr-11 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition font-mono"
+              />
+              <button 
+                type="button" 
+                onclick="togglePasswordVisibility('regConfirmPassword', this)" 
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                aria-label="Toggle password visibility"
+              >
+                <i class="ph-bold ph-eye text-base"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Terms Checkbox -->
+          <div class="pt-1">
+            <label class="flex items-start gap-2.5 cursor-pointer text-xs text-slate-600 select-none">
+              <input 
+                type="checkbox" 
+                id="regTermsCheckbox" 
+                required
+                checked
+                class="w-4 h-4 mt-0.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300 accent-blue-600 shrink-0"
+              />
+              <span>I agree to the <b class="font-bold text-slate-900">Terms of Service</b> & <b class="font-bold text-slate-900">Privacy Policy</b></span>
+            </label>
+          </div>
+
+          <!-- High-Impact Primary CTA Button -->
+          <div class="pt-2">
+            <button 
+              type="submit" 
+              id="regSubmitBtn" 
+              class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 active:scale-[0.99] text-white font-black text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition duration-150 cursor-pointer"
+            >
+              <i class="ph-bold ph-shield-check text-lg"></i>
+              <span>Create Account & Open Console</span>
+            </button>
+          </div>
+
+          <!-- Bottom Switch Link -->
+          <div class="pt-2 text-center text-xs text-slate-500">
+            Already have an active account? 
+            <button type="button" onclick="switchTab('login')" class="font-bold text-blue-600 hover:underline ml-1 cursor-pointer">
+              Sign In Here
+            </button>
+          </div>
+
+        </form>
+
+        <!-- ================= LOGIN FORM ================= -->
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 hidden tab-pane-animate">
+          
+          <!-- Email Address -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">
+              Email Address <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <input 
+                type="email" 
+                id="loginEmail" 
+                required
+                placeholder="name@example.com" 
+                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition"
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs font-bold text-slate-700">
+                Password <span class="text-rose-500">*</span>
+              </label>
+              <a href="#" onclick="alert('Password reset link will be sent to your registered email.')" class="text-xs text-blue-600 hover:underline font-semibold">
+                Forgot password?
+              </a>
+            </div>
+            <div class="relative">
+              <input 
+                type="password" 
+                id="loginPassword" 
+                required
+                placeholder="Enter your password" 
+                class="w-full px-4 pr-11 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition font-mono"
+              />
+              <button 
+                type="button" 
+                onclick="togglePasswordVisibility('loginPassword', this)" 
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                aria-label="Toggle password visibility"
+              >
+                <i class="ph-bold ph-eye text-base"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember Me Checkbox -->
+          <div class="pt-1">
+            <label class="flex items-center gap-2.5 cursor-pointer text-xs text-slate-600 select-none">
+              <input 
+                type="checkbox" 
+                id="loginRememberCheckbox" 
+                checked
+                class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 accent-blue-600"
+              />
+              <span>Remember this console session</span>
+            </label>
+          </div>
+
+          <!-- Login Primary CTA Button -->
+          <div class="pt-2">
+            <button 
+              type="submit" 
+              id="loginSubmitBtn" 
+              class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 active:scale-[0.99] text-white font-black text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition duration-150 cursor-pointer"
+            >
+              <i class="ph-bold ph-sign-in text-lg"></i>
+              <span>Login To Console</span>
+            </button>
+          </div>
+
+          <!-- Bottom Switch Link -->
+          <div class="pt-2 text-center text-xs text-slate-500">
+            Don't have an active account? 
+            <button type="button" onclick="switchTab('register')" class="font-bold text-blue-600 hover:underline ml-1 cursor-pointer">
+              Create A Free Account
+            </button>
+          </div>
+
+        </form>
+
+        <!-- Subtle Trust Badges Strip -->
+        <div class="mt-6 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-center gap-3 sm:gap-5 text-[11px] text-slate-500 font-medium">
+          <span class="flex items-center gap-1.5"><i class="ph-bold ph-lock-key text-emerald-500 text-sm"></i> 256-Bit SSL</span>
+          <span class="text-slate-300">•</span>
+          <span class="flex items-center gap-1.5"><i class="ph-bold ph-shield-check text-blue-500 text-sm"></i> GDPR Compliant</span>
+          <span class="text-slate-300">•</span>
+          <span class="flex items-center gap-1.5"><i class="ph-bold ph-lightning text-amber-500 text-sm"></i> Instant Access</span>
+        </div>
+
+      </div>
+    </main>
+
+  <!-- 3. Footer -->
+  <footer class="w-full py-4 text-center text-xs text-slate-400 border-t border-slate-200/80 bg-white">
+    © 2026 TrackPhoneNow Telecom Systems. 256-Bit SSL Ephemeral Enclave. All rights reserved.
+  </footer>
+
+  <!-- ================= SCRIPTS & REAL-TIME INTERACTION LOGIC ================= -->
+  <script>
+    // Tab switching with smooth animated pill states
+    function switchTab(mode) {
+      const regTab = document.getElementById('tabRegisterBtn');
+      const loginTab = document.getElementById('tabLoginBtn');
+      const regForm = document.getElementById('registerForm');
+      const loginForm = document.getElementById('loginForm');
+      const title = document.getElementById('authMainTitle');
+      const subtitle = document.getElementById('authSubTitle');
+      hideAlert();
+
+      if (mode === 'register') {
+        title.textContent = 'Create Free Member Account';
+        subtitle.textContent = 'Instantly deploy phone triangulation and inspect real-time radar coordinates.';
+        regTab.className = "py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 bg-blue-600 text-white shadow-md shadow-blue-600/20 flex items-center justify-center gap-1.5 cursor-pointer";
+        loginTab.className = "py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 cursor-pointer";
+        regForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+      } else {
+        title.textContent = 'Sign In to Member Console';
+        subtitle.textContent = 'Access encrypted geolocation sessions, historical traces, and map data.';
+        loginTab.className = "py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 bg-blue-600 text-white shadow-md shadow-blue-600/20 flex items-center justify-center gap-1.5 cursor-pointer";
+        regTab.className = "py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 cursor-pointer";
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+      }
+    }
+
+    // Toggle Password Visibility
+    function togglePasswordVisibility(id, btn) {
+      const input = document.getElementById(id);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<i class="ph-bold ph-eye-slash text-base text-blue-600"></i>';
+      } else {
+        input.type = 'password';
+        btn.innerHTML = '<i class="ph-bold ph-eye text-base"></i>';
+      }
+    }
+
+    // Instant Email Validation Micro-Interaction
+    function validateEmailField(val) {
+      const emailIcon = document.getElementById('emailValidIcon');
+      const feedback = document.getElementById('emailValidationFeedback');
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+      
+      if (!val) {
+        emailIcon.classList.add('hidden');
+        feedback.classList.add('hidden');
+        return;
+      }
+
+      if (emailRegex.test(val)) {
+        emailIcon.classList.remove('hidden');
+        feedback.classList.remove('hidden', 'text-rose-500');
+        feedback.classList.add('text-emerald-600');
+        feedback.innerHTML = '<i class="ph-bold ph-check text-xs"></i> Valid email format';
+      } else {
+        emailIcon.classList.add('hidden');
+        feedback.classList.remove('hidden', 'text-emerald-600');
+        feedback.classList.add('text-rose-500');
+        feedback.textContent = 'Enter valid email';
+      }
+    }
+
+    // Password Strength Evaluator (4-bar visual meter)
+    function handlePasswordStrength(pwd) {
+      const b1 = document.getElementById('pwdBar1');
+      const b2 = document.getElementById('pwdBar2');
+      const b3 = document.getElementById('pwdBar3');
+      const b4 = document.getElementById('pwdBar4');
+      const lbl = document.getElementById('pwdStrengthLabel');
+
+      [b1, b2, b3, b4].forEach(b => {
+        b.className = 'rounded-full bg-slate-200 transition-colors duration-300';
+      });
+
+      if (!pwd) {
+        lbl.textContent = 'Password security strength';
+        lbl.className = 'text-slate-500';
+        return;
+      }
+
+      let score = 0;
+      if (pwd.length >= 6) score++;
+      if (pwd.length >= 8) score++;
+      if (/[0-9]/.test(pwd) && /[a-zA-Z]/.test(pwd)) score++;
+      if (/[^A-Za-z0-9]/.test(pwd) || pwd.length >= 12) score++;
+
+      if (score === 1) {
+        b1.className = 'rounded-full bg-rose-500 transition-colors duration-300';
+        lbl.textContent = 'Too weak';
+        lbl.className = 'text-rose-500 font-semibold';
+      } else if (score === 2) {
+        b1.className = 'rounded-full bg-amber-500 transition-colors duration-300';
+        b2.className = 'rounded-full bg-amber-500 transition-colors duration-300';
+        lbl.textContent = 'Moderate';
+        lbl.className = 'text-amber-600 font-semibold';
+      } else if (score === 3) {
+        b1.className = 'rounded-full bg-blue-500 transition-colors duration-300';
+        b2.className = 'rounded-full bg-blue-500 transition-colors duration-300';
+        b3.className = 'rounded-full bg-blue-500 transition-colors duration-300';
+        lbl.textContent = 'Strong security';
+        lbl.className = 'text-blue-600 font-semibold';
+      } else if (score >= 4) {
+        b1.className = 'rounded-full bg-emerald-500 transition-colors duration-300';
+        b2.className = 'rounded-full bg-emerald-500 transition-colors duration-300';
+        b3.className = 'rounded-full bg-emerald-500 transition-colors duration-300';
+        b4.className = 'rounded-full bg-emerald-500 transition-colors duration-300';
+        lbl.textContent = 'Forensic-grade encryption';
+        lbl.className = 'text-emerald-600 font-bold';
+      }
+
+      checkPasswordMatch();
+    }
+
+    // Password Match Real-Time Feedback
+    function checkPasswordMatch() {
+      const pwd = document.getElementById('regPassword').value;
+      const confirm = document.getElementById('regConfirmPassword').value;
+      const feedback = document.getElementById('confirmMatchFeedback');
+
+      if (!confirm) {
+        feedback.classList.add('hidden');
+        return;
+      }
+
+      feedback.classList.remove('hidden');
+      if (pwd === confirm) {
+        feedback.className = 'text-[11px] font-semibold text-emerald-600 flex items-center gap-1';
+        feedback.innerHTML = '<i class="ph-bold ph-check text-xs"></i> Passwords match';
+      } else {
+        feedback.className = 'text-[11px] font-semibold text-rose-500 flex items-center gap-1';
+        feedback.innerHTML = '<i class="ph-bold ph-x text-xs"></i> Passwords do not match';
+      }
+    }
+
+    // Dynamic Alert Box Helper
+    function showAlert(msg, isError = true) {
+      const box = document.getElementById('authAlert');
+      box.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'border-red-200', 'bg-blue-50', 'text-blue-700', 'border-blue-200');
+      if (isError) {
+        box.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+      } else {
+        box.classList.add('bg-blue-50', 'text-blue-700', 'border', 'border-blue-200');
+      }
+      box.textContent = msg;
+    }
+
+    function hideAlert() {
+      document.getElementById('authAlert').classList.add('hidden');
+    }
+
+    // Parse URL Parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetPhone = urlParams.get('phone');
+    const initialMode = urlParams.get('mode');
+
+    if (targetPhone) {
+      localStorage.setItem('pendingTargetPhone', targetPhone);
+      document.getElementById('targetPhoneBanner').classList.remove('hidden');
+      document.getElementById('bannerPhoneNum').textContent = targetPhone;
+    }
+
+    if (initialMode === 'login') {
+      switchTab('login');
+    } else {
+      switchTab('register');
+    }
+
+    // Register Handler with Direct Dashboard Handshake
+    async function handleRegister(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirmPassword = document.getElementById('regConfirmPassword').value;
+      const termsCheckbox = document.getElementById('regTermsCheckbox');
+      const btn = document.getElementById('regSubmitBtn');
+
+      if (password !== confirmPassword) {
+        showAlert('Passwords do not match. Please verify before continuing.');
+        return;
+      }
+
+      if (!termsCheckbox.checked) {
+        showAlert('Please acknowledge the Terms of Service to continue.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2.5 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Allocating Encrypted Console...</span>
+      `;
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password, phone: targetPhone || '' })
+        });
+        const data = await res.json();
+
+        if (data.success && data.token) {
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('authUser', JSON.stringify(data.user));
+          showAlert('Account created! Initializing member console...', false);
+
+          const phoneToCarry = targetPhone || localStorage.getItem('pendingTargetPhone');
+          const planToCarry = urlParams.get('plan');
+
+          setTimeout(() => {
+            if (planToCarry) {
+              window.location.href = `/dashboard.html?tab=billing${phoneToCarry ? '&targetPhone=' + encodeURIComponent(phoneToCarry) : ''}`;
+            } else if (phoneToCarry) {
+              localStorage.setItem('pendingTargetPhone', phoneToCarry);
+              window.location.href = `/dashboard.html?targetPhone=${encodeURIComponent(phoneToCarry)}`;
+            } else {
+              window.location.href = '/dashboard.html';
+            }
+          }, 600);
+        } else {
+          showAlert(data.error || 'Failed to create account. Please try again.');
+          btn.disabled = false;
+          btn.innerHTML = `<i class="ph-bold ph-shield-check text-lg"></i><span>Create Account & Open Console</span>`;
+        }
+      } catch (err) {
+        showAlert('Network connectivity failure. Please check connection.');
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ph-bold ph-shield-check text-lg"></i><span>Create Account & Open Console</span>`;
+      }
+    }
+
+    // Login Handler with Dashboard Handoff
+    async function handleLogin(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginSubmitBtn');
+
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2.5 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Verifying Credentials...</span>
+      `;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (data.success && data.token) {
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('authUser', JSON.stringify(data.user));
+          showAlert('Authorization verified. Redirecting...', false);
+
+          const phoneToCarry = targetPhone || localStorage.getItem('pendingTargetPhone');
+          const planToCarry = urlParams.get('plan');
+          setTimeout(() => {
+            if (planToCarry) {
+              window.location.href = `/dashboard.html?tab=billing${phoneToCarry ? '&targetPhone=' + encodeURIComponent(phoneToCarry) : ''}`;
+            } else if (phoneToCarry) {
+              window.location.href = `/dashboard.html?targetPhone=${encodeURIComponent(phoneToCarry)}`;
+            } else {
+              window.location.href = '/dashboard.html';
+            }
+          }, 500);
+        } else {
+          showAlert(data.error || 'Invalid email or password.');
+          btn.disabled = false;
+          btn.innerHTML = `<i class="ph-bold ph-sign-in text-lg"></i><span>Login To Console</span>`;
+        }
+      } catch (err) {
+        showAlert('Network error encountered. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ph-bold ph-sign-in text-lg"></i><span>Login To Console</span>`;
+      }
+    }
+  </script>
+</body>
+</html>
