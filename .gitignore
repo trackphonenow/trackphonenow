@@ -8,3 +8,4 @@ edge_dom.html
 header-check.png
 data/*.db-wal
 data/*.db-shm
+data/*.db

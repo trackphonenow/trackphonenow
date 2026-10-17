@@ -160,6 +160,16 @@
         <span class="sm:hidden">New</span>
       </button>
 
+      <!-- Admin Console Top Nav Button (Shown if role === 'admin') -->
+      <a 
+        id="topAdminBtn" 
+        href="/admin.html" 
+        class="hidden py-2 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs shadow-xs items-center gap-1.5 transition"
+      >
+        <i class="ph-bold ph-shield-check text-purple-600 text-base"></i>
+        <span class="hidden sm:inline">Admin Console</span>
+      </a>
+
       <!-- Calm Institutional Status Pill -->
       <div id="topPlanBadge" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-medium text-slate-600">
         <span class="w-2 h-2 rounded-full bg-slate-400"></span>
@@ -197,6 +207,10 @@
           </div>
 
           <div class="py-1">
+            <a id="dropdownAdminLink" href="/admin.html" class="hidden w-full text-left px-4 py-2.5 text-xs text-purple-700 hover:bg-purple-50 flex items-center gap-2.5 font-bold">
+              <i class="ph-bold ph-shield-check text-purple-600 text-base"></i>
+              <span>Master Admin Console</span>
+            </a>
             <button onclick="switchTab('billing')" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-semibold">
               <i class="ph-bold ph-credit-card text-blue-600 text-base"></i>
               <span>Subscription & Crypto Billing</span>
@@ -274,9 +288,18 @@
           onclick="switchTab('settings')" 
           class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-600 hover:bg-slate-100"
         >
-          <i class="ph-bold ph-shield-check text-lg text-slate-400"></i>
+          <i class="ph-bold ph-gear text-lg text-slate-400"></i>
           <span class="whitespace-nowrap">Security & Privacy</span>
         </button>
+
+        <a 
+          id="navAdminLink" 
+          href="/admin.html" 
+          class="hidden w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 shadow-xs"
+        >
+          <i class="ph-bold ph-shield-check text-lg text-purple-600"></i>
+          <span class="whitespace-nowrap">Admin Console</span>
+        </a>
 
       </nav>
 
@@ -1945,6 +1968,23 @@
       
       const planTitle = document.getElementById('billingPlanTitle');
       if (planTitle) planTitle.textContent = user.planName || 'Free Tier (Upgrade Required)';
+
+      // Role-based Admin Clearance UI
+      if (user.role === 'admin') {
+        const topAdminBtn = document.getElementById('topAdminBtn');
+        if (topAdminBtn) topAdminBtn.classList.remove('hidden');
+        const dropdownAdminLink = document.getElementById('dropdownAdminLink');
+        if (dropdownAdminLink) dropdownAdminLink.classList.remove('hidden');
+        const navAdminLink = document.getElementById('navAdminLink');
+        if (navAdminLink) navAdminLink.classList.remove('hidden');
+      } else {
+        const topAdminBtn = document.getElementById('topAdminBtn');
+        if (topAdminBtn) topAdminBtn.classList.add('hidden');
+        const dropdownAdminLink = document.getElementById('dropdownAdminLink');
+        if (dropdownAdminLink) dropdownAdminLink.classList.add('hidden');
+        const navAdminLink = document.getElementById('navAdminLink');
+        if (navAdminLink) navAdminLink.classList.add('hidden');
+      }
 
       const banner = document.getElementById('radarUpgradeBanner');
       const isUpgraded = isUserUpgraded();

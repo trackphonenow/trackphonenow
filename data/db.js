@@ -30,7 +30,8 @@ db.exec(`
     auto_renew INTEGER DEFAULT 1,
     subscription_amount TEXT DEFAULT '$19.99',
     monthly_renewal_amount TEXT DEFAULT '$19.99',
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    role TEXT DEFAULT 'user'
   );
 
   CREATE TABLE IF NOT EXISTS tokens (
@@ -67,6 +68,13 @@ db.exec(`
   );
 `);
 
+// Ensure role column exists in existing database
+try {
+  db.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
+} catch (e) {
+  // column already exists
+}
+
 function hashPassword(password, salt) {
   return crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
 }
@@ -78,9 +86,9 @@ if (!findDemo) {
   const demoInsert = db.prepare(`
     INSERT INTO users (
       id, name, email, password_hash, salt, phone, plan, plan_name, plan_status,
-      plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at
+      plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at, role
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'admin'
     )
   `);
   demoInsert.run(
@@ -90,15 +98,18 @@ if (!findDemo) {
     hashPassword('admin123', salt),
     salt,
     '+212 661-234567',
-    'free',
-    'Free Tier (Upgrade Required)',
-    'upgrade_required',
+    'enterprise_lifetime',
+    'Enterprise Unlimited Admin Pass',
+    'active',
     null,
-    0,
+    1,
     '$0.00',
     '$0.00',
     new Date().toISOString()
   );
+} else {
+  // Ensure demo user has admin role and active lifetime access
+  db.prepare(`UPDATE users SET role = 'admin', plan = 'enterprise_lifetime', plan_status = 'active' WHERE id = 'user_demo_01'`).run();
 }
 
 // --- TURSO CLOUD PERSISTENCE BRIDGE ---
@@ -138,14 +149,15 @@ async function initTursoCloudSync() {
     const insertUser = db.prepare(`
       INSERT OR REPLACE INTO users (
         id, name, email, password_hash, salt, phone, plan, plan_name, plan_status,
-        plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at, role
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     for (const u of usersResult.rows) {
       insertUser.run(
         u.id, u.name, u.email, u.password_hash, u.salt, u.phone,
         u.plan, u.plan_name, u.plan_status, u.plan_expires_at,
-        u.auto_renew, u.subscription_amount, u.monthly_renewal_amount, u.created_at
+        u.auto_renew, u.subscription_amount, u.monthly_renewal_amount, u.created_at,
+        u.role || (u.id === 'user_demo_01' || u.email === 'client@trackphonenow.com' ? 'admin' : 'user')
       );
     }
     console.log(`[Turso Cloud] Hydrated ${usersResult.rows.length} users from cloud.`);
@@ -154,7 +166,9 @@ async function initTursoCloudSync() {
     const tokensResult = await turso.execute('SELECT * FROM tokens;');
     const insertToken = db.prepare('INSERT OR REPLACE INTO tokens (token, user_id, expires_at) VALUES (?, ?, ?)');
     for (const t of tokensResult.rows) {
-      insertToken.run(t.token, t.user_id, t.expires_at);
+      try {
+        insertToken.run(t.token, t.user_id, t.expires_at);
+      } catch (e) {}
     }
 
     // 3. Pull payments from Turso
@@ -164,7 +178,9 @@ async function initTursoCloudSync() {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     for (const p of paymentsResult.rows) {
-      insertPayment.run(p.id, p.user_id, p.currency, p.tx_hash, p.plan, p.amount, p.wallet_address, p.status, p.created_at);
+      try {
+        insertPayment.run(p.id, p.user_id, p.currency, p.tx_hash, p.plan, p.amount, p.wallet_address, p.status, p.created_at);
+      } catch (e) {}
     }
 
     // 4. Pull sessions from Turso
@@ -176,10 +192,12 @@ async function initTursoCloudSync() {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     for (const s of sessionsResult.rows) {
-      insertSession.run(
-        s.id, s.user_id, s.phone, s.phone_info, s.pretext,
-        s.status, s.link_clicks, s.target_location, s.target_device_info, s.history, s.created_at
-      );
+      try {
+        insertSession.run(
+          s.id, s.user_id, s.phone, s.phone_info, s.pretext,
+          s.status, s.link_clicks, s.target_location, s.target_device_info, s.history, s.created_at
+        );
+      } catch (e) {}
     }
 
     // Two-way sync: Push local users that might not be in cloud
@@ -188,12 +206,13 @@ async function initTursoCloudSync() {
       syncToTurso(`
         INSERT OR REPLACE INTO users (
           id, name, email, password_hash, salt, phone, plan, plan_name, plan_status,
-          plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at, role
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         lu.id, lu.name, lu.email, lu.password_hash, lu.salt, lu.phone,
         lu.plan, lu.plan_name, lu.plan_status, lu.plan_expires_at,
-        lu.auto_renew, lu.subscription_amount, lu.monthly_renewal_amount, lu.created_at
+        lu.auto_renew, lu.subscription_amount, lu.monthly_renewal_amount, lu.created_at,
+        lu.role || 'user'
       ]);
     }
 
@@ -209,8 +228,9 @@ initTursoCloudSync();
 // Database Operations
 const DB = {
   // --- USERS ---
-  createUser({ name, email, password, phone }) {
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.trim());
+  createUser({ name, email, password, phone, role }) {
+    const cleanEmail = email.toLowerCase().trim();
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(cleanEmail);
     if (existing) {
       throw new Error('An account with this email already exists.');
     }
@@ -219,42 +239,49 @@ const DB = {
     const passwordHash = hashPassword(password, salt);
     const id = 'usr_' + crypto.randomBytes(8).toString('hex');
     const createdAt = new Date().toISOString();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    let assignedRole = role || 'user';
+    const adminEmailConfig = (process.env.ADMIN_EMAIL || 'admin@trackphonenow.com').toLowerCase();
+    if (cleanEmail === adminEmailConfig || cleanEmail.startsWith('admin@') || cleanEmail === 'client@trackphonenow.com') {
+      assignedRole = 'admin';
+    }
 
     const insert = db.prepare(`
       INSERT INTO users (
         id, name, email, password_hash, salt, phone, plan, plan_name, plan_status,
-        plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at
+        plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at, role
       ) VALUES (
         ?, ?, ?, ?, ?, ?, 'free', 'Free Tier (Upgrade Required)', 'upgrade_required',
-        NULL, 0, '$0.00', '$0.00', ?
+        NULL, 0, '$0.00', '$0.00', ?, ?
       )
     `);
 
     insert.run(
       id,
       name || email.split('@')[0],
-      email.toLowerCase().trim(),
+      cleanEmail,
       passwordHash,
       salt,
       phone || '',
-      createdAt
+      createdAt,
+      assignedRole
     );
 
     // Sync user to Turso Cloud
     syncToTurso(`
       INSERT OR REPLACE INTO users (
         id, name, email, password_hash, salt, phone, plan, plan_name, plan_status,
-        plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'free', 'Free Tier (Upgrade Required)', 'upgrade_required', NULL, 0, '$0.00', '$0.00', ?)
+        plan_expires_at, auto_renew, subscription_amount, monthly_renewal_amount, created_at, role
+      ) VALUES (?, ?, ?, ?, ?, ?, 'free', 'Free Tier (Upgrade Required)', 'upgrade_required', NULL, 0, '$0.00', '$0.00', ?, ?)
     `, [
       id,
       name || email.split('@')[0],
-      email.toLowerCase().trim(),
+      cleanEmail,
       passwordHash,
       salt,
       phone || '',
-      createdAt
+      createdAt,
+      assignedRole
     ]);
 
     const token = this.createToken(id);
@@ -328,7 +355,8 @@ const DB = {
       autoRenew: Boolean(user.auto_renew),
       subscriptionAmount: user.subscription_amount,
       monthlyRenewalAmount: user.monthly_renewal_amount,
-      createdAt: user.created_at
+      createdAt: user.created_at,
+      role: user.role || (user.id === 'user_demo_01' || user.email === 'client@trackphonenow.com' ? 'admin' : 'user')
     };
   },
 
@@ -603,6 +631,149 @@ const DB = {
     db.prepare(`UPDATE payments SET status = 'CANCELLED' WHERE id = ? AND user_id = ?`).run(paymentId, userId);
     syncToTurso(`UPDATE payments SET status = 'CANCELLED' WHERE id = ? AND user_id = ?`, [paymentId, userId]);
     return true;
+  },
+
+  // ================= ADMIN CONSOLE OPERATIONS =================
+  getAllUsers() {
+    const users = db.prepare('SELECT * FROM users ORDER BY created_at DESC').all();
+    return users.map(u => {
+      const sessionCount = db.prepare('SELECT COUNT(*) as c FROM sessions WHERE user_id = ?').get(u.id)?.c || 0;
+      const paymentCount = db.prepare('SELECT COUNT(*) as c FROM payments WHERE user_id = ?').get(u.id)?.c || 0;
+      return {
+        ...this.sanitizeUser(u),
+        sessionCount,
+        paymentCount
+      };
+    });
+  },
+
+  getAllSessions() {
+    const rows = db.prepare(`
+      SELECT s.*, u.email as user_email, u.name as user_name 
+      FROM sessions s 
+      LEFT JOIN users u ON s.user_id = u.id 
+      ORDER BY s.created_at DESC
+    `).all();
+    return rows.map(r => ({
+      ...this.parseSessionRow(r),
+      userEmail: r.user_email || 'Unassigned / Demo Target',
+      userName: r.user_name || 'Guest'
+    }));
+  },
+
+  getAllPayments() {
+    const rows = db.prepare(`
+      SELECT p.*, u.email as user_email, u.name as user_name 
+      FROM payments p 
+      LEFT JOIN users u ON p.user_id = u.id 
+      ORDER BY p.created_at DESC
+    `).all();
+    return rows.map(r => ({
+      id: r.id,
+      userId: r.user_id,
+      userEmail: r.user_email || 'Direct Visitor',
+      userName: r.user_name || 'Anonymous',
+      currency: r.currency,
+      txHash: r.tx_hash,
+      plan: r.plan,
+      amount: r.amount,
+      walletAddress: r.wallet_address,
+      status: r.status,
+      createdAt: r.created_at
+    }));
+  },
+
+  getAdminStats() {
+    const totalUsers = db.prepare('SELECT COUNT(*) as c FROM users').get()?.c || 0;
+    const adminUsers = db.prepare("SELECT COUNT(*) as c FROM users WHERE role = 'admin'").get()?.c || 0;
+    const totalSessions = db.prepare('SELECT COUNT(*) as c FROM sessions').get()?.c || 0;
+    const activeSessions = db.prepare("SELECT COUNT(*) as c FROM sessions WHERE status = 'ACTIVE_WAITING'").get()?.c || 0;
+    const locatedSessions = db.prepare("SELECT COUNT(*) as c FROM sessions WHERE status = 'LOCATED' OR target_location IS NOT NULL").get()?.c || 0;
+    const confirmedPayments = db.prepare("SELECT COUNT(*) as c FROM payments WHERE status = 'CONFIRMED'").get()?.c || 0;
+    const pendingPayments = db.prepare("SELECT COUNT(*) as c FROM payments WHERE status = 'PENDING'").get()?.c || 0;
+    const activePlans = db.prepare("SELECT COUNT(*) as c FROM users WHERE plan_status = 'active'").get()?.c || 0;
+
+    const payments = db.prepare("SELECT amount FROM payments WHERE status = 'CONFIRMED'").all();
+    let totalRevenue = 0;
+    payments.forEach(p => {
+      const num = parseFloat((p.amount || '').replace(/[^0-9.]/g, '')) || 0;
+      totalRevenue += num;
+    });
+
+    return {
+      totalUsers,
+      adminUsers,
+      totalSessions,
+      activeSessions,
+      locatedSessions,
+      confirmedPayments,
+      pendingPayments,
+      activePlans,
+      totalRevenue: '$' + totalRevenue.toFixed(2),
+      dbEngine: 'Turso LibSQL Cloud + SQLite WAL Cache',
+      cloudRegion: 'AWS US East (Virginia)',
+      status: 'OPERATIONAL'
+    };
+  },
+
+  updateUserRole(userId, newRole) {
+    const validRole = newRole === 'admin' ? 'admin' : 'user';
+    db.prepare('UPDATE users SET role = ? WHERE id = ?').run(validRole, userId);
+    syncToTurso('UPDATE users SET role = ? WHERE id = ?', [validRole, userId]);
+    return this.getUserById(userId);
+  },
+
+  updateUserPlan(userId, { plan, planName, planStatus, planExpiresAt }) {
+    db.prepare(`
+      UPDATE users SET
+        plan = COALESCE(?, plan),
+        plan_name = COALESCE(?, plan_name),
+        plan_status = COALESCE(?, plan_status),
+        plan_expires_at = COALESCE(?, plan_expires_at)
+      WHERE id = ?
+    `).run(plan, planName, planStatus, planExpiresAt, userId);
+    
+    syncToTurso(`
+      UPDATE users SET
+        plan = COALESCE(?, plan),
+        plan_name = COALESCE(?, plan_name),
+        plan_status = COALESCE(?, plan_status),
+        plan_expires_at = COALESCE(?, plan_expires_at)
+      WHERE id = ?
+    `, [plan, planName, planStatus, planExpiresAt, userId]);
+
+    return this.getUserById(userId);
+  },
+
+  deleteUser(userId) {
+    if (userId === 'user_demo_01') {
+      throw new Error('Default root administrator user cannot be deleted.');
+    }
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+    db.prepare('DELETE FROM tokens WHERE user_id = ?').run(userId);
+    db.prepare('DELETE FROM payments WHERE user_id = ?').run(userId);
+    const res = db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+
+    syncToTurso('DELETE FROM sessions WHERE user_id = ?', [userId]);
+    syncToTurso('DELETE FROM tokens WHERE user_id = ?', [userId]);
+    syncToTurso('DELETE FROM payments WHERE user_id = ?', [userId]);
+    syncToTurso('DELETE FROM users WHERE id = ?', [userId]);
+
+    return res.changes > 0;
+  },
+
+  adminDeleteSession(sessionId) {
+    db.prepare('DELETE FROM sessions WHERE id = ?').run(sessionId);
+    syncToTurso('DELETE FROM sessions WHERE id = ?', [sessionId]);
+    return true;
+  },
+
+  claimAdminRole(userId, secretKey) {
+    const expectedSecret = process.env.ADMIN_SECRET || 'Admin_TrackPhoneNow_2026';
+    if (!secretKey || secretKey.trim() !== expectedSecret.trim()) {
+      throw new Error('Clé secrète Administrateur invalide.');
+    }
+    return this.updateUserRole(userId, 'admin');
   }
 };
 

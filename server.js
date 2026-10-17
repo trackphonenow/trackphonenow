@@ -45,6 +45,23 @@ function requireAuth(req, res, next) {
   next();
 }
 
+function requireAdmin(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : req.query.token;
+  if (!token) {
+    return res.status(401).json({ success: false, error: 'Authentication token required.' });
+  }
+  const user = Store.getUserByToken(token);
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'Session expired. Please log in again.' });
+  }
+  if (user.role !== 'admin') {
+    return res.status(403).json({ success: false, error: 'Access denied: Administrative clearance required.' });
+  }
+  req.user = user;
+  next();
+}
+
 // Helper: Intelligent Carrier & Geo Metadata Lookup
 function lookupPhoneMetadata(phoneNumber) {
   const cleanNumber = phoneNumber.replace(/[\s\-\(\)\+]/g, '');
@@ -526,17 +543,109 @@ app.post('/api/payment/cancel-pending', authMiddleware, (req, res) => {
   });
 });
 
-// API: Admin / Merchant instant manual confirmation (Secured with ADMIN_SECRET)
+// ================= ADMIN CONSOLE APIS =================
+
+// 1. Get platform KPIs and overview metrics
+app.get('/api/admin/overview', requireAdmin, (req, res) => {
+  try {
+    const stats = Store.getAdminStats();
+    res.json({ success: true, stats });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Get all users
+app.get('/api/admin/users', requireAdmin, (req, res) => {
+  try {
+    const users = Store.getAllUsers();
+    res.json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Update user role (admin/user)
+app.post('/api/admin/users/:id/role', requireAdmin, (req, res) => {
+  const { role } = req.body;
+  if (!role || !['admin', 'user'].includes(role)) {
+    return res.status(400).json({ success: false, error: 'Invalid role specified (must be admin or user).' });
+  }
+  try {
+    const updated = Store.updateUserRole(req.params.id, role);
+    res.json({ success: true, message: `Role updated to ${role}.`, user: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 4. Update user subscription plan
+app.post('/api/admin/users/:id/plan', requireAdmin, (req, res) => {
+  const { plan, planName, planStatus, planExpiresAt } = req.body;
+  try {
+    const updated = Store.updateUserPlan(req.params.id, { plan, planName, planStatus, planExpiresAt });
+    res.json({ success: true, message: 'Plan updated successfully.', user: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 5. Delete a user
+app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
+  try {
+    Store.deleteUser(req.params.id);
+    res.json({ success: true, message: 'User deleted successfully.' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 6. Get all tracking sessions
+app.get('/api/admin/sessions', requireAdmin, (req, res) => {
+  try {
+    const allSessions = Store.getAllSessions();
+    res.json({ success: true, sessions: allSessions });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. Delete a tracking session
+app.delete('/api/admin/sessions/:id', requireAdmin, (req, res) => {
+  try {
+    Store.adminDeleteSession(req.params.id);
+    sessions.delete(req.params.id);
+    res.json({ success: true, message: 'Tracking session deleted.' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 8. Get all crypto payments
+app.get('/api/admin/payments', requireAdmin, (req, res) => {
+  try {
+    const payments = Store.getAllPayments();
+    res.json({ success: true, payments });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 9. Confirm crypto payment (can be called by authenticated admin or with adminSecret)
 app.post('/api/admin/confirm-payment', (req, res) => {
   const { paymentId, adminSecret } = req.body;
-  const configuredSecret = process.env.ADMIN_SECRET || 'TrackPhoneNow_Admin_9824_Secured';
-  
-  if (!adminSecret || adminSecret !== configuredSecret) {
-    return res.status(403).json({ success: false, error: 'Unauthorized: Invalid Admin Secret key.' });
+  const authHeader = req.headers['authorization'];
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : req.query.token;
+  const user = token ? Store.getUserByToken(token) : null;
+  const configuredSecret = process.env.ADMIN_SECRET || 'Admin_TrackPhoneNow_2026';
+
+  const isAuthorized = (user && user.role === 'admin') || (adminSecret && adminSecret.trim() === configuredSecret);
+  if (!isAuthorized) {
+    return res.status(403).json({ success: false, error: 'Unauthorized: Admin authorization required.' });
   }
 
   if (!paymentId) {
-    return res.status(400).json({ error: 'paymentId is required' });
+    return res.status(400).json({ success: false, error: 'paymentId is required' });
   }
   try {
     const confirmedResult = Store.confirmCryptoPayment(paymentId);
@@ -548,7 +657,22 @@ app.post('/api/admin/confirm-payment', (req, res) => {
       user: confirmedResult.user
     });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 10. Self-claim admin role using Master Secret
+app.post('/api/admin/claim-role', requireAuth, (req, res) => {
+  const { secretKey } = req.body;
+  try {
+    const updatedUser = Store.claimAdminRole(req.user.id, secretKey);
+    res.json({
+      success: true,
+      message: 'Admin authorization granted successfully.',
+      user: updatedUser
+    });
+  } catch (err) {
+    res.status(403).json({ success: false, error: err.message });
   }
 });
 
