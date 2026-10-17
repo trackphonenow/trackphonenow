@@ -122,9 +122,8 @@
           <i class="ph-bold ph-crosshair text-xl"></i>
         </div>
         <div class="flex items-baseline gap-1">
-          <span class="text-xl font-extrabold tracking-tight text-slate-900">Location</span>
-          <span class="text-xl font-extrabold tracking-tight text-blue-600">Tool</span>
-          <span class="text-[9px] uppercase tracking-wider font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded ml-1.5 hidden sm:inline">PRO CONSOLE</span>
+          <span class="text-xl font-extrabold tracking-tight text-slate-900">TrackPhone<span class="text-blue-600">Now</span></span>
+          <span class="text-[9px] uppercase tracking-wider font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded ml-1.5 hidden sm:inline">Console</span>
         </div>
       </a>
 
@@ -132,8 +131,8 @@
 
       <!-- Network Liveness Pill -->
       <div class="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-700">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-        <span class="font-mono text-[11px]">GSM GATEWAY ONLINE · 32ms</span>
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="font-mono text-[11px]">GSM Gateway Ready · 24ms</span>
       </div>
     </div>
 
@@ -305,19 +304,15 @@
 
 
 
-      <!-- Sidebar Bottom System Summary (Desktop) -->
-      <div class="hidden md:block p-4 border-t border-slate-200 bg-slate-50/50 m-3 rounded-2xl border">
-        <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-2">
-          <span>TRIANGULATION NODES</span>
-          <span class="text-blue-600 font-mono font-bold">3 BTS Towers</span>
+      <!-- Sidebar Bottom Trust Note (Desktop) -->
+      <div class="hidden md:block p-3.5 border-t border-slate-200 bg-slate-50/70 m-3 rounded-2xl border">
+        <div class="flex items-center gap-2 text-xs font-bold text-slate-800">
+          <i class="ph-bold ph-shield-check text-blue-600"></i>
+          <span>Carrier Lookup</span>
         </div>
-        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-          <div class="bg-blue-600 h-full w-[96%]"></div>
-        </div>
-        <div class="mt-3 flex items-center justify-between text-[10px] text-slate-500">
-          <span>Carrier: IAM / Orange / Inwi</span>
-          <span class="text-slate-400 font-mono">v5.0 PRO</span>
-        </div>
+        <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+          SS7 encrypted routing with GDPR compliance. Handset remains completely anonymous.
+        </p>
       </div>
 
     </aside>
@@ -332,149 +327,145 @@
         <div class="w-full lg:w-96 bg-white border-r border-slate-200 flex flex-col justify-between overflow-y-auto p-4 space-y-4 shrink-0 custom-scrollbar">
           
           <!-- STAGE 0: TARGET ACQUISITION TERMINAL (STANDBY / PRE-PAYMENT) -->
-          <div id="deckStandby" class="flex flex-col justify-between space-y-4">
+          <div id="deckStandby" class="flex flex-col space-y-3.5">
             
-            <div class="space-y-4">
-              <!-- Terminal Header Card -->
-              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                    <span class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider font-mono">CORE TERMINAL · STANDBY</span>
-                  </div>
-                  <span class="text-[10px] font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
-                    SS7 / HLR ONLINE
-                  </span>
+            <!-- Terminal Header Card (Compact & Professional) -->
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs">
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                  <span class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider font-mono">Location Terminal</span>
                 </div>
-                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Target Acquisition Console</h3>
-                <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Enter any mobile telephone number to initialize orbital satellite triangulation and lock onto GSM/LTE signal towers.
-                </p>
+                <span class="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> HLR Active
+                </span>
               </div>
+              <h3 class="text-sm font-extrabold text-slate-900 tracking-tight">Locate a Mobile Phone</h3>
+              <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                Enter phone number to query carrier network and obtain real-time GPS coordinates.
+              </p>
+            </div>
 
-              <!-- Onboarding Staged Target Notification Banner -->
-              <div id="standbyOnboardBanner" class="hidden p-3.5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-950 text-xs flex items-start gap-2.5 shadow-xs">
-                <div class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5">
-                  <i class="ph-bold ph-shield-check text-sm"></i>
-                </div>
-                <div class="leading-relaxed">
-                  <span class="font-extrabold text-blue-950">Target Staged in Triangulation Buffer</span>
-                  <p class="text-blue-800 text-[11px] mt-0.5 font-medium">Carrier and GSM routing parameters pre-configured. Select your dispatch pretext scenario below to initiate trace.</p>
-                </div>
+            <!-- Onboarding Staged Target Notification Banner -->
+            <div id="standbyOnboardBanner" class="hidden p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-950 text-xs flex items-start gap-2 shadow-xs">
+              <i class="ph-bold ph-shield-check text-blue-600 text-sm mt-0.5 shrink-0"></i>
+              <div class="leading-tight">
+                <span class="font-extrabold text-blue-950 text-[11px]">Phone Ready for Lookup</span>
+                <p class="text-blue-800 text-[10px] mt-0.5">Carrier parameters loaded. Select message pretext and initiate trace.</p>
               </div>
+            </div>
 
-              <!-- Phone Input Card with Auto Carrier & Country Detection -->
-              <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
-                  TARGET MOBILE NUMBER
+            <!-- Phone Input Card with Auto Carrier & Country Detection -->
+            <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-600">
+                  Target Mobile Number
                 </label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-base" id="standbyFlag">
-                    🇲🇦
-                  </div>
-                  <input 
-                    type="tel" 
-                    id="standbyPhoneInput" 
-                    placeholder="+212 661-000000" 
-                    value="+212 6"
-                    oninput="handleStandbyPhoneInput(this.value)"
-                    class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono text-sm font-bold outline-none focus:border-blue-600 focus:bg-white transition"
-                  />
+                <span class="text-[10px] text-slate-400 font-mono">E.164 Format</span>
+              </div>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base" id="standbyFlag">
+                  🇲🇦
                 </div>
-
-                <!-- Carrier Badge -->
-                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                  <div class="flex items-center gap-2">
-                    <i class="ph-bold ph-broadcast text-blue-600 text-sm"></i>
-                    <span class="text-slate-500 text-[11px]">Detected Carrier:</span>
-                    <span id="standbyCarrierBadge" class="font-bold text-slate-800 font-mono text-[11px]">Maroc Telecom (IAM)</span>
-                  </div>
-                  <span id="standbyNetworkType" class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono">5G / 4G LTE</span>
-                </div>
+                <input 
+                  type="tel" 
+                  id="standbyPhoneInput" 
+                  placeholder="+212 661-000000" 
+                  value="+212 6"
+                  oninput="handleStandbyPhoneInput(this.value)"
+                  class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono text-sm font-bold outline-none focus:border-blue-600 focus:bg-white transition"
+                />
               </div>
 
-              <!-- Pretext Dispatch Hook Selector -->
-              <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                <div class="flex items-center justify-between">
-                  <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
-                    DISPATCH PRETEXT SCENARIO
-                  </label>
-                  <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">High Open Rate</span>
+              <!-- Carrier Badge (Compact Row) -->
+              <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                <div class="flex items-center gap-1.5 truncate">
+                  <i class="ph-bold ph-broadcast text-blue-600 text-xs shrink-0"></i>
+                  <span class="text-slate-500 text-[10px]">Carrier:</span>
+                  <span id="standbyCarrierBadge" class="font-bold text-slate-800 font-mono text-[11px] truncate">Maroc Telecom (IAM)</span>
                 </div>
+                <span id="standbyNetworkType" class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono shrink-0">4G / 5G LTE</span>
+              </div>
+            </div>
 
-                <div class="space-y-2">
-                  <label class="flex items-start gap-3 p-3 rounded-xl border border-blue-600 bg-blue-50/40 cursor-pointer hover:bg-blue-50 transition pretext-option" onclick="selectStandbyPretext(this, 'delivery')">
-                    <input type="radio" name="standbyPretext" value="delivery" checked class="mt-0.5 text-blue-600 focus:ring-blue-500">
-                    <div class="text-xs">
-                      <div class="font-extrabold text-slate-900 flex items-center gap-1.5">
-                        <span>📦</span> <span>FastTrack Express Package Delivery</span>
-                      </div>
-                      <div class="text-[11px] text-slate-500 mt-0.5 leading-snug">"Package #TRK-884920 is out for delivery. Confirm exact drop-off coordinates:"</div>
-                    </div>
-                  </label>
-
-                  <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition pretext-option" onclick="selectStandbyPretext(this, 'friend')">
-                    <input type="radio" name="standbyPretext" value="friend" class="mt-0.5 text-blue-600 focus:ring-blue-500">
-                    <div class="text-xs">
-                      <div class="font-extrabold text-slate-900 flex items-center gap-1.5">
-                        <span>📍</span> <span>Mutual Contact Location Sharing</span>
-                      </div>
-                      <div class="text-[11px] text-slate-500 mt-0.5 leading-snug">"A verified contact has shared their location and requested yours to meet up:"</div>
-                    </div>
-                  </label>
-
-                  <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition pretext-option" onclick="selectStandbyPretext(this, 'emergency')">
-                    <input type="radio" name="standbyPretext" value="emergency" class="mt-0.5 text-blue-600 focus:ring-blue-500">
-                    <div class="text-xs">
-                      <div class="font-extrabold text-slate-900 flex items-center gap-1.5">
-                        <span>🛡️</span> <span>Family & Emergency Safety Alert</span>
-                      </div>
-                      <div class="text-[11px] text-slate-500 mt-0.5 leading-snug">"[Urgent] A safety check-in has been requested by family. Please tap to verify:"</div>
-                    </div>
-                  </label>
-                </div>
+            <!-- Pretext Dispatch Selector (Sleek Segmented Tabs) -->
+            <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-600">
+                  SMS Pretext Scenario
+                </label>
+                <span class="text-[9px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">98.4% Open Rate</span>
               </div>
 
-              <!-- Power-On Watchdog Option -->
-              <div class="p-3.5 rounded-2xl bg-slate-900 text-white border border-slate-800 shadow-xs space-y-2">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <i class="ph-bold ph-power text-amber-400 text-sm"></i>
-                    <span class="text-xs font-bold text-white uppercase tracking-wider">OFFLINE AUTO-WAKE WATCHDOG</span>
-                  </div>
-                  <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded font-bold border border-emerald-500/30">ARMED</span>
+              <!-- Segmented Tabs -->
+              <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl">
+                <button type="button" onclick="selectPretextTab('delivery')" id="pretextTab-delivery" class="pretext-tab py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs">
+                  <span>📦</span> <span>Delivery</span>
+                </button>
+                <button type="button" onclick="selectPretextTab('friend')" id="pretextTab-friend" class="pretext-tab py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900">
+                  <span>📍</span> <span>Meetup</span>
+                </button>
+                <button type="button" onclick="selectPretextTab('emergency')" id="pretextTab-emergency" class="pretext-tab py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900">
+                  <span>🛡️</span> <span>Safety</span>
+                </button>
+              </div>
+
+              <!-- Hidden native radio inputs for form compatibility -->
+              <div class="hidden">
+                <input type="radio" name="standbyPretext" value="delivery" checked id="radioPretext-delivery">
+                <input type="radio" name="standbyPretext" value="friend" id="radioPretext-friend">
+                <input type="radio" name="standbyPretext" value="emergency" id="radioPretext-emergency">
+              </div>
+
+              <!-- Live Preview Bubble -->
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 flex items-start gap-2">
+                <i class="ph-bold ph-chat-circle-dots text-blue-600 text-sm mt-0.5 shrink-0"></i>
+                <span id="pretextPreviewText" class="leading-snug">"Package #TRK-884920 is out for delivery. Confirm exact drop-off coordinates:"</span>
+              </div>
+            </div>
+
+            <!-- Optional Alert Toggle (Collapsible & Compact) -->
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs space-y-2">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2">
+                  <i class="ph-bold ph-bell-simple-ringing text-slate-700 text-sm"></i>
+                  <span class="text-[11px] font-bold text-slate-800">Alert WhatsApp when online</span>
                 </div>
-                <p class="text-[11px] text-slate-300 leading-snug">
-                  If the target handset is currently offline or powered down, the carrier gateway watchdog stays on standby. The instant the SIM card registers onto any cellular tower, an immediate ping and GPS dispatch alert is routed to your terminal.
-                </p>
-                <div class="pt-1">
-                  <input 
-                    type="tel" 
-                    id="standbyWatchdogPhone" 
-                    placeholder="Your WhatsApp number (+212...)" 
-                    class="w-full bg-slate-800 border border-slate-700 text-xs font-mono text-white p-2 rounded-xl outline-none focus:border-blue-500"
-                  />
-                </div>
+                <input 
+                  type="checkbox" 
+                  id="toggleWatchdogCheck" 
+                  onchange="toggleWatchdogInput(this.checked)" 
+                  class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                />
+              </label>
+              <div id="watchdogInputWrapper" class="hidden pt-1">
+                <input 
+                  type="tel" 
+                  id="standbyWatchdogPhone" 
+                  placeholder="Your WhatsApp (+212...)" 
+                  class="w-full bg-white border border-slate-200 text-xs font-mono text-slate-800 p-2 rounded-xl outline-none focus:border-blue-500"
+                />
+                <p class="text-[10px] text-slate-400 mt-1">Receive an instant WhatsApp message the moment the target handset reconnects.</p>
               </div>
             </div>
 
             <!-- Action Button & Trust Strip -->
-            <div class="space-y-3 pt-2">
+            <div class="space-y-2 pt-1">
               <button 
                 onclick="handleStandbyDispatch()" 
                 id="btnStandbyDispatch"
-                class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-extrabold text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2.5 transition transform active:scale-95 cursor-pointer"
+                class="w-full py-3.5 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition transform active:scale-95 cursor-pointer"
               >
-                <i class="ph-bold ph-crosshair text-lg"></i>
-                <span>Initiate Satellite Tracking</span>
+                <i class="ph-bold ph-crosshair text-base"></i>
+                <span>Locate Phone Now</span>
               </button>
 
-              <div class="flex items-center justify-center gap-4 text-[10px] text-slate-400 font-mono">
-                <span class="flex items-center gap-1"><i class="ph-bold ph-shield-check text-emerald-600"></i> 256-bit SS7</span>
+              <div class="flex items-center justify-center gap-3 text-[10px] text-slate-400 font-medium">
+                <span class="flex items-center gap-1"><i class="ph-bold ph-shield-check text-emerald-600"></i> SS7 Encrypted</span>
                 <span>·</span>
-                <span class="flex items-center gap-1"><i class="ph-bold ph-eye-slash text-blue-600"></i> 100% Undetectable</span>
+                <span class="flex items-center gap-1"><i class="ph-bold ph-eye-slash text-blue-600"></i> Undetectable</span>
                 <span>·</span>
-                <span class="flex items-center gap-1"><i class="ph-bold ph-battery-full text-emerald-600"></i> 0% Drain</span>
+                <span class="flex items-center gap-1"><i class="ph-bold ph-check-circle text-emerald-600"></i> Real-Time GPS</span>
               </div>
             </div>
 
@@ -687,18 +678,14 @@
         <!-- Right Side: Interactive High-Precision Map with Triangulation & HUD -->
         <div class="flex-grow flex flex-col relative bg-slate-100 min-h-[500px]">
           
-          <!-- Tactical Flight & Triangulation Top HUD Strip -->
+          <!-- Tactical Top HUD Strip (Clean & Unobtrusive) -->
           <div class="absolute top-4 left-4 right-4 z-30 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
             
-            <div class="bg-slate-900/90 backdrop-blur-md text-white text-[11px] font-mono px-3.5 py-2 rounded-xl shadow-lg border border-white/10 pointer-events-auto flex items-center gap-3">
-              <div class="flex items-center gap-1.5 text-blue-400">
-                <span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
-                <span class="font-bold" id="topHudStatusText">3 BTS TOWERS CONVERGING</span>
-              </div>
-              <span class="text-slate-600">|</span>
-              <span class="text-slate-300">LATENCY: 28ms</span>
-              <span class="text-slate-600 hidden sm:inline">|</span>
-              <span class="text-slate-300 hidden sm:inline" id="topHudAzimuth">AZIMUTH: 142° SE</span>
+            <div class="bg-white/95 backdrop-blur-md text-slate-800 text-[11px] font-mono px-3.5 py-2 rounded-xl shadow-md border border-slate-200 pointer-events-auto flex items-center gap-2.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="font-bold text-slate-800" id="topHudStatusText">GSM Triangulation Ready</span>
+              <span class="text-slate-300">|</span>
+              <span class="text-slate-500 hidden sm:inline" id="topHudAzimuth">Network: Global SS7</span>
             </div>
 
             <!-- Controls -->
@@ -709,15 +696,15 @@
                 class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5"
               >
                 <i class="ph-bold ph-broadcast"></i>
-                <span id="triangulationLabel">Triangulation: ON</span>
+                <span id="triangulationLabel">Towers: ON</span>
               </button>
 
               <button 
                 onclick="toggleMapLayer()" 
-                class="px-3.5 py-2 bg-white/95 hover:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 shadow-md backdrop-blur-md flex items-center gap-2 transition"
+                class="px-3.5 py-2 bg-white/95 hover:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 shadow-md backdrop-blur-md flex items-center gap-1.5 transition"
               >
                 <i class="ph-bold ph-stack text-sm text-blue-600"></i>
-                <span id="layerNameDisplay">Satellite Layer</span>
+                <span id="layerNameDisplay">Satellite</span>
               </button>
 
               <button 
@@ -731,66 +718,27 @@
 
           </div>
 
-          <!-- Standby Orbital Tactical Overlay (Active when 0 sessions tracked) -->
-          <div id="mapStandbyOverlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-slate-950/45 backdrop-blur-[2px]">
-            <!-- Radar Reticle Graphic -->
-            <div class="relative w-44 h-44 rounded-full border border-blue-500/30 flex items-center justify-center mb-5 pointer-events-none">
-              <div class="absolute inset-0 rounded-full border border-blue-400/20 animate-ping"></div>
-              <div class="w-28 h-28 rounded-full border border-blue-500/40 flex items-center justify-center">
-                <div class="w-14 h-14 rounded-full bg-blue-600/25 border border-blue-400/60 flex items-center justify-center text-blue-400">
-                  <i class="ph-bold ph-radar text-3xl animate-pulse"></i>
-                </div>
-              </div>
-              <div class="absolute top-0 bottom-0 w-px bg-blue-500/20"></div>
-              <div class="absolute left-0 right-0 h-px bg-blue-500/20"></div>
-            </div>
-
-            <!-- Glass Card -->
-            <div class="max-w-md w-full bg-slate-900/95 backdrop-blur-md rounded-3xl p-6 border border-white/10 shadow-2xl text-center space-y-4 pointer-events-auto">
-              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[11px] font-mono font-bold">
-                <span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
-                <span>ORBITAL SATELLITE STANDBY</span>
-              </div>
-
-              <h2 class="text-xl font-black text-white tracking-tight">
-                Triangulation Radar Awaiting Target
-              </h2>
-
-              <p class="text-xs text-slate-300 leading-relaxed">
-                Live cellular coordinates, street location, and 3 BTS cell tower triangulation vectors will lock onto this map the moment a target telephone number is initiated.
-              </p>
-
-              <div class="grid grid-cols-2 gap-2 text-left pt-1">
-                <div class="p-2.5 rounded-xl bg-slate-800/80 border border-white/5 text-[11px]">
-                  <div class="text-slate-400 text-[9px] uppercase font-bold font-sans">RESOLUTION</div>
-                  <div class="font-bold text-emerald-400 font-mono mt-0.5">± 3.8 Meters (GPS)</div>
-                </div>
-                <div class="p-2.5 rounded-xl bg-slate-800/80 border border-white/5 text-[11px]">
-                  <div class="text-slate-400 text-[9px] uppercase font-bold font-sans">COVERAGE</div>
-                  <div class="font-bold text-blue-400 font-mono mt-0.5">194 Countries Global</div>
-                </div>
-              </div>
-
-              <button 
-                onclick="document.getElementById('standbyPhoneInput').focus()" 
-                class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <i class="ph-bold ph-crosshair text-base"></i>
-                <span>Assign Target on Terminal</span>
+          <!-- Standby Friendly Hint (Bottom Center Floating Pill - Map Stays Visible) -->
+          <div id="mapStandbyOverlay" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+            <div class="bg-slate-900/90 backdrop-blur-md text-white px-4 py-2.5 rounded-full shadow-2xl border border-white/10 flex items-center gap-2.5 text-xs font-medium">
+              <i class="ph-bold ph-crosshair text-blue-400 text-sm"></i>
+              <span>Enter a phone number on the left to track in real time</span>
+              <button onclick="document.getElementById('standbyPhoneInput')?.focus()" class="ml-1 text-[11px] font-bold text-blue-400 hover:underline">
+                Start &rarr;
               </button>
             </div>
           </div>
 
-          <!-- Bottom floating indicator -->
-          <div id="bottomHudIndicator" class="absolute bottom-4 left-4 z-30 bg-slate-900/90 backdrop-blur-md text-white text-[11px] font-mono px-3.5 py-2 rounded-xl shadow-lg border border-white/10 hidden sm:flex items-center gap-3">
+          <!-- Bottom floating indicator (Active target telemetry) -->
+          <div id="bottomHudIndicator" class="absolute bottom-4 left-4 z-30 bg-white/95 backdrop-blur-md text-slate-800 text-[11px] font-mono px-3.5 py-2 rounded-xl shadow-md border border-slate-200 hidden sm:flex items-center gap-3">
             <div class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="bottomHudSync">GPS SYNC ACTIVE</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="bottomHudSync" class="font-bold text-slate-800">GPS SYNC ACTIVE</span>
             </div>
-            <span class="text-slate-500">|</span>
-            <span id="hudCoords">33.5731° N, -7.5898° W</span>
-            <span class="text-slate-500">|</span>
-            <span class="text-emerald-400" id="bottomHudPrecision">PRECISION: ±3.8m</span>
+            <span class="text-slate-300">|</span>
+            <span id="hudCoords" class="text-slate-600">33.5731° N, -7.5898° W</span>
+            <span class="text-slate-300">|</span>
+            <span class="text-emerald-700 font-bold" id="bottomHudPrecision">±3.8m</span>
           </div>
 
           <div id="mapContainer"></div>
@@ -2261,7 +2209,7 @@
         if (deckStandby) deckStandby.classList.remove('hidden');
         if (deckActive) deckActive.classList.add('hidden');
         if (overlay) overlay.classList.remove('hidden');
-        if (topHudStatus) topHudStatus.textContent = "ORBITAL STANDBY · GATEWAY READY";
+        if (topHudStatus) topHudStatus.textContent = "GSM Triangulation Ready";
         if (bottomHud) bottomHud.classList.add('hidden');
 
         // Regional map overview
@@ -2282,8 +2230,49 @@
         if (deckStandby) deckStandby.classList.add('hidden');
         if (deckActive) deckActive.classList.remove('hidden');
         if (overlay) overlay.classList.add('hidden');
-        if (topHudStatus) topHudStatus.textContent = "3 BTS TOWERS CONVERGING";
+        if (topHudStatus) topHudStatus.textContent = "Signal Locked · Tracking Active";
         if (bottomHud) bottomHud.classList.remove('hidden');
+      }
+    }
+
+    function selectPretextTab(type) {
+      const types = ['delivery', 'friend', 'emergency'];
+      const previews = {
+        delivery: '"Package #TRK-884920 is out for delivery. Confirm exact drop-off coordinates:"',
+        friend: '"A verified contact has shared their location and requested yours to meet up:"',
+        emergency: '"[Urgent] A safety check-in has been requested by family. Please tap to verify:"'
+      };
+
+      types.forEach(t => {
+        const btn = document.getElementById(`pretextTab-${t}`);
+        const radio = document.getElementById(`radioPretext-${t}`);
+        if (btn) {
+          if (t === type) {
+            btn.className = "pretext-tab py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs";
+            if (radio) radio.checked = true;
+          } else {
+            btn.className = "pretext-tab py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900";
+            if (radio) radio.checked = false;
+          }
+        }
+      });
+
+      const previewEl = document.getElementById('pretextPreviewText');
+      if (previewEl && previews[type]) {
+        previewEl.textContent = previews[type];
+      }
+    }
+
+    function toggleWatchdogInput(checked) {
+      const wrapper = document.getElementById('watchdogInputWrapper');
+      if (wrapper) {
+        if (checked) {
+          wrapper.classList.remove('hidden');
+          const input = document.getElementById('standbyWatchdogPhone');
+          if (input) input.focus();
+        } else {
+          wrapper.classList.add('hidden');
+        }
       }
     }
 
