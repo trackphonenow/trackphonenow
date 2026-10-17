@@ -984,8 +984,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const urlParams = new URLSearchParams(window.location.search);
+  const incomingPhone = urlParams.get('phone');
+  const autostart = urlParams.get('autostart');
+  const planParam = urlParams.get('plan');
+
+  if (incomingPhone) {
+    const input = document.getElementById('phoneInput');
+    if (input) {
+      input.value = incomingPhone;
+      currentScannedPhone = incomingPhone;
+    }
+    if (autostart === '1') {
+      setTimeout(() => {
+        startScan();
+      }, 400);
+    }
+  }
+
   if (urlParams.get('paywall') === '1' || urlParams.get('crypto') === '1') {
-    currentScannedPhone = '+212 661-234567';
+    currentScannedPhone = incomingPhone || currentScannedPhone || '+212 661-234567';
     showPaywallModal();
   }
 });
