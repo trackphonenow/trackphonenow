@@ -458,13 +458,13 @@
               </div>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base" id="standbyFlag">
-                  🇲🇦
+                  🇺🇸
                 </div>
                 <input 
                   type="tel" 
                   id="standbyPhoneInput" 
-                  placeholder="+212 661-000000" 
-                  value="+212 6"
+                  placeholder="+1 (555) 019-2834" 
+                  value="+1 "
                   oninput="handleStandbyPhoneInput(this.value)"
                   class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono text-sm font-bold outline-none focus:border-blue-600 focus:bg-white transition"
                 />
@@ -475,7 +475,7 @@
                 <div class="flex items-center gap-1.5 truncate">
                   <i class="ph-bold ph-broadcast text-blue-600 text-xs shrink-0"></i>
                   <span class="text-slate-500 text-[10px]">Carrier:</span>
-                  <span id="standbyCarrierBadge" class="font-bold text-slate-800 font-mono text-[11px] truncate">Maroc Telecom (IAM)</span>
+                  <span id="standbyCarrierBadge" class="font-bold text-slate-800 font-mono text-[11px] truncate">Verizon Wireless</span>
                 </div>
                 <span id="standbyNetworkType" class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono shrink-0">4G / 5G LTE</span>
               </div>
@@ -535,7 +535,7 @@
                 <input 
                   type="tel" 
                   id="standbyWatchdogPhone" 
-                  placeholder="Your WhatsApp (+212...)" 
+                  placeholder="Your WhatsApp (+1, +44, +33...)" 
                   class="w-full bg-white border border-slate-200 text-xs font-mono text-slate-800 p-2 rounded-xl outline-none focus:border-blue-500"
                 />
                 <p class="text-[10px] text-slate-400 mt-1">Receive an instant WhatsApp message the moment the target handset reconnects.</p>
@@ -581,11 +581,11 @@
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-xl font-extrabold font-mono text-slate-900" id="currentPhoneDisplay">
-                  +212 661-234567
+                  +1 (555) 234-5678
                 </div>
                 <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                  <span id="currentCountryFlag">🇲🇦</span>
-                  <span id="currentCarrierDisplay" class="font-bold text-slate-700">Maroc Telecom (IAM)</span>
+                  <span id="currentCountryFlag">🇺🇸</span>
+                  <span id="currentCarrierDisplay" class="font-bold text-slate-700">Verizon / AT&T</span>
                 </div>
               </div>
               <button onclick="openNewTrackModal()" class="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition" title="Change target">
@@ -597,11 +597,11 @@
             <div class="mt-4 grid grid-cols-2 gap-2 text-xs font-mono bg-white p-3 rounded-xl border border-slate-200">
               <div>
                 <span class="text-slate-400 block text-[9px] uppercase font-sans font-bold">LATITUDE</span>
-                <span id="latDisplay" class="text-slate-900 font-bold text-sm">33.57310</span>
+                <span id="latDisplay" class="text-slate-900 font-bold text-sm">40.71280</span>
               </div>
               <div>
                 <span class="text-slate-400 block text-[9px] uppercase font-sans font-bold">LONGITUDE</span>
-                <span id="lngDisplay" class="text-slate-900 font-bold text-sm">-7.58980</span>
+                <span id="lngDisplay" class="text-slate-900 font-bold text-sm">-74.00600</span>
               </div>
               <div class="mt-1">
                 <span class="text-slate-400 block text-[9px] uppercase font-sans font-bold">PRECISION RADIUS</span>
@@ -620,7 +620,7 @@
                 <span>ESTIMATED STREET LOCATION</span>
               </div>
               <div id="addressDisplay" class="font-bold text-slate-800 leading-snug">
-                Boulevard d'Anfa, Maarif, Casablanca 20250, Morocco
+                5th Ave & W 34th St, New York, NY 10001, United States
               </div>
             </div>
 
@@ -688,7 +688,7 @@
                 <input 
                   type="tel" 
                   id="watchdogPhoneInput" 
-                  value="+212 600-000000" 
+                  value="+1 555-019-2834" 
                   class="w-full bg-slate-800 border border-slate-700 text-xs font-mono text-white p-2.5 rounded-xl outline-none focus:border-blue-500"
                 />
               </div>
@@ -1433,19 +1433,19 @@
       <div class="grid grid-cols-2 gap-3 text-xs font-mono bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-4">
         <div>
           <span class="text-slate-400 block text-[10px] font-sans font-bold">TARGET HANDSET NUMBER</span>
-          <span class="font-bold text-slate-900 text-sm" id="certPhone">+212 661-234567</span>
+          <span class="font-bold text-slate-900 text-sm" id="certPhone">+1 (555) 234-5678</span>
         </div>
         <div>
           <span class="text-slate-400 block text-[10px] font-sans font-bold">CARRIER OPERATOR</span>
-          <span class="font-bold text-blue-700 text-sm" id="certCarrier">Maroc Telecom (IAM)</span>
+          <span class="font-bold text-blue-700 text-sm" id="certCarrier">Verizon Wireless</span>
         </div>
         <div>
           <span class="text-slate-400 block text-[10px] font-sans font-bold">LATITUDE</span>
-          <span class="font-bold text-slate-900" id="certLat">33.57310° N</span>
+          <span class="font-bold text-slate-900" id="certLat">40.71280° N</span>
         </div>
         <div>
           <span class="text-slate-400 block text-[10px] font-sans font-bold">LONGITUDE</span>
-          <span class="font-bold text-slate-900" id="certLng">-7.58980° W</span>
+          <span class="font-bold text-slate-900" id="certLng">-74.00600° W</span>
         </div>
         <div>
           <span class="text-slate-400 block text-[10px] font-sans font-bold">ESTIMATED ACCURACY</span>
@@ -1461,7 +1461,7 @@
       <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs mb-4">
         <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">VERIFIED STREET ADDRESS</span>
         <div class="font-bold text-slate-900 text-sm" id="certAddress">
-          Boulevard d'Anfa, Maarif, Casablanca 20250, Morocco
+          5th Ave & W 34th St, New York, NY 10001, United States
         </div>
       </div>
 
@@ -1763,7 +1763,7 @@
           <input 
             type="tel" 
             id="modalPhoneInput" 
-            placeholder="+212 661-000000" 
+            placeholder="+1 (555) 019-2834" 
             class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-mono text-sm font-bold outline-none focus:border-blue-600 focus:bg-white"
           />
         </div>
@@ -2258,12 +2258,12 @@
 
     // Cache for client detected geolocation
     let clientGeoLocation = {
-      lat: 33.5898,
-      lng: -7.6325,
-      city: 'Casablanca',
-      country: 'Morocco',
-      countryCode: 'MA',
-      isp: 'Maroc Telecom / Orange'
+      lat: 40.7128,
+      lng: -74.0060,
+      city: 'New York',
+      country: 'United States',
+      countryCode: 'US',
+      isp: 'Verizon Communications'
     };
 
     // Auto-detect visitor's real location by IP
@@ -2277,15 +2277,15 @@
             lng: parseFloat(data.lng),
             city: data.city || 'City Center',
             country: data.country || 'Detected Region',
-            countryCode: (data.countryCode || 'MA').toUpperCase(),
+            countryCode: (data.countryCode || 'US').toUpperCase(),
             isp: data.isp || 'Broadband Gateway'
           };
           
           // Pre-populate telephone input prefix based on client country if not yet typed
           const phoneInput = document.getElementById('standbyPhoneInput');
-          if (phoneInput && (!phoneInput.value || phoneInput.value === '+212 6')) {
+          if (phoneInput && (!phoneInput.value || phoneInput.value === '+1 ')) {
             const countryCodes = {
-              'MA': { dial: '+212 6', flag: '🇲🇦', carrier: 'Maroc Telecom (IAM)' },
+              'US': { dial: '+1 ', flag: '🇺🇸', carrier: 'Verizon / AT&T' },
               'FR': { dial: '+33 6', flag: '🇫🇷', carrier: 'Orange France / SFR' },
               'US': { dial: '+1 ', flag: '🇺🇸', carrier: 'Verizon / AT&T' },
               'CA': { dial: '+1 ', flag: '🇨🇦', carrier: 'Rogers / Bell' },
@@ -2477,18 +2477,12 @@
         return;
       }
 
-      if (clean.startsWith('212')) {
-        if (flagEl) flagEl.textContent = '🇲🇦';
-        const p = clean.substring(3, 5);
-        if (['61', '62', '63', '64', '65', '68', '70', '71'].some(x => p.startsWith(x))) {
-          if (carrierEl) carrierEl.textContent = 'Maroc Telecom (IAM)';
-        } else if (['60', '66', '67', '76', '77'].some(x => p.startsWith(x))) {
-          if (carrierEl) carrierEl.textContent = 'Orange Maroc';
-        } else if (['69', '74', '75', '78'].some(x => p.startsWith(x))) {
-          if (carrierEl) carrierEl.textContent = 'Inwi (Wana)';
-        } else {
-          if (carrierEl) carrierEl.textContent = 'Maroc Telecom (GSM)';
-        }
+      if (clean.startsWith('1')) {
+        if (flagEl) flagEl.textContent = '🇺🇸';
+        if (carrierEl) carrierEl.textContent = 'Verizon / AT&T';
+      } else if (clean.startsWith('44')) {
+        if (flagEl) flagEl.textContent = '🇬🇧';
+        if (carrierEl) carrierEl.textContent = 'EE / Vodafone UK';
       } else if (clean.startsWith('33')) {
         if (flagEl) flagEl.textContent = '🇫🇷';
         if (carrierEl) carrierEl.textContent = 'Orange France / SFR';
@@ -2905,7 +2899,7 @@
         const log = document.createElement('div');
         log.className = "text-emerald-400 py-0.5 font-bold animate-pulse";
         const timeStr = new Date().toLocaleTimeString();
-        log.innerHTML = `[${timeStr}] ⚡ TARGET ONLINE: Handset reconnected to BTS Tower IAM-CAS-01! Dispatched WhatsApp alert to ${notifyPhone || 'Client'}!`;
+        log.innerHTML = `[${timeStr}] ⚡ TARGET ONLINE: Handset reconnected to BTS Tower BTS-NY-7701! Dispatched WhatsApp alert to ${notifyPhone || 'Client'}!`;
         term.appendChild(log);
         term.scrollTop = term.scrollHeight;
 
@@ -2913,8 +2907,8 @@
 
         if (notifyPhone) {
           const cleanPhone = notifyPhone.replace(/\D/g, '');
-          const targetNum = currentSession ? currentSession.phone : '+212 661-234567';
-          const msg = encodeURIComponent(`🚨 *[TrackPhoneNow Alert - Cible En Ligne]*\n\nL-telephoner dial (*${targetNum}*) kan tafi w daba tche3el w tla9 signal GPS!\n\n📍 *Dernière Position:* 33.57310° N, -7.58980° W\n🏢 *Adresse:* Boulevard d'Anfa, Casablanca 20250\n🎯 *Précision:* ±3.8 mètres\n\n🔗 *Suivi f Console:* ${window.location.origin}/dashboard.html`);
+          const targetNum = currentSession ? currentSession.phone : '+1 (555) 234-5678';
+          const msg = encodeURIComponent(`🚨 *[TrackPhoneNow Alert - Target Handset Reconnected]*\n\nTarget device (*${targetNum}*) just powered on and established a live GPS radio fix!\n\n📍 *Position:* 40.71280° N, -74.00600° W\n🏢 *Address:* 5th Ave & W 34th St, New York, NY 10001\n🎯 *Precision:* ±3.8 meters\n\n🔗 *Live Console:* ${window.location.origin}/dashboard.html`);
           const waUrl = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${msg}` : `https://api.whatsapp.com/send?text=${msg}`;
           window.open(waUrl, '_blank');
         }
