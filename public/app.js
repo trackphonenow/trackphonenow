@@ -165,12 +165,13 @@ function initHeroRadar() {
 
 // --- 3. Country & Carrier Real-Time Detection ---
 const countryList = [
-  { code: 'us', dial: '+1', name: 'United States', placeholder: '(555) 019-2834' },
-  { code: 'gb', dial: '+44', name: 'United Kingdom', placeholder: '7911 123456' },
-  { code: 'ca', dial: '+1', name: 'Canada', placeholder: '(555) 019-2834' },
+  { code: 'ma', dial: '+212', name: 'Morocco', placeholder: '6 12 34 56 78' },
   { code: 'fr', dial: '+33', name: 'France', placeholder: '6 12 34 56 78' },
-  { code: 'de', dial: '+49', name: 'Germany', placeholder: '151 23456789' },
   { code: 'es', dial: '+34', name: 'Spain', placeholder: '612 345 678' },
+  { code: 'us', dial: '+1', name: 'United States', placeholder: '(555) 019-2834' },
+  { code: 'ca', dial: '+1', name: 'Canada', placeholder: '(555) 019-2834' },
+  { code: 'gb', dial: '+44', name: 'United Kingdom', placeholder: '7911 123456' },
+  { code: 'de', dial: '+49', name: 'Germany', placeholder: '151 23456789' },
   { code: 'it', dial: '+39', name: 'Italy', placeholder: '312 345 6789' },
   { code: 'be', dial: '+32', name: 'Belgium', placeholder: '470 12 34 56' },
   { code: 'nl', dial: '+31', name: 'Netherlands', placeholder: '6 12345678' },
@@ -198,7 +199,7 @@ const countryList = [
 ];
 
 let currentCountry = countryList[0];
-let currentDial = '+1';
+let currentDial = '+212';
 
 function setupPhoneInputs() {
   const dropdownBtn = document.getElementById('countryDropdownBtn');
@@ -405,10 +406,24 @@ function setupPhoneInputs() {
 
   function formatPhoneInput() {
     const raw = phoneInput.value.replace(/\D/g, '');
-    if (raw.length > 3 && raw.length <= 6) {
-      phoneInput.value = `${raw.slice(0, 3)} ${raw.slice(3)}`;
-    } else if (raw.length > 6) {
-      phoneInput.value = `${raw.slice(0, 3)} ${raw.slice(3, 6)} ${raw.slice(6, 10)}`;
+    if (currentDial === '+212') {
+      if (raw.length <= 2) {
+        phoneInput.value = raw;
+      } else if (raw.length <= 4) {
+        phoneInput.value = `${raw.slice(0, 2)} ${raw.slice(2)}`;
+      } else if (raw.length <= 6) {
+        phoneInput.value = `${raw.slice(0, 2)} ${raw.slice(2, 4)} ${raw.slice(4)}`;
+      } else if (raw.length <= 8) {
+        phoneInput.value = `${raw.slice(0, 2)} ${raw.slice(2, 4)} ${raw.slice(4, 6)} ${raw.slice(6)}`;
+      } else {
+        phoneInput.value = `${raw.slice(0, 2)} ${raw.slice(2, 4)} ${raw.slice(4, 6)} ${raw.slice(6, 8)} ${raw.slice(8, 10)}`;
+      }
+    } else {
+      if (raw.length > 3 && raw.length <= 6) {
+        phoneInput.value = `${raw.slice(0, 3)} ${raw.slice(3)}`;
+      } else if (raw.length > 6) {
+        phoneInput.value = `${raw.slice(0, 3)} ${raw.slice(3, 6)} ${raw.slice(6, 10)}`;
+      }
     }
   }
 
@@ -422,10 +437,13 @@ function setupPhoneInputs() {
     }
 
     let carrier = `${currentCountry.name} Cellular 4G/5G`;
-    if (currentDial === '+1') {
-      carrier = 'Verizon / AT&T';
-    } else if (currentDial === '+44') {
-      carrier = 'EE / Vodafone UK';
+    if (currentDial === '+212') {
+      const stripped = rawVal.startsWith('0') ? rawVal.substring(1) : rawVal;
+      const p = stripped.substring(0, 2);
+      if (['61', '62', '63', '64', '65', '68', '70', '71', '72'].includes(p)) carrier = 'Maroc Telecom (IAM)';
+      else if (['60', '66', '67', '76', '77'].includes(p)) carrier = 'Orange Maroc';
+      else if (['69', '74', '75', '78'].includes(p)) carrier = 'Inwi';
+      else carrier = 'Maroc Cellular 4G/5G';
     } else if (currentDial === '+33') {
       carrier = rawVal.startsWith('6') || rawVal.startsWith('7') ? 'Orange / SFR' : 'Bouygues Telecom';
     } else if (currentDial === '+1') {
@@ -967,7 +985,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('paywall') === '1' || urlParams.get('crypto') === '1') {
-    currentScannedPhone = '+1 (202) 555-0143';
+    currentScannedPhone = '+212 661-234567';
     showPaywallModal();
   }
 });

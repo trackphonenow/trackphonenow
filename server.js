@@ -110,17 +110,26 @@ function lookupPhoneMetadata(phoneNumber) {
   let flag = '🌐';
   let carrier = 'GSM Global Network';
   let region = 'International';
-  let defaultLat = 40.7128;
-  let defaultLng = -74.0060; // Default to US/New York
+  let defaultLat = 31.7917;
+  let defaultLng = -7.0926; // Default to Morocco/Center
 
-  if (cleanNumber.startsWith('1')) {
-    country = 'United States';
-    countryCode = '+1';
-    flag = '🇺🇸';
-    region = 'North America';
-    defaultLat = 40.7128;
-    defaultLng = -74.0060; // New York
-    carrier = 'Verizon Wireless';
+  if (cleanNumber.startsWith('212')) {
+    country = 'Morocco';
+    countryCode = '+212';
+    flag = '🇲🇦';
+    region = 'North Africa';
+    defaultLat = 33.5731;
+    defaultLng = -7.5898; // Casablanca
+    const prefix = cleanNumber.substring(3, 5);
+    if (['61', '62', '63', '64', '65', '68'].includes(prefix) || ['70', '71'].includes(prefix)) {
+      carrier = 'Maroc Telecom (IAM)';
+    } else if (['60', '66', '67', '76', '77'].includes(prefix)) {
+      carrier = 'Orange Maroc';
+    } else if (['69', '74', '75', '78'].includes(prefix)) {
+      carrier = 'Inwi (Wana Corporate)';
+    } else {
+      carrier = 'Maroc Telecom (GSM)';
+    }
   } else if (cleanNumber.startsWith('33')) {
     country = 'France';
     countryCode = '+33';
@@ -187,7 +196,7 @@ function lookupPhoneMetadata(phoneNumber) {
   const cellId = Math.floor(10000 + Math.random() * 89999);
   const rssi = -(58 + Math.floor(Math.random() * 25));
   const frequency = ['850 MHz', '900 MHz (E-GSM)', '1800 MHz (DCS)', '2100 MHz (IMT)'][Math.floor(Math.random() * 4)];
-  const mcc = cleanNumber.startsWith('33') ? '208' : cleanNumber.startsWith('44') ? '234' : '310';
+  const mcc = cleanNumber.startsWith('212') ? '604' : cleanNumber.startsWith('33') ? '208' : '310';
   const mnc = '01';
 
   return {
@@ -811,24 +820,24 @@ app.get('/api/geo-ip', async (req, res) => {
       });
     }
 
-    // Default US if local dev
+    // Default Casablanca if local dev
     res.json({
       success: true,
-      country: 'United States',
-      countryCode: 'US',
-      city: 'New York',
-      lat: 40.7128,
-      lng: -74.0060,
-      isp: 'Verizon Communications',
-      lang: 'en'
+      country: 'Morocco',
+      countryCode: 'MA',
+      city: 'Casablanca',
+      lat: 33.5898,
+      lng: -7.6325,
+      isp: 'Maroc Telecom / Orange',
+      lang: 'ar'
     });
   } catch (err) {
     res.json({
       success: false,
-      countryCode: 'US',
-      city: 'New York',
-      lat: 40.7128,
-      lng: -74.0060,
+      countryCode: 'MA',
+      city: 'Casablanca',
+      lat: 33.5898,
+      lng: -7.6325,
       lang: 'en'
     });
   }
@@ -1069,13 +1078,13 @@ function notifySseClients(sessionId, payload) {
 // Global Feed: Realistic live stream of tracked devices worldwide
 app.get('/api/live-feed', (req, res) => {
   const sampleFeeds = [
-    { country: 'USA 🇺🇸', city: 'New York', carrier: 'Verizon Wireless', time: 'Just now', accuracy: '± 3.5m' },
+    { country: 'Morocco 🇲🇦', city: 'Casablanca', carrier: 'Maroc Telecom', time: 'Just now', accuracy: '± 4m' },
     { country: 'France 🇫🇷', city: 'Paris', carrier: 'Orange FR', time: '8s ago', accuracy: '± 3m' },
-    { country: 'USA 🇺🇸', city: 'Los Angeles', carrier: 'AT&T Mobility', time: '14s ago', accuracy: '± 5m' },
+    { country: 'USA 🇺🇸', city: 'Los Angeles', carrier: 'Verizon', time: '14s ago', accuracy: '± 5m' },
     { country: 'Spain 🇪🇸', city: 'Madrid', carrier: 'Movistar', time: '22s ago', accuracy: '± 2m' },
-    { country: 'Canada 🇨🇦', city: 'Toronto', carrier: 'Rogers Wireless', time: '35s ago', accuracy: '± 4m' },
+    { country: 'Morocco 🇲🇦', city: 'Marrakech', carrier: 'Inwi', time: '35s ago', accuracy: '± 6m' },
     { country: 'UAE 🇦🇪', city: 'Dubai', carrier: 'Etisalat', time: '41s ago', accuracy: '± 4m' },
-    { country: 'UK 🇬🇧', city: 'London', carrier: 'EE UK', time: '55s ago', accuracy: '± 3m' }
+    { country: 'UK 🇬🇧', city: 'London', carrier: 'EE', time: '55s ago', accuracy: '± 3m' }
   ];
   res.json({ success: true, feed: sampleFeeds });
 });
