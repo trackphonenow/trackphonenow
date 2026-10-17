@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const Store = require('./data/db');
@@ -7,9 +8,33 @@ const Store = require('./data/db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Performance & Compression for Core Web Vitals
+app.use(compression());
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Explicit SEO Routes with proper Content-Type & no-cache headers
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+  res.sendFile(path.join(__dirname, 'public', 'robots.txt'));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml');
+  res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+  res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
+
+// Static assets with smart caching
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    }
+  }
+}));
 
 // In-Memory Database for Tracking Sessions synced with Persistent Store
 const sessions = new Map();

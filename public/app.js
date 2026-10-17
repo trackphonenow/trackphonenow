@@ -1,5 +1,5 @@
 /**
- * LocationTool - Core Client Logic & Cellular Geolocation
+ * TrackPhoneNow - Core Client Logic & Cellular Geolocation
  */
 
 // --- 1. Audio Alerts (Web Audio API) ---
