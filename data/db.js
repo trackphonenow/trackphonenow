@@ -546,7 +546,7 @@ const DB = {
     else if (plan === 'annual_enterprise' || plan === 'enterprise_lifetime' || plan === 'pro_12m') defAmount = '$139.99';
 
     // Prevent Replay Attacks: Check if txHash has already been confirmed or used
-    if (txHash && txHash.trim().length >= 10) {
+    if (txHash && txHash.trim().length >= 10 && !txHash.startsWith('scan_')) {
       const existing = db.prepare(`SELECT * FROM payments WHERE tx_hash = ? AND status = 'CONFIRMED' LIMIT 1`).get(txHash.trim());
       if (existing) {
         throw new Error('This transaction hash has already been redeemed and confirmed on the blockchain.');
@@ -652,14 +652,20 @@ const DB = {
     } : null;
   },
 
-  confirmCryptoPayment(paymentId) {
+  confirmCryptoPayment(paymentId, updatedTxHash) {
     const payment = this.getPaymentById(paymentId);
     if (!payment) {
       throw new Error('Payment not found');
     }
 
-    db.prepare(`UPDATE payments SET status = 'CONFIRMED' WHERE id = ?`).run(paymentId);
-    syncToTurso(`UPDATE payments SET status = 'CONFIRMED' WHERE id = ?`, [paymentId]);
+    if (updatedTxHash) {
+      db.prepare(`UPDATE payments SET status = 'CONFIRMED', tx_hash = ? WHERE id = ?`).run(updatedTxHash, paymentId);
+      syncToTurso(`UPDATE payments SET status = 'CONFIRMED', tx_hash = ? WHERE id = ?`, [updatedTxHash, paymentId]);
+      payment.txHash = updatedTxHash;
+    } else {
+      db.prepare(`UPDATE payments SET status = 'CONFIRMED' WHERE id = ?`).run(paymentId);
+      syncToTurso(`UPDATE payments SET status = 'CONFIRMED' WHERE id = ?`, [paymentId]);
+    }
 
     if (payment.userId && payment.userId !== 'guest') {
       let expiresAt;

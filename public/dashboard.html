@@ -1651,67 +1651,86 @@
           </div>
         </div>
 
-        <!-- Step 4: Transaction Hash (TxID) & Confirm -->
+        <!-- Step 4: Automated Blockchain Detection & Confirm -->
         <div class="space-y-3 pt-1">
-          <div>
-            <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
-              ENTER BLOCKCHAIN TRANSACTION HASH (TXID)
-            </label>
-            <input 
-              type="text" 
-              id="upgradeTxInput" 
-              placeholder="e.g. 7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3..." 
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-mono text-xs outline-none focus:border-blue-600 focus:bg-white"
-            />
+          <div class="p-4 rounded-2xl bg-blue-50/80 border border-blue-200 text-xs text-blue-950 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+              <i class="ph-bold ph-radar text-lg animate-pulse"></i>
+            </div>
+            <div class="space-y-1">
+              <div class="font-extrabold text-blue-900 text-xs flex items-center gap-2">
+                <span>Détection Automatique Blockchain (Mempool Scanner)</span>
+                <span class="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase font-mono">Live 24/7</span>
+              </div>
+              <p class="text-[11px] text-blue-800 leading-relaxed">
+                Envoyez le montant depuis votre wallet ou exchange (Binance, Bybit, TrustWallet, etc.). <strong>Aucun code ou TxID n'est obligatoire</strong>. Cliquez ci-dessous dès que le virement est effectué pour vérifier la blockchain et activer votre pack.
+              </p>
+            </div>
           </div>
 
           <button 
             type="button" 
             onclick="confirmUpgradePayment()" 
             id="upgradeSubmitBtn"
-            class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-black text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition transform active:scale-95 cursor-pointer"
+            class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-black text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2.5 transition transform active:scale-95 cursor-pointer"
           >
-            <i class="ph-bold ph-check-circle text-lg"></i>
-            <span>Confirm Payment & Check Blockchain</span>
+            <i class="ph-bold ph-check-circle text-xl text-emerald-300"></i>
+            <span id="upgradeSubmitBtnText">J'ai effectué le paiement (Vérifier la Blockchain)</span>
           </button>
+
+          <!-- Collapsible Optional TxID for advanced users -->
+          <div class="text-center pt-0.5">
+            <button 
+              type="button" 
+              onclick="document.getElementById('manualTxContainer').classList.toggle('hidden')" 
+              class="text-[11px] font-semibold text-slate-400 hover:text-slate-600 underline cursor-pointer"
+            >
+              + Saisir un Hash / TxID manuellement (facultatif)
+            </button>
+            <div id="manualTxContainer" class="hidden mt-2 text-left">
+              <input 
+                type="text" 
+                id="upgradeTxInput" 
+                placeholder="Collez le TxID ici si vous le souhaitez (facultatif)..." 
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 font-mono text-xs outline-none focus:border-blue-600 focus:bg-white"
+              />
+            </div>
+          </div>
         </div>
 
       </div>
 
       <!-- Modal Step B: Blockchain Verification Pending Screen -->
       <div id="upgradeModalPendingStep" class="hidden space-y-5 animate-in fade-in duration-200">
-        <div class="text-center p-6 bg-gradient-to-b from-amber-50/90 to-white border border-amber-200 rounded-3xl">
-          <div class="w-16 h-16 mx-auto rounded-full bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-amber-600 text-3xl mb-3 shadow-inner">
-            <i class="ph-bold ph-hourglass-high animate-spin" style="animation-duration: 5s;"></i>
+        <div class="text-center p-6 bg-gradient-to-b from-blue-50/80 to-white border border-blue-200 rounded-3xl">
+          <div class="w-16 h-16 mx-auto rounded-full bg-blue-100 border-2 border-blue-300 flex items-center justify-center text-blue-600 text-3xl mb-3 shadow-inner">
+            <i class="ph-bold ph-radar animate-spin" style="animation-duration: 4s;"></i>
           </div>
-          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-black uppercase tracking-wider mb-2 border border-amber-300">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-            <span>En attente de validation Blockchain (Pending)</span>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-[11px] font-black uppercase tracking-wider mb-2 border border-blue-300 font-mono">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <span>Scan Automatique des Nœuds Blockchain</span>
           </div>
-          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Paiement Détecté dans le Réseau</h3>
+          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Recherche du Virement sur la Blockchain</h3>
           <p class="text-xs text-slate-600 max-w-md mx-auto mt-1 leading-relaxed">
-            Votre transaction est enregistrée. L'activation de la Console Pro s'effectuera dès la confirmation des blocs par les nœuds validateurs (généralement 1 à 3 minutes).
+            Notre scanner interroge automatiquement les explorateurs de blocs toutes les 4 secondes. Dès confirmation du virement, votre <strong>Console Pro sera activée immédiatement</strong>.
           </p>
         </div>
 
         <!-- TX Information summary -->
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5 text-xs font-mono">
           <div class="flex items-center justify-between">
-            <span class="text-slate-400 font-sans font-bold text-[10px] uppercase">Pass & Montant</span>
+            <span class="text-slate-400 font-sans font-bold text-[10px] uppercase">Pack Sélectionné</span>
             <span class="font-bold text-slate-900" id="modalPendingAmountNetwork">USDT (TRC-20) · $49.99</span>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-slate-400 font-sans font-bold text-[10px] uppercase">Transaction Hash (TXID)</span>
-            <a id="modalPendingTxLink" href="#" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1 font-bold truncate max-w-[240px]">
-              <span id="modalPendingTxHash" class="truncate">0x...</span>
-              <i class="ph-bold ph-arrow-square-out shrink-0"></i>
-            </a>
+            <span class="text-slate-400 font-sans font-bold text-[10px] uppercase">Adresse de Dépôt</span>
+            <span id="modalPendingWalletAddr" class="font-mono text-slate-700 truncate max-w-[220px]">TT44...</span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-slate-400 font-sans font-bold text-[10px] uppercase">Statut Réseau</span>
-            <span class="text-amber-800 bg-amber-100 px-2 py-0.5 rounded font-bold text-[10px] flex items-center gap-1 border border-amber-200">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-              <span>Awaiting 1+ Node Confirmations</span>
+            <span class="text-blue-800 bg-blue-100 px-2 py-0.5 rounded font-bold text-[10px] flex items-center gap-1 border border-blue-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+              <span id="modalPendingStatusText">Scanning Mempool (Auto-Check Active)...</span>
             </span>
           </div>
         </div>
@@ -1719,12 +1738,12 @@
         <div class="space-y-2">
           <button 
             type="button" 
-            onclick="verifyModalBlockchainStatus()" 
+            onclick="verifyModalBlockchainStatus(false)" 
             id="modalVerifyBtn"
             class="w-full py-3 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-600/25 flex items-center justify-center gap-2 transition cursor-pointer"
           >
-            <i class="ph-bold ph-arrows-clockwise text-base"></i>
-            <span>Vérifier le statut Blockchain maintenant</span>
+            <i class="ph-bold ph-arrows-clockwise text-base animate-spin" style="animation-duration: 3s;"></i>
+            <span>Scanner la Blockchain maintenant</span>
           </button>
           <button 
             type="button" 
@@ -3205,7 +3224,24 @@
       }
     }
 
+    let modalPollTimer = null;
+
+    function startModalBlockchainPolling() {
+      stopModalBlockchainPolling();
+      modalPollTimer = setInterval(async () => {
+        await verifyModalBlockchainStatus(true);
+      }, 4000);
+    }
+
+    function stopModalBlockchainPolling() {
+      if (modalPollTimer) {
+        clearInterval(modalPollTimer);
+        modalPollTimer = null;
+      }
+    }
+
     function closeUpgradeModal() {
+      stopModalBlockchainPolling();
       const modal = document.getElementById('upgradeModal');
       if (modal) modal.classList.add('hidden');
     }
@@ -3292,18 +3328,12 @@
 
     async function confirmUpgradePayment() {
       const btn = document.getElementById('upgradeSubmitBtn');
-      const txHash = (document.getElementById('upgradeTxInput').value || '').trim();
+      const txHash = (document.getElementById('upgradeTxInput')?.value || '').trim();
       const plan = UPGRADE_PLANS[selectedUpgradePlan];
       const wallet = UPGRADE_WALLETS[selectedUpgradeCurrency];
 
-      if (!txHash || txHash.length < 8) {
-        showToast('⚠️ Veuillez saisir le Hash de transaction (TXID) de votre virement crypto.', true);
-        document.getElementById('upgradeTxInput').focus();
-        return;
-      }
-
       btn.disabled = true;
-      btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Vérification Blockchain en cours...`;
+      btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Scan des nœuds Blockchain en cours...`;
 
       const token = localStorage.getItem('authToken');
       try {
@@ -3315,7 +3345,7 @@
           },
           body: JSON.stringify({
             currency: selectedUpgradeCurrency,
-            txHash: txHash,
+            txHash: txHash || undefined,
             plan: selectedUpgradePlan,
             amount: plan.usdLabel
           })
@@ -3324,7 +3354,7 @@
         const data = await res.json();
         if (data.success) {
           if (data.confirmed) {
-            // Instant on-chain confirmation (already verified by blockchain)
+            // Instant on-chain confirmation
             playSound('lock');
             closeUpgradeModal();
             showToast(`🎉 PAIEMENT VALIDÉ SUR LA BLOCKCHAIN ! Vous êtes désormais sur ${plan.name} !`);
@@ -3336,33 +3366,38 @@
             }
             fetchPendingPayment();
           } else {
-            // Blockchain pending status (Must wait for block confirmations)
+            // Blockchain pending status (Switch to scanning view and auto-poll)
             playSound('radar');
             document.getElementById('upgradeModalCheckoutStep').classList.add('hidden');
             document.getElementById('upgradeModalPendingStep').classList.remove('hidden');
 
             document.getElementById('modalPendingAmountNetwork').textContent = `${wallet.name} · ${plan.usdLabel}`;
-            document.getElementById('modalPendingTxHash').textContent = txHash.length > 24 ? `${txHash.substring(0, 12)}...${txHash.substring(txHash.length - 8)}` : txHash;
-            document.getElementById('modalPendingTxLink').href = getExplorerTxUrl(selectedUpgradeCurrency, txHash);
+            const walletAddrEl = document.getElementById('modalPendingWalletAddr');
+            if (walletAddrEl) walletAddrEl.textContent = wallet.address;
 
-            showToast('🟡 Transaction enregistrée. En attente de confirmation sur la blockchain.');
+            showToast('📡 Scan de la blockchain activé. Vérification automatique en cours...');
             fetchPendingPayment();
+
+            // Start automated polling every 4 seconds
+            startModalBlockchainPolling();
           }
         } else {
-          showToast(data.error || 'Erreur lors de la validation du hash.', true);
+          showToast(data.error || 'Erreur lors de la vérification.', true);
         }
       } catch (err) {
         showToast('Erreur réseau lors de la vérification.', true);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i class="ph-bold ph-check-circle text-lg"></i> <span>Confirm Payment & Check Blockchain</span>`;
+        btn.innerHTML = `<i class="ph-bold ph-check-circle text-xl text-emerald-300"></i> <span>J'ai effectué le paiement (Vérifier la Blockchain)</span>`;
       }
     }
 
-    async function verifyModalBlockchainStatus() {
+    async function verifyModalBlockchainStatus(silent = false) {
       const btn = document.getElementById('modalVerifyBtn');
-      btn.disabled = true;
-      btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Consultation des nœuds validateurs...`;
+      if (!silent && btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Consultation des explorateurs de blocs...`;
+      }
 
       const token = localStorage.getItem('authToken');
       try {
@@ -3375,23 +3410,26 @@
         });
         const data = await res.json();
         if (data.success && data.confirmed) {
+          stopModalBlockchainPolling();
           playSound('lock');
           closeUpgradeModal();
-          showToast(`🎉 TRANSACTION CONFIRMÉE SUR LA BLOCKCHAIN ! Compte Pro Activé !`);
+          showToast(`🎉 TRANSACTION CONFIRMÉE SUR LA BLOCKCHAIN ! Pack Pro activé avec succès !`);
           if (data.user) {
             currentUser = data.user;
             localStorage.setItem('authUser', JSON.stringify(data.user));
             updateUserUI(data.user);
           }
           fetchPendingPayment();
-        } else {
-          showToast(data.message || '🟡 Transaction toujours en attente des confirmations du réseau.', true);
+        } else if (!silent) {
+          showToast(data.message || '🟡 Transaction toujours en attente de détection sur la blockchain.', true);
         }
       } catch (e) {
-        showToast('Erreur de connexion blockchain.', true);
+        if (!silent) showToast('Erreur de connexion blockchain.', true);
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="ph-bold ph-arrows-clockwise text-base"></i> <span>Vérifier le statut Blockchain maintenant</span>`;
+        if (!silent && btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="ph-bold ph-arrows-clockwise text-base animate-spin" style="animation-duration: 3s;"></i> <span>Scanner la Blockchain maintenant</span>`;
+        }
       }
     }
 

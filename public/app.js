@@ -850,19 +850,13 @@ async function handleConfirmCryptoPayment() {
   const btn = document.getElementById('confirmCryptoPaymentBtn');
   const txHash = (document.getElementById('cryptoTxHashInput')?.value || '').trim();
 
-  if (!txHash || txHash.length < 8) {
-    alert('Please enter your valid transaction hash (TXID) from your crypto wallet or exchange so our nodes can verify the blockchain confirmation.');
-    document.getElementById('cryptoTxHashInput')?.focus();
-    return;
-  }
-
   btn.disabled = true;
-  btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Verifying Blockchain Mempool...`;
+  btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Scanning Blockchain Nodes...`;
 
   try {
     const token = localStorage.getItem('authToken');
     
-    // Call server crypto confirmation endpoint
+    // Call server crypto confirmation endpoint (no TXID required)
     const res = await fetch('/api/payment/crypto-confirm', {
       method: 'POST',
       headers: {
@@ -870,29 +864,34 @@ async function handleConfirmCryptoPayment() {
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       },
       body: JSON.stringify({
-        currency: activeCryptoKey,
-        txHash: txHash,
-        plan: 'pro_1month',
+        currency: activeCryptoKey || 'usdt_trc20',
+        txHash: txHash || undefined,
+        plan: 'pro_1m',
         amount: '$24.99'
       })
     });
 
     const data = await res.json();
     
-    if (res.ok) {
-      btn.innerHTML = `✓ Payment Broadcasted! Status: PENDING`;
-      btn.className = "w-full py-3.5 px-6 rounded-2xl bg-amber-600 text-white font-extrabold text-sm flex items-center justify-center gap-2";
+    if (res.ok && data.success) {
+      if (data.confirmed) {
+        btn.innerHTML = `✓ Payment Confirmed on Blockchain!`;
+        btn.className = "w-full py-3.5 px-6 rounded-2xl bg-emerald-600 text-white font-extrabold text-sm flex items-center justify-center gap-2";
+      } else {
+        btn.innerHTML = `📡 Transaction Detected! Verifying blocks...`;
+        btn.className = "w-full py-3.5 px-6 rounded-2xl bg-blue-600 text-white font-extrabold text-sm flex items-center justify-center gap-2";
+      }
 
       setTimeout(() => {
         if (!token) {
-          window.location.href = `/auth.html?phone=${encodeURIComponent(currentScannedPhone || '')}&plan=pro_1month&tx=${encodeURIComponent(txHash)}`;
+          window.location.href = `/auth.html?phone=${encodeURIComponent(currentScannedPhone || '')}&plan=pro_1m&autologin=1`;
         } else {
           window.location.href = `/dashboard.html?tab=billing`;
         }
       }, 1000);
     } else {
       btn.disabled = false;
-      btn.innerHTML = `⚠️ ${data.error || 'Verification Failed. Try Again.'}`;
+      btn.innerHTML = `⚠️ ${data.error || 'Verification in progress. Try Again.'}`;
       btn.className = "w-full py-3.5 px-6 rounded-2xl bg-red-600 text-white font-extrabold text-sm flex items-center justify-center gap-2";
     }
 

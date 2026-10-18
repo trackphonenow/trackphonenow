@@ -459,75 +459,246 @@ async function checkBtcTransaction(txHash) {
   }
 }
 
+// Automated on-chain deposit scanner (No TxID needed from user)
+async function scanWalletForRecentDeposits(currencyKey, walletAddress) {
+  try {
+    // 1. TRON Network (USDT TRC-20 & native TRX)
+    if (currencyKey === 'usdt_trc20' || currencyKey === 'Tron Network') {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4500);
+      try {
+        const trc20Res = await fetch(
+          `https://apilist.tronscanapi.com/api/token_trc20/transfers?limit=5&start=0&sort=-timestamp&count=true&relatedAddress=${walletAddress}`,
+          { headers: { 'User-Agent': 'TrackPhoneNow-Forensic-Tracker/1.0' }, signal: controller.signal }
+        );
+        clearTimeout(timeoutId);
+        if (trc20Res.ok) {
+          const trc20Data = await trc20Res.json();
+          const transfers = trc20Data.token_transfers || [];
+          for (const tx of transfers) {
+            if (tx.to_address === walletAddress && tx.confirmed) {
+              const amountUSDT = (parseFloat(tx.quant || '0') / 1e6).toFixed(2);
+              return {
+                detected: true,
+                confirmed: true,
+                txHash: tx.transaction_id,
+                amount: amountUSDT,
+                currency: 'USDT (TRC-20)',
+                block: tx.block,
+                source: 'TronScan TRC-20'
+              };
+            }
+          }
+        }
+      } catch (e) {
+        clearTimeout(timeoutId);
+      }
+
+      // Check standard TRX transactions
+      try {
+        const trxController = new AbortController();
+        const trxTimeout = setTimeout(() => trxController.abort(), 4500);
+        const trxRes = await fetch(
+          `https://apilist.tronscanapi.com/api/transaction?sort=-timestamp&count=true&limit=5&start=0&address=${walletAddress}`,
+          { headers: { 'User-Agent': 'TrackPhoneNow-Forensic-Tracker/1.0' }, signal: trxController.signal }
+        );
+        clearTimeout(trxTimeout);
+        if (trxRes.ok) {
+          const trxData = await trxRes.json();
+          const txList = trxData.data || [];
+          for (const tx of txList) {
+            if (tx.toAddress === walletAddress && tx.confirmed && tx.result === 'SUCCESS') {
+              return {
+                detected: true,
+                confirmed: true,
+                txHash: tx.hash,
+                amount: (parseFloat(tx.amount || '0') / 1e6).toFixed(2),
+                currency: 'TRX',
+                block: tx.block,
+                source: 'TronScan TRX'
+              };
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. Bitcoin (BTC)
+    if (currencyKey === 'btc' || currencyKey === 'Bitcoin SegWit') {
+      const btcController = new AbortController();
+      const btcTimeout = setTimeout(() => btcController.abort(), 4500);
+      try {
+        const btcRes = await fetch(
+          `https://blockstream.info/api/address/${walletAddress}/txs`,
+          { headers: { 'User-Agent': 'TrackPhoneNow-Forensic-Tracker/1.0' }, signal: btcController.signal }
+        );
+        clearTimeout(btcTimeout);
+        if (btcRes.ok) {
+          const btcTxs = await btcRes.json();
+          if (Array.isArray(btcTxs) && btcTxs.length > 0) {
+            for (const tx of btcTxs) {
+              const isIncoming = tx.vout && tx.vout.some(out => out.scriptpubkey_address === walletAddress);
+              if (isIncoming) {
+                return {
+                  detected: true,
+                  confirmed: !!(tx.status && tx.status.confirmed),
+                  txHash: tx.txid,
+                  currency: 'BTC',
+                  block: tx.status?.block_height,
+                  source: 'Blockstream BTC'
+                };
+              }
+            }
+          }
+        }
+      } catch (e) {
+        clearTimeout(btcTimeout);
+      }
+    }
+
+    // 3. Litecoin (LTC)
+    if (currencyKey === 'ltc' || currencyKey === 'Litecoin Network') {
+      const ltcController = new AbortController();
+      const ltcTimeout = setTimeout(() => ltcController.abort(), 4500);
+      try {
+        const ltcRes = await fetch(
+          `https://litecoinspace.org/api/address/${walletAddress}/txs`,
+          { headers: { 'User-Agent': 'TrackPhoneNow-Forensic-Tracker/1.0' }, signal: ltcController.signal }
+        );
+        clearTimeout(ltcTimeout);
+        if (ltcRes.ok) {
+          const ltcTxs = await ltcRes.json();
+          if (Array.isArray(ltcTxs) && ltcTxs.length > 0) {
+            for (const tx of ltcTxs) {
+              const isIncoming = tx.vout && tx.vout.some(out => out.scriptpubkey_address === walletAddress);
+              if (isIncoming) {
+                return {
+                  detected: true,
+                  confirmed: !!(tx.status && tx.status.confirmed),
+                  txHash: tx.txid,
+                  currency: 'LTC',
+                  block: tx.status?.block_height,
+                  source: 'LitecoinSpace'
+                };
+              }
+            }
+          }
+        }
+      } catch (e) {
+        clearTimeout(ltcTimeout);
+      }
+    }
+
+    return { detected: false };
+  } catch (err) {
+    console.warn('[Blockchain Auto-Scan]', err.message);
+    return { detected: false, error: err.message };
+  }
+}
+
 async function verifyTxOnChain(currencyKey, txHash, recipientAddress) {
-  if (!txHash || txHash.trim().length < 10) {
-    return { confirmed: false, error: 'Valid transaction hash (TXID) is required.' };
+  if (!txHash || txHash.trim().length < 8) {
+    // If no TxID, check if there is an incoming transaction on the address
+    const deposit = await scanWalletForRecentDeposits(currencyKey, recipientAddress);
+    if (deposit.detected && deposit.confirmed) {
+      return { confirmed: true, data: deposit, detectedTxHash: deposit.txHash };
+    }
+    return { confirmed: false, pending: true, message: 'Scan du réseau en cours. En attente de la détection de votre transfert...' };
   }
   const cleanHash = txHash.trim();
+  if (cleanHash.startsWith('scan_')) {
+    const deposit = await scanWalletForRecentDeposits(currencyKey, recipientAddress);
+    if (deposit.detected && deposit.confirmed) {
+      return { confirmed: true, data: deposit, detectedTxHash: deposit.txHash };
+    }
+    return { confirmed: false, pending: true, message: 'Scan automatique des blocs en cours...' };
+  }
   if (currencyKey === 'usdt_trc20' || currencyKey === 'Tron Network') {
     return await checkTronTransaction(cleanHash, recipientAddress);
   }
   if (currencyKey === 'btc' || currencyKey === 'Bitcoin SegWit') {
     return await checkBtcTransaction(cleanHash);
   }
-  // For other networks (BEP20, ERC20, SOL, LTC), check if valid hex/hash length
+  // For other networks (BEP20, ERC20, SOL, LTC)
   if (cleanHash.length >= 32) {
     return { confirmed: false, pending: true, message: 'Transaction registered, awaiting multi-node validator consensus.' };
   }
   return { confirmed: false, error: 'Transaction hash format unrecognized.' };
 }
 
-// API: Submit Crypto Payment (Stays PENDING until blockchain verification)
+// API: Submit Crypto Payment (No TxID required! Automatic Mempool / Blockchain Detection)
 app.post(['/api/payment/crypto-confirm', '/api/payment/crypto-submit'], authMiddleware, async (req, res) => {
   const { currency, txHash, plan, amount } = req.body;
   const wallet = CRYPTO_WALLETS[currency] || CRYPTO_WALLETS.usdt_trc20;
   const targetUserId = req.user ? req.user.id : 'user_demo_01';
-
-  if (!txHash || txHash.trim().length < 8) {
-    return res.status(400).json({
-      success: false,
-      error: 'Veuillez saisir un Hash de transaction (TXID) valide issu de votre wallet.'
-    });
-  }
 
   let defaultAmount = '$24.99';
   if (plan === 'pro_3m') defaultAmount = '$49.99';
   else if (plan === 'pro_6m') defaultAmount = '$89.99';
   else if (plan === 'annual_enterprise' || plan === 'enterprise_lifetime' || plan === 'pro_12m') defaultAmount = '$139.99';
 
-  // 1. Record payment in DB with status = 'PENDING'
-  const payment = Store.recordCryptoPayment({
-    userId: targetUserId,
-    currency: wallet.name,
-    txHash: txHash.trim(),
-    plan: plan || 'pro_1m',
-    amount: amount || defaultAmount,
-    walletAddress: wallet.address
-  });
+  const providedHash = (txHash || '').trim();
 
-  // 2. Perform live blockchain verification check
-  const check = await verifyTxOnChain(wallet.id, txHash.trim(), wallet.address);
+  // 1. If no TxID provided, check directly on-chain for incoming deposit to wallet
+  let detectedDeposit = null;
+  if (!providedHash) {
+    detectedDeposit = await scanWalletForRecentDeposits(wallet.id, wallet.address);
+  }
 
-  if (check.confirmed) {
-    // If already confirmed on-chain (e.g. valid broadcast with blocks)
-    const confirmedResult = Store.confirmCryptoPayment(payment.id);
+  const effectiveTxHash = providedHash || (detectedDeposit && detectedDeposit.detected ? detectedDeposit.txHash : ('scan_' + Date.now().toString(36) + '_' + crypto.randomBytes(3).toString('hex')));
+
+  // 2. Record payment in DB with status = 'PENDING'
+  let payment;
+  try {
+    payment = Store.recordCryptoPayment({
+      userId: targetUserId,
+      currency: wallet.name,
+      txHash: effectiveTxHash,
+      plan: plan || 'pro_1m',
+      amount: amount || defaultAmount,
+      walletAddress: wallet.address
+    });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+
+  // 3. If deposit was already found on-chain, confirm and upgrade instantly!
+  if (detectedDeposit && detectedDeposit.detected && detectedDeposit.confirmed) {
+    const confirmedResult = Store.confirmCryptoPayment(payment.id, detectedDeposit.txHash);
     return res.json({
       success: true,
       confirmed: true,
       status: 'CONFIRMED',
-      message: `Paiement vérifié avec succès sur la blockchain ! Compte activé.`,
+      message: `Paiement détecté et confirmé sur la blockchain (${detectedDeposit.source}) ! Votre compte Pro est activé.`,
       payment: confirmedResult.payment,
-      user: confirmedResult.user
+      user: confirmedResult.user,
+      txHash: detectedDeposit.txHash
     });
   }
 
-  // Otherwise, strictly remain in PENDING state until confirmations complete
+  // 4. If user provided a TxID, perform on-chain verification
+  if (providedHash && providedHash.length >= 10) {
+    const check = await verifyTxOnChain(wallet.id, providedHash, wallet.address);
+    if (check.confirmed) {
+      const confirmedResult = Store.confirmCryptoPayment(payment.id, check.detectedTxHash || providedHash);
+      return res.json({
+        success: true,
+        confirmed: true,
+        status: 'CONFIRMED',
+        message: `Paiement vérifié avec succès sur la blockchain ! Compte activé.`,
+        payment: confirmedResult.payment,
+        user: confirmedResult.user
+      });
+    }
+  }
+
+  // 5. Otherwise, remain in PENDING state while frontend auto-polls
   const currentUser = Store.getUserById(targetUserId);
   res.json({
     success: true,
     confirmed: false,
     status: 'PENDING',
-    message: check.message || 'Paiement enregistré. En attente de confirmation sur la blockchain...',
+    message: 'Scan automatique de la blockchain en cours. En attente de détection du virement par les nœuds...',
     payment,
     user: currentUser
   });
@@ -543,7 +714,7 @@ app.get('/api/payment/pending', authMiddleware, (req, res) => {
   });
 });
 
-// API: Verify Blockchain Status for pending payment
+// API: Verify Blockchain Status for pending payment (Polls blockchain nodes)
 app.post('/api/payment/verify-blockchain', authMiddleware, async (req, res) => {
   const targetUserId = req.user ? req.user.id : 'user_demo_01';
   const pendingPayment = Store.getLatestPendingPayment(targetUserId);
@@ -564,25 +735,42 @@ app.post('/api/payment/verify-blockchain', authMiddleware, async (req, res) => {
     }
   }
 
-  const check = await verifyTxOnChain(walletKey, pendingPayment.txHash, pendingPayment.walletAddress);
-
-  if (check.confirmed) {
-    const confirmedResult = Store.confirmCryptoPayment(pendingPayment.id);
+  // Scan blockchain address directly for any confirmed incoming deposit
+  const deposit = await scanWalletForRecentDeposits(walletKey, pendingPayment.walletAddress);
+  if (deposit && deposit.detected && deposit.confirmed) {
+    const confirmedResult = Store.confirmCryptoPayment(pendingPayment.id, deposit.txHash);
     return res.json({
       success: true,
       confirmed: true,
       status: 'CONFIRMED',
-      message: `Transaction confirmée sur la blockchain ! Votre console Pro est maintenant activée.`,
+      message: `Transaction détectée et confirmée sur la blockchain (${deposit.source}) ! Votre console Pro est maintenant activée.`,
       payment: confirmedResult.payment,
-      user: confirmedResult.user
+      user: confirmedResult.user,
+      txHash: deposit.txHash
     });
+  }
+
+  // If pending payment has a manual hash
+  if (pendingPayment.txHash && !pendingPayment.txHash.startsWith('scan_')) {
+    const check = await verifyTxOnChain(walletKey, pendingPayment.txHash, pendingPayment.walletAddress);
+    if (check.confirmed) {
+      const confirmedResult = Store.confirmCryptoPayment(pendingPayment.id, check.detectedTxHash || pendingPayment.txHash);
+      return res.json({
+        success: true,
+        confirmed: true,
+        status: 'CONFIRMED',
+        message: `Transaction confirmée sur la blockchain ! Votre console Pro est maintenant activée.`,
+        payment: confirmedResult.payment,
+        user: confirmedResult.user
+      });
+    }
   }
 
   res.json({
     success: true,
     confirmed: false,
     status: 'PENDING',
-    message: check.message || 'Transaction en attente des confirmations de blocs du réseau...',
+    message: 'Scan automatique des blocs en cours... En attente de la diffusion de votre transaction.',
     payment: pendingPayment
   });
 });

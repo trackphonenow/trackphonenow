@@ -52,9 +52,9 @@ const I18N_TRANSLATIONS = {
       amountDue: 'AMOUNT DUE',
       depositAddress: 'OFFICIAL RECEIVING ADDRESS',
       viewExplorer: 'View Address on Explorer',
-      txLabel: 'ENTER BLOCKCHAIN TRANSACTION HASH (TXID)',
-      txPlaceholder: 'Paste TxID from your wallet transfer...',
-      confirmBtn: 'Confirm Payment & Verify Blockchain',
+      txLabel: 'AUTOMATIC MEMPOOL SCANNER (NO TXID REQUIRED)',
+      txPlaceholder: 'Scanning incoming transfers or paste optional TxID...',
+      confirmBtn: 'I Have Sent Payment (Verify Blockchain)',
       footerNotice: 'Transactions are monitored 24/7 via blockchain explorers. Access unlocks once verified on-chain.'
     },
     pricing: {
@@ -134,9 +134,9 @@ const I18N_TRANSLATIONS = {
       amountDue: 'MONTANT À PAYER',
       depositAddress: 'ADRESSE OFFICIELLE DE DÉPÔT',
       viewExplorer: 'Voir l’adresse sur l’Explorer',
-      txLabel: 'ENTREZ LE HASH DE TRANSACTION (TXID)',
-      txPlaceholder: 'Collez le TxID fourni par votre portefeuille...',
-      confirmBtn: 'Confirmer le Paiement & Vérifier la Blockchain',
+      txLabel: 'DÉTECTION AUTOMATIQUE BLOCKCHAIN (AUCUN TXID REQUIS)',
+      txPlaceholder: 'Scan automatique des transferts ou collez un TxID facultatif...',
+      confirmBtn: "J'ai effectué le paiement (Vérifier la Blockchain)",
       footerNotice: 'Surveillance continue 24/7 sur la blockchain. L’accès s’active dès confirmation sur le réseau.'
     },
     pricing: {
@@ -216,9 +216,9 @@ const I18N_TRANSLATIONS = {
       amountDue: 'المبلغ المطلوب',
       depositAddress: 'عنوان المحفظة الرسمي للإيداع',
       viewExplorer: 'معاينة المحفظة على مستكشف البلوكشين',
-      txLabel: 'أدخل رمز المعاملة (TXID)',
-      txPlaceholder: 'الصق رمز التحويل الخاص بمحفظتك...',
-      confirmBtn: 'تأكيد الدفع والفحص على البلوكشين',
+      txLabel: 'الكشف التلقائي عبر البلوكشين (بدون إدخال رمز المعاملة)',
+      txPlaceholder: 'جاري فحص المعاملات الواردة تلقائياً أو الصق كود اختياري...',
+      confirmBtn: 'لقد قمت بالتحويل (فحص البلوكشين وتفعيل الحساب)',
       footerNotice: 'مراقبة المعاملات مستمرة على مدار الساعة. يتم فتح التتبع تلقائياً فور تأكيد الشبكة.'
     },
     pricing: {
@@ -298,9 +298,9 @@ const I18N_TRANSLATIONS = {
       amountDue: 'TOTAL A PAGAR',
       depositAddress: 'DIRECCIÓN OFICIAL DE DEPÓSITO',
       viewExplorer: 'Ver dirección en el explorador',
-      txLabel: 'INTRODUZCA EL HASH DE TRANSACCIÓN (TXID)',
-      txPlaceholder: 'Pegue el TxID proporcionado por su billetera...',
-      confirmBtn: 'Confirmar Pago y Verificar Blockchain',
+      txLabel: 'DETECCIÓN AUTOMÁTICA EN BLOCKCHAIN (NO SE REQUIERE TXID)',
+      txPlaceholder: 'Escaneo automático de transferencias o pegue TxID opcional...',
+      confirmBtn: 'He realizado el pago (Verificar Blockchain)',
       footerNotice: 'Monitoreo 24/7 en la blockchain. El acceso se desbloquea al confirmar en red.'
     },
     pricing: {
@@ -380,9 +380,9 @@ const I18N_TRANSLATIONS = {
       amountDue: 'FÄLLIGER BETRAG',
       depositAddress: 'OFFIZIELLE EMPFANGSADRESSE',
       viewExplorer: 'Adresse im Explorer ansehen',
-      txLabel: 'TRANSAKTIONS-HASH (TXID) EINGEBEN',
-      txPlaceholder: 'TxID Ihrer Überweisung einfügen...',
-      confirmBtn: 'Zahlung Bestätigen & Blockchain Prüfen',
+      txLabel: 'AUTOMATISCHER BLOCKCHAIN-SCAN (KEINE TXID ERFORDERLICH)',
+      txPlaceholder: 'Automatischer Scan eingehender Transfers oder optionale TxID einfügen...',
+      confirmBtn: 'Zahlung gesendet (Blockchain überprüfen)',
       footerNotice: '24/7 Blockchain-Überwachung. Freischaltung erfolgt sofort nach Block-Bestätigung.'
     },
     pricing: {
