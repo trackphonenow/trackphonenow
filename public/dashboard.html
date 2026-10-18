@@ -464,44 +464,49 @@
                   type="button" 
                   id="standbyCountryBtn"
                   onclick="toggleStandbyCountryDropdown(event)"
-                  class="flex items-center gap-1.5 pl-3 pr-2.5 py-2.5 hover:bg-slate-100 rounded-l-xl transition cursor-pointer select-none border-r border-slate-200 shrink-0"
+                  class="flex items-center gap-2 pl-3 pr-2.5 py-2.5 hover:bg-slate-100/90 rounded-l-xl transition cursor-pointer select-none group shrink-0"
+                  aria-expanded="false"
                   title="Sélectionner l'indicatif pays"
                 >
-                  <span id="standbyFlag" class="text-lg">🇲🇦</span>
-                  <span id="standbyDialCode" class="font-mono font-bold text-xs text-slate-800">+212</span>
-                  <i class="ph-bold ph-caret-down text-[10px] text-slate-400"></i>
+                  <img id="standbyFlagImg" src="https://flagcdn.com/w40/ma.png" alt="Morocco" class="w-5 h-3.5 object-cover rounded-xs shadow-xs border border-slate-200 shrink-0" />
+                  <span id="standbyCountryName" class="text-xs sm:text-sm font-bold text-slate-900 truncate max-w-[80px] sm:max-w-[110px]">Morocco</span>
+                  <span id="standbyDialCode" class="text-xs font-bold text-slate-500 font-mono">(+212)</span>
+                  <i id="standbyDropdownChevron" class="ph-bold ph-caret-down text-slate-400 text-xs group-hover:text-slate-800 transition transform duration-200"></i>
                 </button>
+
+                <div class="w-[1px] h-7 bg-slate-200 mx-0.5 shrink-0"></div>
+                <i class="ph-bold ph-phone text-slate-400 text-sm sm:text-base ml-2 shrink-0"></i>
 
                 <!-- Phone Number Input -->
                 <input 
                   type="tel" 
                   id="standbyPhoneInput" 
-                  placeholder="6 61 00 00 00" 
+                  placeholder="6 12 34 56 78" 
                   value="6"
                   oninput="handleStandbyPhoneInput(this.value)"
-                  class="w-full px-3 py-2.5 bg-transparent text-slate-900 font-mono text-sm font-bold outline-none"
+                  class="w-full px-2 py-2.5 bg-transparent text-slate-900 font-mono text-xs sm:text-sm font-bold outline-none"
                 />
 
                 <!-- Country Dropdown Popover -->
                 <div 
                   id="standbyCountryMenu" 
-                  class="hidden absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 text-slate-800"
-                  style="box-shadow: 0 20px 40px -5px rgba(15, 23, 42, 0.35);"
+                  class="hidden absolute top-full left-0 mt-2 w-80 sm:w-84 max-w-[calc(100vw-32px)] bg-white rounded-2xl shadow-2xl border border-slate-200 py-2.5 z-50 text-slate-800 backdrop-blur-md"
+                  style="box-shadow: 0 25px 60px -10px rgba(15, 23, 42, 0.4);"
                 >
-                  <div class="px-2.5 pb-2 border-b border-slate-100">
-                    <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                      <i class="ph-bold ph-magnifying-glass text-slate-400"></i>
+                  <div class="px-3 pb-2 border-b border-slate-100">
+                    <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 focus-within:border-blue-500 focus-within:bg-white transition">
+                      <i class="ph-bold ph-magnifying-glass text-slate-400 text-sm"></i>
                       <input 
                         type="text" 
                         id="standbyCountrySearch" 
                         placeholder="Rechercher pays ou indicatif..." 
                         oninput="filterStandbyCountries(this.value)"
-                        class="w-full bg-transparent outline-none text-xs font-medium text-slate-800"
+                        class="w-full bg-transparent outline-none text-xs font-semibold placeholder:text-slate-400 text-slate-800"
                         autocomplete="off"
                       />
                     </div>
                   </div>
-                  <div id="standbyCountryList" class="max-h-56 overflow-y-auto px-1 py-1 space-y-0.5">
+                  <div id="standbyCountryList" class="max-h-60 overflow-y-auto px-1.5 py-1.5 space-y-0.5 custom-scrollbar">
                     <!-- Populated via JS -->
                   </div>
                 </div>
@@ -1827,42 +1832,47 @@
               type="button" 
               id="modalCountryBtn"
               onclick="toggleModalCountryDropdown(event)"
-              class="flex items-center gap-1.5 pl-3 pr-2.5 py-3 hover:bg-slate-100 rounded-l-xl transition cursor-pointer select-none border-r border-slate-200 shrink-0"
+              class="flex items-center gap-2 pl-3 pr-2.5 py-3 hover:bg-slate-100/90 rounded-l-xl transition cursor-pointer select-none group shrink-0"
+              aria-expanded="false"
               title="Sélectionner l'indicatif pays"
             >
-              <span id="modalCountryFlag" class="text-lg">🇲🇦</span>
-              <span id="modalCountryDial" class="font-mono font-bold text-xs text-slate-800">+212</span>
-              <i class="ph-bold ph-caret-down text-[10px] text-slate-400"></i>
+              <img id="modalCountryFlagImg" src="https://flagcdn.com/w40/ma.png" alt="Morocco" class="w-5 h-3.5 object-cover rounded-xs shadow-xs border border-slate-200 shrink-0" />
+              <span id="modalCountryName" class="text-xs sm:text-sm font-bold text-slate-900 truncate max-w-[80px] sm:max-w-[110px]">Morocco</span>
+              <span id="modalCountryDial" class="text-xs font-bold text-slate-500 font-mono">(+212)</span>
+              <i id="modalDropdownChevron" class="ph-bold ph-caret-down text-slate-400 text-xs group-hover:text-slate-800 transition transform duration-200"></i>
             </button>
+
+            <div class="w-[1px] h-7 bg-slate-200 mx-0.5 shrink-0"></div>
+            <i class="ph-bold ph-phone text-slate-400 text-base ml-2 shrink-0"></i>
 
             <!-- Phone Number Input -->
             <input 
               type="tel" 
               id="modalPhoneInput" 
-              placeholder="6 61 00 00 00" 
-              class="w-full px-3 py-3 bg-transparent text-slate-900 font-mono text-sm font-bold outline-none"
+              placeholder="6 12 34 56 78" 
+              class="w-full px-2.5 py-3 bg-transparent text-slate-900 font-mono text-sm font-bold outline-none"
             />
 
             <!-- Modal Country Dropdown Popover -->
             <div 
               id="modalCountryMenu" 
-              class="hidden absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 text-slate-800"
-              style="box-shadow: 0 20px 40px -5px rgba(15, 23, 42, 0.35);"
+              class="hidden absolute top-full left-0 mt-2 w-80 sm:w-84 max-w-[calc(100vw-32px)] bg-white rounded-2xl shadow-2xl border border-slate-200 py-2.5 z-50 text-slate-800 backdrop-blur-md"
+              style="box-shadow: 0 25px 60px -10px rgba(15, 23, 42, 0.4);"
             >
-              <div class="px-2.5 pb-2 border-b border-slate-100">
-                <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                  <i class="ph-bold ph-magnifying-glass text-slate-400"></i>
+              <div class="px-3 pb-2 border-b border-slate-100">
+                <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 focus-within:border-blue-500 focus-within:bg-white transition">
+                  <i class="ph-bold ph-magnifying-glass text-slate-400 text-sm"></i>
                   <input 
                     type="text" 
                     id="modalCountrySearch" 
                     placeholder="Rechercher pays ou indicatif..." 
                     oninput="filterModalCountries(this.value)"
-                    class="w-full bg-transparent outline-none text-xs font-medium text-slate-800"
+                    class="w-full bg-transparent outline-none text-xs font-semibold placeholder:text-slate-400 text-slate-800"
                     autocomplete="off"
                   />
                 </div>
               </div>
-              <div id="modalCountryList" class="max-h-56 overflow-y-auto px-1 py-1 space-y-0.5">
+              <div id="modalCountryList" class="max-h-60 overflow-y-auto px-1.5 py-1.5 space-y-0.5 custom-scrollbar">
                 <!-- Populated via JS -->
               </div>
             </div>
@@ -2548,29 +2558,39 @@
       }
     }
 
-    // Global Dashboard Countries with Dial Codes, Emojis, and Carriers
+    // Global Dashboard Countries with Dial Codes, ISO Codes, Carriers and Placeholders
     const DASHBOARD_COUNTRIES = [
-      { code: 'ma', dial: '+212', flag: '🇲🇦', name: 'Morocco', placeholder: '6 12 34 56 78', carrier: 'Maroc Telecom (IAM)' },
-      { code: 'fr', dial: '+33', flag: '🇫🇷', name: 'France', placeholder: '6 12 34 56 78', carrier: 'Orange France / SFR' },
-      { code: 'es', dial: '+34', flag: '🇪🇸', name: 'Spain', placeholder: '612 345 678', carrier: 'Movistar / Orange ES' },
-      { code: 'us', dial: '+1', flag: '🇺🇸', name: 'United States', placeholder: '555 019 2834', carrier: 'Verizon / AT&T' },
-      { code: 'ca', dial: '+1', flag: '🇨🇦', name: 'Canada', placeholder: '555 019 2834', carrier: 'Rogers / Bell' },
-      { code: 'gb', dial: '+44', flag: '🇬🇧', name: 'United Kingdom', placeholder: '7911 123456', carrier: 'EE / Vodafone UK' },
-      { code: 'de', dial: '+49', flag: '🇩🇪', name: 'Germany', placeholder: '151 23456789', carrier: 'Deutsche Telekom' },
-      { code: 'it', dial: '+39', flag: '🇮🇹', name: 'Italy', placeholder: '312 345 6789', carrier: 'TIM / Vodafone IT' },
-      { code: 'be', dial: '+32', flag: '🇧🇪', name: 'Belgium', placeholder: '470 12 34 56', carrier: 'Proximus' },
-      { code: 'nl', dial: '+31', flag: '🇳🇱', name: 'Netherlands', placeholder: '6 12345678', carrier: 'KPN' },
-      { code: 'sa', dial: '+966', flag: '🇸🇦', name: 'Saudi Arabia', placeholder: '50 123 4567', carrier: 'STC (Saudi Telecom)' },
-      { code: 'ae', dial: '+971', flag: '🇦🇪', name: 'UAE', placeholder: '50 123 4567', carrier: 'e& (Etisalat) / du' },
-      { code: 'dz', dial: '+213', flag: '🇩🇿', name: 'Algeria', placeholder: '550 12 34 56', carrier: 'Mobilis / Djezzy' },
-      { code: 'tn', dial: '+216', flag: '🇹🇳', name: 'Tunisia', placeholder: '20 123 456', carrier: 'Tunisie Telecom' },
-      { code: 'eg', dial: '+20', flag: '🇪🇬', name: 'Egypt', placeholder: '10 1234 5678', carrier: 'Vodafone Egypt' },
-      { code: 'tr', dial: '+90', flag: '🇹🇷', name: 'Turkey', placeholder: '532 123 4567', carrier: 'Turkcell' },
-      { code: 'pt', dial: '+351', flag: '🇵🇹', name: 'Portugal', placeholder: '912 345 678', carrier: 'MEO / NOS' },
-      { code: 'ch', dial: '+41', flag: '🇨🇭', name: 'Switzerland', placeholder: '78 123 45 67', carrier: 'Swisscom' },
-      { code: 'se', dial: '+46', flag: '🇸🇪', name: 'Sweden', placeholder: '70 123 45 67', carrier: 'Telia' },
-      { code: 'qa', dial: '+974', flag: '🇶🇦', name: 'Qatar', placeholder: '3312 3456', carrier: 'Ooredoo' },
-      { code: 'kw', dial: '+965', flag: '🇰🇼', name: 'Kuwait', placeholder: '5123 4567', carrier: 'Zain' }
+      { code: 'ma', dial: '+212', name: 'Morocco', placeholder: '6 12 34 56 78', carrier: 'Maroc Telecom (IAM)' },
+      { code: 'fr', dial: '+33', name: 'France', placeholder: '6 12 34 56 78', carrier: 'Orange France / SFR' },
+      { code: 'es', dial: '+34', name: 'Spain', placeholder: '612 345 678', carrier: 'Movistar / Orange ES' },
+      { code: 'us', dial: '+1', name: 'United States', placeholder: '(555) 019-2834', carrier: 'Verizon / AT&T' },
+      { code: 'ca', dial: '+1', name: 'Canada', placeholder: '(555) 019-2834', carrier: 'Rogers / Bell' },
+      { code: 'gb', dial: '+44', name: 'United Kingdom', placeholder: '7911 123456', carrier: 'EE / Vodafone UK' },
+      { code: 'de', dial: '+49', name: 'Germany', placeholder: '151 23456789', carrier: 'Deutsche Telekom' },
+      { code: 'it', dial: '+39', name: 'Italy', placeholder: '312 345 6789', carrier: 'TIM / Vodafone IT' },
+      { code: 'be', dial: '+32', name: 'Belgium', placeholder: '470 12 34 56', carrier: 'Proximus' },
+      { code: 'nl', dial: '+31', name: 'Netherlands', placeholder: '6 12345678', carrier: 'KPN' },
+      { code: 'sa', dial: '+966', name: 'Saudi Arabia', placeholder: '50 123 4567', carrier: 'STC (Saudi Telecom)' },
+      { code: 'ae', dial: '+971', name: 'United Arab Emirates', placeholder: '50 123 4567', carrier: 'e& (Etisalat) / du' },
+      { code: 'qa', dial: '+974', name: 'Qatar', placeholder: '3312 3456', carrier: 'Ooredoo' },
+      { code: 'kw', dial: '+965', name: 'Kuwait', placeholder: '5123 4567', carrier: 'Zain' },
+      { code: 'om', dial: '+968', name: 'Oman', placeholder: '9123 4567', carrier: 'Omantel' },
+      { code: 'bh', dial: '+973', name: 'Bahrain', placeholder: '3612 3456', carrier: 'Batelco' },
+      { code: 'dz', dial: '+213', name: 'Algeria', placeholder: '550 12 34 56', carrier: 'Mobilis / Djezzy' },
+      { code: 'tn', dial: '+216', name: 'Tunisia', placeholder: '20 123 456', carrier: 'Tunisie Telecom' },
+      { code: 'eg', dial: '+20', name: 'Egypt', placeholder: '10 1234 5678', carrier: 'Vodafone Egypt' },
+      { code: 'tr', dial: '+90', name: 'Turkey', placeholder: '532 123 4567', carrier: 'Turkcell' },
+      { code: 'pt', dial: '+351', name: 'Portugal', placeholder: '912 345 678', carrier: 'MEO / NOS' },
+      { code: 'ch', dial: '+41', name: 'Switzerland', placeholder: '78 123 45 67', carrier: 'Swisscom' },
+      { code: 'se', dial: '+46', name: 'Sweden', placeholder: '70 123 45 67', carrier: 'Telia' },
+      { code: 'no', dial: '+47', name: 'Norway', placeholder: '412 34 567', carrier: 'Telenor' },
+      { code: 'dk', dial: '+45', name: 'Denmark', placeholder: '20 12 34 56', carrier: 'TDC Net' },
+      { code: 'at', dial: '+43', name: 'Austria', placeholder: '664 1234567', carrier: 'A1 Telekom' },
+      { code: 'ie', dial: '+353', name: 'Ireland', placeholder: '85 123 4567', carrier: 'Vodafone IE' },
+      { code: 'au', dial: '+61', name: 'Australia', placeholder: '412 345 678', carrier: 'Telstra' },
+      { code: 'br', dial: '+55', name: 'Brazil', placeholder: '11 91234-5678', carrier: 'Vivo / Claro' },
+      { code: 'mx', dial: '+52', name: 'Mexico', placeholder: '55 1234 5678', carrier: 'Telcel' },
+      { code: 'in', dial: '+91', name: 'India', placeholder: '98765 43210', carrier: 'Jio / Airtel' }
     ];
 
     let standbySelectedCountry = DASHBOARD_COUNTRIES[0];
@@ -2584,49 +2604,68 @@
         c.name.toLowerCase().includes(q) || c.dial.includes(q) || c.code.toLowerCase().includes(q)
       );
       if (filtered.length === 0) {
-        listEl.innerHTML = `<div class="py-3 text-center text-xs text-slate-400">Aucun pays trouvé</div>`;
+        listEl.innerHTML = `<div class="py-4 text-center text-xs text-slate-400 font-medium">Aucun pays trouvé</div>`;
         return;
       }
-      listEl.innerHTML = filtered.map(c => `
-        <button 
-          type="button" 
-          onclick="selectStandbyCountry('${c.code}')" 
-          class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-left hover:bg-blue-50 transition cursor-pointer ${c.code === standbySelectedCountry.code ? 'bg-blue-50/80 font-bold' : ''}"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-base">${c.flag}</span>
-            <span class="text-xs text-slate-800">${c.name}</span>
-          </div>
-          <span class="font-mono text-xs font-bold text-slate-500">${c.dial}</span>
-        </button>
-      `).join('');
+      listEl.innerHTML = filtered.map(c => {
+        const isSelected = c.code === standbySelectedCountry.code;
+        return `
+          <button 
+            type="button" 
+            onclick="selectStandbyCountry('${c.code}')" 
+            class="country-opt w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-blue-50/90 transition group cursor-pointer ${isSelected ? 'bg-blue-50/70 font-semibold' : ''}"
+          >
+            <div class="flex items-center gap-2.5 min-w-0">
+              <img src="https://flagcdn.com/w40/${c.code}.png" alt="${c.name}" class="w-5 h-3.5 object-cover rounded-xs shadow-xs border border-slate-200 flex-shrink-0" />
+              <span class="text-xs sm:text-sm font-semibold text-slate-800 group-hover:text-blue-600 truncate">${c.name}</span>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-700">${c.dial}</span>
+              <i class="ph-bold ph-check text-emerald-600 text-sm ${isSelected ? '' : 'invisible'}"></i>
+            </div>
+          </button>
+        `;
+      }).join('');
     }
 
     function selectStandbyCountry(code) {
       const found = DASHBOARD_COUNTRIES.find(c => c.code === code);
       if (found) {
         standbySelectedCountry = found;
-        const flagEl = document.getElementById('standbyFlag');
+        const flagImg = document.getElementById('standbyFlagImg');
+        const nameEl = document.getElementById('standbyCountryName');
         const dialEl = document.getElementById('standbyDialCode');
         const phoneInput = document.getElementById('standbyPhoneInput');
         const carrierEl = document.getElementById('standbyCarrierBadge');
-        if (flagEl) flagEl.textContent = found.flag;
-        if (dialEl) dialEl.textContent = found.dial;
-        if (phoneInput) {
-          phoneInput.placeholder = found.placeholder;
+
+        if (flagImg) {
+          flagImg.src = `https://flagcdn.com/w40/${found.code}.png`;
+          flagImg.alt = found.name;
         }
+        if (nameEl) nameEl.textContent = found.name;
+        if (dialEl) dialEl.textContent = `(${found.dial})`;
+        if (phoneInput) phoneInput.placeholder = found.placeholder;
         if (carrierEl) carrierEl.textContent = found.carrier;
       }
       const menu = document.getElementById('standbyCountryMenu');
+      const chevron = document.getElementById('standbyDropdownChevron');
       if (menu) menu.classList.add('hidden');
+      if (chevron) chevron.classList.remove('rotate-180');
+      renderStandbyCountries(document.getElementById('standbyCountrySearch')?.value || '');
     }
 
     function toggleStandbyCountryDropdown(e) {
       if (e) e.stopPropagation();
       const menu = document.getElementById('standbyCountryMenu');
+      const chevron = document.getElementById('standbyDropdownChevron');
       if (menu) {
+        const isClosed = menu.classList.contains('hidden');
         menu.classList.toggle('hidden');
-        if (!menu.classList.contains('hidden')) {
+        if (chevron) {
+          if (isClosed) chevron.classList.add('rotate-180');
+          else chevron.classList.remove('rotate-180');
+        }
+        if (isClosed) {
           renderStandbyCountries();
           const searchInput = document.getElementById('standbyCountrySearch');
           if (searchInput) {
@@ -2650,47 +2689,66 @@
         c.name.toLowerCase().includes(q) || c.dial.includes(q) || c.code.toLowerCase().includes(q)
       );
       if (filtered.length === 0) {
-        listEl.innerHTML = `<div class="py-3 text-center text-xs text-slate-400">Aucun pays trouvé</div>`;
+        listEl.innerHTML = `<div class="py-4 text-center text-xs text-slate-400 font-medium">Aucun pays trouvé</div>`;
         return;
       }
-      listEl.innerHTML = filtered.map(c => `
-        <button 
-          type="button" 
-          onclick="selectModalCountry('${c.code}')" 
-          class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-left hover:bg-blue-50 transition cursor-pointer ${c.code === modalSelectedCountry.code ? 'bg-blue-50/80 font-bold' : ''}"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-base">${c.flag}</span>
-            <span class="text-xs text-slate-800">${c.name}</span>
-          </div>
-          <span class="font-mono text-xs font-bold text-slate-500">${c.dial}</span>
-        </button>
-      `).join('');
+      listEl.innerHTML = filtered.map(c => {
+        const isSelected = c.code === modalSelectedCountry.code;
+        return `
+          <button 
+            type="button" 
+            onclick="selectModalCountry('${c.code}')" 
+            class="country-opt w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-blue-50/90 transition group cursor-pointer ${isSelected ? 'bg-blue-50/70 font-semibold' : ''}"
+          >
+            <div class="flex items-center gap-2.5 min-w-0">
+              <img src="https://flagcdn.com/w40/${c.code}.png" alt="${c.name}" class="w-5 h-3.5 object-cover rounded-xs shadow-xs border border-slate-200 flex-shrink-0" />
+              <span class="text-xs sm:text-sm font-semibold text-slate-800 group-hover:text-blue-600 truncate">${c.name}</span>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-700">${c.dial}</span>
+              <i class="ph-bold ph-check text-emerald-600 text-sm ${isSelected ? '' : 'invisible'}"></i>
+            </div>
+          </button>
+        `;
+      }).join('');
     }
 
     function selectModalCountry(code) {
       const found = DASHBOARD_COUNTRIES.find(c => c.code === code);
       if (found) {
         modalSelectedCountry = found;
-        const flagEl = document.getElementById('modalCountryFlag');
+        const flagImg = document.getElementById('modalCountryFlagImg');
+        const nameEl = document.getElementById('modalCountryName');
         const dialEl = document.getElementById('modalCountryDial');
         const phoneInput = document.getElementById('modalPhoneInput');
-        if (flagEl) flagEl.textContent = found.flag;
-        if (dialEl) dialEl.textContent = found.dial;
-        if (phoneInput) {
-          phoneInput.placeholder = found.placeholder;
+
+        if (flagImg) {
+          flagImg.src = `https://flagcdn.com/w40/${found.code}.png`;
+          flagImg.alt = found.name;
         }
+        if (nameEl) nameEl.textContent = found.name;
+        if (dialEl) dialEl.textContent = `(${found.dial})`;
+        if (phoneInput) phoneInput.placeholder = found.placeholder;
       }
       const menu = document.getElementById('modalCountryMenu');
+      const chevron = document.getElementById('modalDropdownChevron');
       if (menu) menu.classList.add('hidden');
+      if (chevron) chevron.classList.remove('rotate-180');
+      renderModalCountries(document.getElementById('modalCountrySearch')?.value || '');
     }
 
     function toggleModalCountryDropdown(e) {
       if (e) e.stopPropagation();
       const menu = document.getElementById('modalCountryMenu');
+      const chevron = document.getElementById('modalDropdownChevron');
       if (menu) {
+        const isClosed = menu.classList.contains('hidden');
         menu.classList.toggle('hidden');
-        if (!menu.classList.contains('hidden')) {
+        if (chevron) {
+          if (isClosed) chevron.classList.add('rotate-180');
+          else chevron.classList.remove('rotate-180');
+        }
+        if (isClosed) {
           renderModalCountries();
           const searchInput = document.getElementById('modalCountrySearch');
           if (searchInput) {
@@ -2709,16 +2767,20 @@
     document.addEventListener('click', (e) => {
       const standbyMenu = document.getElementById('standbyCountryMenu');
       const standbyBtn = document.getElementById('standbyCountryBtn');
+      const standbyChevron = document.getElementById('standbyDropdownChevron');
       if (standbyMenu && !standbyMenu.classList.contains('hidden')) {
         if (!standbyMenu.contains(e.target) && (!standbyBtn || !standbyBtn.contains(e.target))) {
           standbyMenu.classList.add('hidden');
+          if (standbyChevron) standbyChevron.classList.remove('rotate-180');
         }
       }
       const modalMenu = document.getElementById('modalCountryMenu');
       const modalBtn = document.getElementById('modalCountryBtn');
+      const modalChevron = document.getElementById('modalDropdownChevron');
       if (modalMenu && !modalMenu.classList.contains('hidden')) {
         if (!modalMenu.contains(e.target) && (!modalBtn || !modalBtn.contains(e.target))) {
           modalMenu.classList.add('hidden');
+          if (modalChevron) modalChevron.classList.remove('rotate-180');
         }
       }
     });
