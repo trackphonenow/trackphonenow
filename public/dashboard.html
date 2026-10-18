@@ -140,7 +140,7 @@
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
     }
     
-    /* Radar Multi-Ring Wavefront (triangulation node) */
+    /* Radar Multi-Ring Wavefront (satellite beacon node) */
     .radar-beacon {
       position: relative;
       display: flex;
@@ -810,7 +810,7 @@
 
         </div>
 
-        <!-- Right Side: Interactive High-Precision Map with Triangulation & HUD -->
+        <!-- Right Side: Interactive High-Precision Map with Satellite HUD -->
         <div class="flex-grow flex flex-col relative bg-slate-100 min-h-[500px]">
           
           <!-- Tactical Top HUD Strip (Clean & Unobtrusive) -->
@@ -818,20 +818,21 @@
             
             <div class="bg-white/95 backdrop-blur-md text-slate-800 text-[11px] font-mono px-3.5 py-2 rounded-xl shadow-md border border-slate-200 pointer-events-auto flex items-center gap-2.5">
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span class="font-bold text-slate-800" id="topHudStatusText">GSM Triangulation Ready</span>
+              <span class="font-bold text-slate-800" id="topHudStatusText">Satellite GPS Active</span>
               <span class="text-slate-300">|</span>
-              <span class="text-slate-500 hidden sm:inline" id="topHudAzimuth">Network: Global SS7</span>
+              <span class="text-slate-500 hidden sm:inline" id="topHudAzimuth">Accuracy: ±3.5m</span>
             </div>
 
             <!-- Controls -->
             <div class="flex items-center gap-2 pointer-events-auto">
               <button 
-                onclick="toggleTriangulationVectors()" 
-                id="btnTriangulation"
-                class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5"
+                onclick="toggleAccuracyRadius()" 
+                id="btnAccuracyRadius"
+                class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5"
+                title="Toggle Accuracy Radius"
               >
-                <i class="ph-bold ph-broadcast"></i>
-                <span id="triangulationLabel">Towers: ON</span>
+                <i class="ph-bold ph-target"></i>
+                <span id="accuracyRadiusLabel">Radius: ON</span>
               </button>
 
               <button 
@@ -1184,7 +1185,7 @@
                 <div class="text-[11px] text-slate-500 font-medium mt-0.5">$24.99 / mois · Tarif standard</div>
                 <ul class="mt-4 space-y-2 text-xs text-slate-700 font-medium">
                   <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-emerald-600"></i> <b>Unlimited</b> Simultaneous Targets</li>
-                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-emerald-600"></i> <b>3 BTS Towers</b> Triangulation (±3.5m)</li>
+                  <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-emerald-600"></i> <b>Doorstep Satellite GPS</b> Precision (±3.5m)</li>
                   <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-emerald-600"></i> <b>WhatsApp & SMS</b> Signal Dispatch</li>
                   <li class="flex items-center gap-2"><i class="ph-bold ph-check-circle text-emerald-600"></i> 1-Click Cancel Anytime</li>
                 </ul>
@@ -1494,8 +1495,8 @@
           <span class="font-bold text-emerald-600">± 3.8 Meters (Pinpoint)</span>
         </div>
         <div>
-          <span class="text-slate-400 block text-[10px] font-sans font-bold">TRIANGULATION METHOD</span>
-          <span class="font-bold text-slate-800">Assisted-GPS + 3 BTS Nodes</span>
+          <span class="text-slate-400 block text-[10px] font-sans font-bold">GEOLOCATION METHOD</span>
+          <span class="font-bold text-slate-800">Assisted-GPS + Carrier Network</span>
         </div>
       </div>
 
@@ -1909,9 +1910,7 @@
     let map = null;
     let targetMarker = null;
     let accuracyCircle = null;
-    let towerMarkers = [];
-    let triangulationPolylines = [];
-    let showTriangulation = true;
+    let showAccuracyRadius = true;
     let currentSession = null;
     let allSessions = [];
     let sseSource = null;
@@ -2248,7 +2247,6 @@
         currentLayer = 'hybrid';
       }
       updateMapMarker(lat, lng, 3.8);
-      renderCellTowerTriangulation(lat, lng);
     }
 
     // Toggle between Realistic Hybrid, Crisp Street Map, and Standard Satellite
@@ -2403,69 +2401,25 @@
       return clientGeoLocation;
     }
 
-    // Triangulation Spectacle: 3 BTS Towers with Converging Lasers
-    function renderCellTowerTriangulation(targetLat, targetLng) {
-      if (!map) return;
-
-      // Clear existing
-      towerMarkers.forEach(m => map.removeLayer(m));
-      triangulationPolylines.forEach(p => map.removeLayer(p));
-      towerMarkers = [];
-      triangulationPolylines = [];
-
-      if (!showTriangulation) return;
-
-      const city = clientGeoLocation.city || 'Cell';
-      const towers = [
-        { name: `${city} Central BTS #49281`, lat: targetLat + 0.0052, lng: targetLng - 0.0045, carrier: clientGeoLocation.isp || 'Telecom Gateway' },
-        { name: `${city} Micro-Cell #1204`, lat: targetLat - 0.0039, lng: targetLng + 0.0048, carrier: '4G/5G LTE Node' },
-        { name: `${city} Sector Tower #771`, lat: targetLat + 0.0044, lng: targetLng + 0.0038, carrier: 'SS7 Active Relay' }
-      ];
-
-      towers.forEach(t => {
-        const towerIcon = L.divIcon({
-          className: 'tower-pin',
-          html: `
-            <div class="w-6 h-6 rounded-lg bg-slate-900 text-blue-400 border border-blue-400/60 shadow-md flex items-center justify-center text-xs">
-              <i class="ph-bold ph-broadcast"></i>
-            </div>
-          `,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12]
-        });
-
-        const tm = L.marker([t.lat, t.lng], { icon: towerIcon }).addTo(map);
-        tm.bindPopup(`<b class="text-xs font-mono">${t.name}</b><br/><span class="text-[10px] text-slate-500">${t.carrier} · Active</span>`);
-        towerMarkers.push(tm);
-
-        // Converging line
-        const line = L.polyline([[t.lat, t.lng], [targetLat, targetLng]], {
-          color: '#3b82f6',
-          weight: 2,
-          dashArray: '6, 8',
-          opacity: 0.85
-        }).addTo(map);
-        triangulationPolylines.push(line);
-      });
-    }
-
-    function toggleTriangulationVectors() {
-      showTriangulation = !showTriangulation;
-      const label = document.getElementById('triangulationLabel');
-      const btn = document.getElementById('btnTriangulation');
-      if (label) label.textContent = showTriangulation ? 'Triangulation: ON' : 'Triangulation: OFF';
+    function toggleAccuracyRadius() {
+      showAccuracyRadius = !showAccuracyRadius;
+      const label = document.getElementById('accuracyRadiusLabel');
+      const btn = document.getElementById('btnAccuracyRadius');
+      if (label) label.textContent = showAccuracyRadius ? 'Radius: ON' : 'Radius: OFF';
       if (btn) {
-        btn.className = showTriangulation ? 
-          "px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5" :
+        btn.className = showAccuracyRadius ? 
+          "px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5" :
           "px-3.5 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5";
       }
 
-      if (currentSession && currentSession.targetLocation) {
-        renderCellTowerTriangulation(currentSession.targetLocation.latitude, currentSession.targetLocation.longitude);
-      } else {
-        renderCellTowerTriangulation(clientGeoLocation.lat, clientGeoLocation.lng);
+      if (accuracyCircle && map) {
+        if (showAccuracyRadius) {
+          accuracyCircle.addTo(map);
+        } else {
+          map.removeLayer(accuracyCircle);
+        }
       }
-      showToast(showTriangulation ? 'Cell Triangulation Vectors Enabled' : 'Triangulation Vectors Hidden');
+      showToast(showAccuracyRadius ? 'Satellite Precision Radius Enabled' : 'Precision Radius Hidden');
     }
 
     // Standby & Acquisition Terminal State Management
@@ -2480,7 +2434,7 @@
         if (deckStandby) deckStandby.classList.remove('hidden');
         if (deckActive) deckActive.classList.add('hidden');
         if (overlay) overlay.classList.remove('hidden');
-        if (topHudStatus) topHudStatus.textContent = "GSM Triangulation Ready";
+        if (topHudStatus) topHudStatus.textContent = "Satellite GPS Ready";
         if (bottomHud) bottomHud.classList.add('hidden');
 
         // Real-time street overview dynamically centered on client's detected IP location
@@ -2498,10 +2452,6 @@
         if (map) map.closePopup();
         if (targetMarker && map) { map.removeLayer(targetMarker); targetMarker = null; }
         if (accuracyCircle && map) { map.removeLayer(accuracyCircle); accuracyCircle = null; }
-        towerMarkers.forEach(m => map && map.removeLayer(m));
-        triangulationPolylines.forEach(p => map && map.removeLayer(p));
-        towerMarkers = [];
-        triangulationPolylines = [];
         
         // Show demo pin on client's city so map immediately reflects their region
         updateMapMarker(targetLat, targetLng, 4.2);
@@ -2813,7 +2763,7 @@
           if (carrierEl) carrierEl.textContent = 'Maroc Telecom (GSM)';
         }
       } else {
-        if (carrierEl) carrierEl.textContent = standbySelectedCountry.carrier || 'Cellular BTS';
+        if (carrierEl) carrierEl.textContent = standbySelectedCountry.carrier || 'Cellular Network';
       }
     }
 
@@ -3019,7 +2969,7 @@
           if (payload.type === 'LOCATED' && payload.session) {
             currentSession = payload.session;
             playSound('lock');
-            showToast('Target Signal Locked via Cellular Triangulation!');
+            showToast('Target Signal Locked via Satellite GPS!');
             selectSession(payload.session);
           }
         } catch (e) {}
@@ -3232,7 +3182,7 @@
         const log = document.createElement('div');
         log.className = "text-emerald-400 py-0.5 font-bold animate-pulse";
         const timeStr = new Date().toLocaleTimeString();
-        log.innerHTML = `[${timeStr}] ⚡ TARGET ONLINE: Handset reconnected to BTS Tower IAM-CAS-01! Dispatched WhatsApp alert to ${notifyPhone || 'Client'}!`;
+        log.innerHTML = `[${timeStr}] ⚡ TARGET ONLINE: Handset reconnected & active! Dispatched WhatsApp alert to ${notifyPhone || 'Client'}!`;
         term.appendChild(log);
         term.scrollTop = term.scrollHeight;
 

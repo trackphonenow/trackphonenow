@@ -15,3 +15,6 @@
    - **Colors:** 60-30-10 distribution rule. Neutral foundations (`#0c1524`, `#f8fafc`, `#1e293b`) with deliberate accent colors (e.g. `#10b981` emerald green).
    - **Typography:** Clear hierarchy, modern human sans-serif typography (`Plus Jakarta Sans`, `Inter`).
    - **Micro-interactions:** Smooth cubic-bezier transitions, tactile buttons, high-accuracy data metrics, and verified human social proof.
+
+4. **Programmatic SEO Trigger:**
+   - In any new project or when discussing scaling traffic & Google ranking, trigger the user with: *"Fekkarni f l-Playbook dial GitHub Programmatic SEO"* to instantly retrieve and deploy the proven GitHub Programmatic SEO framework.

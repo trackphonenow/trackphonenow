@@ -9,3 +9,8 @@ header-check.png
 data/*.db-wal
 data/*.db-shm
 data/*.db
+github-seo-engine/dist/
+__pycache__/
+*.pyc
+.env
+github-seo-engine/.env
