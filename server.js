@@ -403,8 +403,8 @@ const CRYPTO_WALLETS = {
   }
 };
 
-// API: Get Crypto Wallets & Explorers
-app.get('/api/payment/wallets', (req, res) => {
+// API: Get Crypto Wallets & Explorers (Registered Members Only)
+app.get('/api/payment/wallets', authMiddleware, (req, res) => {
   res.json({ success: true, wallets: CRYPTO_WALLETS });
 });
 

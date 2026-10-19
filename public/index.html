@@ -208,9 +208,6 @@
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" />
 
-  <!-- QRCode Library for Crypto Checkout -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
   <!-- Base and Wdes Design System CSS -->
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="wdes.css" />
@@ -1002,7 +999,7 @@
           </div>
           <div class="flex items-center gap-2">
             <i class="ph-bold ph-lightning text-xl text-amber-500"></i>
-            <span><strong>Instant Activation:</strong> Automated mempool & card verification in under 60 seconds.</span>
+            <span><strong>Instant Activation:</strong> Instant 256-bit encrypted verification in under 60 seconds.</span>
           </div>
           <div class="flex items-center gap-2">
             <i class="ph-bold ph-arrow-counter-clockwise text-xl text-emerald-600"></i>
@@ -1125,7 +1122,7 @@
       <div class="wdes-container flex flex-col md:flex-row items-center justify-between gap-8">
         <div>
           <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Ready to locate any phone number?</h2>
-          <p class="text-white/80 text-base mt-2">Accurate within 3 meters. Flexible 1, 3, or 6-month passes — zero KYC crypto activation.</p>
+          <p class="text-white/80 text-base mt-2">Accurate within 3.5 meters. Flexible 1, 3, or 6-month passes — instant member activation.</p>
         </div>
         <button onclick="document.getElementById('phoneNumberInput').focus(); window.scrollTo({top: 0, behavior: 'smooth'});" class="btn-wdes-white flex-shrink-0">
           <span>Locate Device Now</span>
@@ -1215,179 +1212,92 @@
     </div>
   </div>
 
-  <!-- Target Locked Crypto Checkout Modal -->
-  <div id="paywallModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
-    <div class="bg-white max-w-lg w-full rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative modal-enter my-8">
+  <!-- Target Locked Member Handoff Modal -->
+  <div id="targetLockedModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+    <div class="bg-white max-w-md w-full rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative modal-enter my-8">
       
       <!-- Close button -->
-      <button onclick="closePaywallModal()" class="absolute right-4 top-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm transition">
+      <button onclick="closeTargetLockedModal()" class="absolute right-4 top-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm transition cursor-pointer">
         ✕
       </button>
 
       <!-- Target Header -->
-      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-        <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center text-xl">
-            <i class="ph-bold ph-crosshair"></i>
-          </div>
-          <div>
-            <div class="text-[10px] uppercase font-mono font-bold text-emerald-600 flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-              <span>Target GPS Signal Locked</span>
-            </div>
-            <div class="text-sm font-bold font-mono text-slate-900" id="paywallPhoneDisplay">
-              +212 6** ** **
-            </div>
-          </div>
+      <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+        <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center text-2xl shrink-0">
+          <i class="ph-bold ph-crosshair"></i>
         </div>
-
-        <div class="text-right">
-          <div class="text-[10px] text-slate-400 font-mono">RESERVED TIME</div>
-          <div id="countdownTimer" class="text-red-500 font-bold font-mono text-sm">14:59</div>
+        <div>
+          <div class="text-[10px] uppercase font-mono font-bold text-emerald-600 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <span>Target Signal Locked</span>
+          </div>
+          <div class="text-base font-extrabold font-mono text-slate-900" id="lockedPhoneDisplay">
+            +212 6** ** **
+          </div>
         </div>
       </div>
 
-      <!-- Checkout Title -->
-      <div class="mt-4 mb-3">
-        <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-          <span>Pay with Crypto to Access Map</span>
-          <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">Pro Unlimited Pass</span>
-        </h3>
-        <p class="text-xs text-slate-500 mt-0.5">
-          Select your preferred cryptocurrency below. 100% private, instant automated confirmation.
+      <!-- Telemetry Info Card -->
+      <div class="bg-slate-50 rounded-2xl p-4 my-5 border border-slate-200/80 space-y-2.5">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-500 font-medium">Positioning Method:</span>
+          <span class="font-bold text-slate-900 font-mono">Assisted Satellite GPS</span>
+        </div>
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-500 font-medium">Telemetry Precision:</span>
+          <span class="font-bold text-emerald-600 font-mono flex items-center gap-1">
+            <i class="ph-bold ph-check-circle"></i> ±3.5m (Doorstep)
+          </span>
+        </div>
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-500 font-medium">Network Carrier:</span>
+          <span class="font-bold text-slate-900 font-mono" id="lockedCarrierDisplay">Cellular Network Verified</span>
+        </div>
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-500 font-medium">Forensic Dossier:</span>
+          <span class="font-bold text-indigo-600 font-mono">Ready for Export</span>
+        </div>
+      </div>
+
+      <!-- Conversion Message -->
+      <div class="text-center sm:text-left mb-6">
+        <h4 class="text-base font-extrabold text-slate-900">
+          Access Live Radar & Coordinates
+        </h4>
+        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+          The handset's real-time satellite coordinates are ready. Create your free member console to view the interactive street map, monitor movements, and download the official police dossier.
         </p>
       </div>
 
-      <!-- Crypto Selector Tabs -->
-      <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-2xl mb-4 text-[11px] font-bold" id="cryptoSelectorTabs">
-        <button type="button" onclick="selectCrypto('usdt_trc20')" id="tab-usdt_trc20" class="py-2 px-1 rounded-xl text-center transition bg-white text-emerald-700 shadow-xs border border-emerald-300">
-          USDT (TRC20)
-        </button>
-        <button type="button" onclick="selectCrypto('usdt_bep20')" id="tab-usdt_bep20" class="py-2 px-1 rounded-xl text-center transition text-slate-600 hover:text-slate-900">
-          USDT (BEP20)
-        </button>
-        <button type="button" onclick="selectCrypto('usdt_erc20')" id="tab-usdt_erc20" class="py-2 px-1 rounded-xl text-center transition text-slate-600 hover:text-slate-900">
-          USDT (ERC20)
-        </button>
-        <button type="button" onclick="selectCrypto('btc')" id="tab-btc" class="py-2 px-1 rounded-xl text-center transition text-slate-600 hover:text-slate-900">
-          BTC (Bitcoin)
-        </button>
-        <button type="button" onclick="selectCrypto('eth')" id="tab-eth" class="py-2 px-1 rounded-xl text-center transition text-slate-600 hover:text-slate-900">
-          ETH (Ethereum)
-        </button>
-        <button type="button" onclick="selectCrypto('sol')" id="tab-sol" class="py-2 px-1 rounded-xl text-center transition text-slate-600 hover:text-slate-900">
-          SOL (Solana)
-        </button>
-        <button type="button" onclick="selectCrypto('ltc')" id="tab-ltc" class="py-2 px-1 rounded-xl text-center transition text-slate-600 hover:text-slate-900 col-span-3 sm:col-span-2">
-          LTC (Litecoin)
-        </button>
-      </div>
-
-      <!-- Active Crypto Payment Box -->
-      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-        
-        <!-- Header & Amount Due -->
-        <div class="flex items-center justify-between pb-2 border-b border-slate-200/60">
-          <div>
-            <span class="text-[10px] font-bold uppercase text-slate-400 block" id="cryptoNetworkLabel">NETWORK: TRON (TRC-20)</span>
-            <span class="text-sm font-extrabold text-slate-900" id="cryptoCurrencyName">Tether USDT</span>
-          </div>
-          <div class="text-right">
-            <span class="text-[10px] font-bold text-slate-400 block uppercase">AMOUNT DUE</span>
-            <span class="text-base font-extrabold font-mono text-blue-600" id="cryptoAmountDisplay">24.99 USDT</span>
-          </div>
-        </div>
-
-        <!-- QR Code & Address Display -->
-        <div class="flex flex-col sm:flex-row items-center gap-4 py-1">
-          <div class="bg-white p-2 rounded-xl border border-slate-200 shadow-xs shrink-0 flex items-center justify-center">
-            <div id="cryptoQrCode"></div>
-          </div>
-
-          <div class="w-full space-y-2">
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                DEPOSIT WALLET ADDRESS
-              </label>
-              <div class="flex items-center gap-1.5">
-                <input 
-                  type="text" 
-                  id="cryptoAddressInput" 
-                  readonly 
-                  value="TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX" 
-                  class="w-full bg-white text-[11px] font-mono text-slate-800 p-2.5 rounded-xl border border-slate-200 outline-none select-all font-bold"
-                />
-                <button 
-                  type="button"
-                  onclick="copyCryptoAddress()" 
-                  id="copyCryptoBtn"
-                  class="p-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition shrink-0 font-bold text-xs" 
-                  title="Copy Wallet Address"
-                >
-                  <i class="ph-bold ph-copy text-base"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between text-[11px]">
-              <span class="text-slate-500 font-medium flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Automated 24/7 Mempool Verification</span>
-              </span>
-              <span class="text-[10px] text-slate-400 font-mono" id="copyToastMsg"></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Warning Note -->
-        <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-center gap-2">
-          <i class="ph-bold ph-warning text-base text-amber-600 shrink-0"></i>
-          <span id="cryptoNoteText">Send only USDT via TRON (TRC20) network. Instant validation upon block confirmation.</span>
-        </div>
-
-      </div>
-
-      <!-- Automated Blockchain Detection & Confirmation -->
-      <div class="mt-4 space-y-3">
-        <div class="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-900 flex items-start gap-2.5">
-          <i class="ph-bold ph-radar text-base text-emerald-600 shrink-0 mt-0.5 animate-pulse"></i>
-          <p class="text-[11px] text-emerald-950 leading-relaxed">
-            Send the exact amount from your wallet. <strong>No TxID is required</strong>. Click below as soon as you send your transfer to verify on-chain and access your live radar.
-          </p>
-        </div>
-
+      <!-- Main Action CTA -->
+      <div class="space-y-3">
         <button 
-          id="confirmCryptoPaymentBtn" 
-          onclick="handleConfirmCryptoPayment()" 
-          class="w-full py-4 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-sm shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2 transition duration-150 transform active:scale-98 cursor-pointer"
+          id="proceedRegisterBtn"
+          onclick="proceedToMemberConsole()" 
+          class="w-full py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition transform active:scale-98 cursor-pointer"
         >
-          <i class="ph-bold ph-check-circle text-xl text-white"></i>
-          <span>I Have Sent Payment (Confirmer le Paiement)</span>
+          <i class="ph-bold ph-user-plus text-lg"></i>
+          <span>Create Free Account & View Map</span>
         </button>
 
-        <!-- Optional TxID toggle for advanced users -->
-        <div class="text-center pt-0.5">
-          <button 
-            type="button" 
-            onclick="document.getElementById('manualHomeTxBox').classList.toggle('hidden')" 
-            class="text-[10px] text-slate-400 hover:text-slate-600 underline cursor-pointer"
+        <div class="text-center">
+          <a 
+            href="/auth.html?mode=login" 
+            class="text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
           >
-            + Paste TxID manually (optional)
-          </button>
-          <div id="manualHomeTxBox" class="hidden mt-1.5 text-left">
-            <input 
-              type="text" 
-              id="cryptoTxHashInput" 
-              placeholder="Paste transaction hash if desired (optional)..." 
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono text-slate-900 outline-none focus:border-emerald-500"
-            />
-          </div>
+            Already a member? <span class="text-blue-600 font-bold underline">Sign in to console</span>
+          </a>
         </div>
       </div>
 
-      <p class="mt-3 text-[10px] text-center text-slate-400">
-        Transactions are monitored 24/7 via blockchain explorers. Your Pro Pass will be activated immediately.
-      </p>
+      <!-- Security Trust Strip -->
+      <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-center gap-4 text-[10px] text-slate-400 font-medium">
+        <span class="flex items-center gap-1"><i class="ph-bold ph-lock text-emerald-500"></i> 256-Bit SSL</span>
+        <span>•</span>
+        <span class="flex items-center gap-1"><i class="ph-bold ph-shield-check text-blue-500"></i> Zero App Install</span>
+        <span>•</span>
+        <span class="flex items-center gap-1"><i class="ph-bold ph-lightning text-amber-500"></i> Instant Access</span>
+      </div>
 
     </div>
   </div>

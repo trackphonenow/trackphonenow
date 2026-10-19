@@ -615,20 +615,22 @@ function runScanSequence() {
     } else {
       playSound('locked');
       setTimeout(() => {
-        document.getElementById('scanModal').classList.add('hidden');
+        const scanModal = document.getElementById('scanModal');
+        if (scanModal) scanModal.classList.add('hidden');
         
         const token = localStorage.getItem('authToken');
         const isRealUser = token && token !== 'tok_demo_preview';
 
+        if (currentScannedPhone) {
+          localStorage.setItem('pendingTargetPhone', currentScannedPhone);
+        }
+
         if (!isRealUser) {
-          // Guest User: Force registration / login to save target phone & create console
-          if (currentScannedPhone) {
-            localStorage.setItem('pendingTargetPhone', currentScannedPhone);
-          }
-          window.location.href = `/auth.html?phone=${encodeURIComponent(currentScannedPhone || '')}&mode=register`;
+          // Guest User: Show the Target Locked member handoff modal
+          showTargetLockedModal();
         } else {
-          // Logged in user: Show payment checkout or direct to console
-          showPaywallModal();
+          // Logged-in member: Redirect directly to member console with target
+          window.location.href = `/dashboard.html?targetPhone=${encodeURIComponent(currentScannedPhone || '')}`;
         }
       }, 700);
     }
@@ -637,270 +639,49 @@ function runScanSequence() {
   nextStep();
 }
 
-// --- 7. Crypto Checkout Modal & Countdown ---
-const CRYPTO_CONFIG = {
-  usdt_trc20: {
-    id: 'usdt_trc20',
-    name: 'Tether USDT (TRC-20)',
-    network: 'NETWORK: TRON (TRC-20)',
-    symbol: 'USDT',
-    address: 'TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX',
-    explorer: 'https://tronscan.org/address/TT44hVQek5xLh7qz2FhpBdmbMziyBGyzPX/transactions',
-    explorerName: 'View Address on TronScan',
-    amount: '24.99 USDT',
-    note: 'Send only USDT via TRON (TRC20) network. Instant validation upon block confirmation.'
-  },
-  usdt_bep20: {
-    id: 'usdt_bep20',
-    name: 'Tether USDT (BEP-20)',
-    network: 'NETWORK: BNB SMART CHAIN (BEP-20)',
-    symbol: 'USDT',
-    address: '0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
-    explorer: 'https://bscscan.com/token/0x55d398326f99059fF775485246999027B3197955?a=0x35dd60066ae6337b4D0273b129c0E222235B9F8C#transactions',
-    explorerName: 'View Address on BscScan',
-    amount: '24.99 USDT',
-    note: 'Send only USDT via BNB Smart Chain (BEP20). Very low network fee.'
-  },
-  usdt_erc20: {
-    id: 'usdt_erc20',
-    name: 'Tether USDT (ERC-20)',
-    network: 'NETWORK: ETHEREUM MAINNET (ERC-20)',
-    symbol: 'USDT',
-    address: '0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
-    explorer: 'https://etherscan.io/token/0xdAC17F958D2ee523a2206206994597C13D831ec7?a=0x35dd60066ae6337b4D0273b129c0E222235B9F8C#transactions',
-    explorerName: 'View Address on Etherscan',
-    amount: '24.99 USDT',
-    note: 'Send only USDT via Ethereum (ERC-20). Verify sufficient gas for network transfer.'
-  },
-  btc: {
-    id: 'btc',
-    name: 'Bitcoin (BTC)',
-    network: 'NETWORK: BITCOIN (NATIVE SEGWIT)',
-    symbol: 'BTC',
-    address: 'bc1q0v3g205psatdcj09ufzczahq50jusvvnlzsygu',
-    explorer: 'https://mempool.space/address/bc1q0v3g205psatdcj09ufzczahq50jusvvnlzsygu',
-    explorerName: 'View Address on Mempool Space',
-    amount: '0.000015 BTC',
-    note: 'Send native Bitcoin (BTC) to this SegWit address.'
-  },
-  eth: {
-    id: 'eth',
-    name: 'Ethereum (ETH)',
-    network: 'NETWORK: ETHEREUM (ERC-20)',
-    symbol: 'ETH',
-    address: '0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
-    explorer: 'https://etherscan.io/address/0x35dd60066ae6337b4D0273b129c0E222235B9F8C',
-    explorerName: 'View Address on Etherscan',
-    amount: '0.00042 ETH',
-    note: 'Send native ETH via Ethereum Mainnet.'
-  },
-  sol: {
-    id: 'sol',
-    name: 'Solana (SOL)',
-    network: 'NETWORK: SOLANA MAINNET',
-    symbol: 'SOL',
-    address: 't9QLb3arVUMcQ8JALe3Ptz318GfZkzmRAXvoM8yANFe',
-    explorer: 'https://solscan.io/account/t9QLb3arVUMcQ8JALe3Ptz318GfZkzmRAXvoM8yANFe',
-    explorerName: 'View Address on Solscan',
-    amount: '0.0075 SOL',
-    note: 'Send native SOL directly via Solana Network (sub-second confirmations).'
-  },
-  ltc: {
-    id: 'ltc',
-    name: 'Litecoin (LTC)',
-    network: 'NETWORK: LITECOIN NETWORK',
-    symbol: 'LTC',
-    address: 'LVW74nrfMVpsTY7Kd62tkzfNF5aasM7ieS',
-    explorer: 'https://litecoinspace.org/address/LVW74nrfMVpsTY7Kd62tkzfNF5aasM7ieS',
-    explorerName: 'View Address on LitecoinSpace',
-    amount: '0.015 LTC',
-    note: 'Send native LTC via Litecoin Network. Ultra-low gas fees.'
+// --- 7. Target Locked Modal & Member Authentication Handoff ---
+function showTargetLockedModal() {
+  const modal = document.getElementById('targetLockedModal');
+  const phoneDisp = document.getElementById('lockedPhoneDisplay');
+  if (phoneDisp) {
+    phoneDisp.textContent = currentScannedPhone || '+212 6** ** **';
   }
-};
-
-let activeCryptoKey = 'usdt_trc20';
-
-function selectCrypto(key) {
-  const cfg = CRYPTO_CONFIG[key];
-  if (!cfg) return;
-  activeCryptoKey = key;
-
-  // Update tabs highlight
-  Object.keys(CRYPTO_CONFIG).forEach(k => {
-    const tabBtn = document.getElementById(`tab-${k}`);
-    if (tabBtn) {
-      if (k === key) {
-        tabBtn.className = "py-2 px-1 rounded-xl text-center transition bg-white text-emerald-700 shadow-xs border border-emerald-300 font-bold";
-      } else {
-        tabBtn.className = "py-2 px-1 rounded-xl text-center transition text-slate-600 hover:text-slate-900 font-bold";
-      }
-    }
-  });
-
-  // Update elements
-  const netLabel = document.getElementById('cryptoNetworkLabel');
-  const curName = document.getElementById('cryptoCurrencyName');
-  const amtDisplay = document.getElementById('cryptoAmountDisplay');
-  const addrInput = document.getElementById('cryptoAddressInput');
-  const expLink = document.getElementById('cryptoExplorerLink');
-  const expName = document.getElementById('cryptoExplorerName');
-  const noteText = document.getElementById('cryptoNoteText');
-  const toastMsg = document.getElementById('copyToastMsg');
-
-  if (netLabel) netLabel.textContent = cfg.network;
-  if (curName) curName.textContent = cfg.name;
-  if (amtDisplay) amtDisplay.textContent = cfg.amount;
-  if (addrInput) addrInput.value = cfg.address;
-  if (expLink) expLink.href = cfg.explorer;
-  if (expName) expName.textContent = cfg.explorerName;
-  if (noteText) noteText.textContent = cfg.note;
-  if (toastMsg) toastMsg.textContent = '';
-
-  // Render QR Code
-  renderCryptoQR(cfg.address);
-}
-
-function renderCryptoQR(address) {
-  const qrBox = document.getElementById('cryptoQrCode');
-  if (!qrBox) return;
-  qrBox.innerHTML = '';
-  try {
-    new QRCode(qrBox, {
-      text: address,
-      width: 105,
-      height: 105,
-      colorDark: "#0f172a",
-      colorLight: "#ffffff"
-    });
-  } catch (e) {
-    qrBox.innerHTML = `<span class="text-[10px] text-slate-400 font-mono">QR Error</span>`;
+  if (modal) {
+    modal.classList.remove('hidden');
+  } else {
+    proceedToMemberConsole();
   }
 }
 
-function copyCryptoAddress() {
-  const input = document.getElementById('cryptoAddressInput');
-  if (!input) return;
-  navigator.clipboard.writeText(input.value);
-  const btn = document.getElementById('copyCryptoBtn');
-  const toast = document.getElementById('copyToastMsg');
-  if (btn) {
-    btn.innerHTML = `<i class="ph-bold ph-check text-base"></i>`;
-    setTimeout(() => {
-      btn.innerHTML = `<i class="ph-bold ph-copy text-base"></i>`;
-    }, 2000);
-  }
-  if (toast) {
-    toast.textContent = '✓ Copied!';
-    setTimeout(() => { toast.textContent = ''; }, 2500);
-  }
+function closeTargetLockedModal() {
+  const modal = document.getElementById('targetLockedModal');
+  if (modal) modal.classList.add('hidden');
 }
 
-function showPaywallModal() {
-  const paywallModal = document.getElementById('paywallModal');
-  if (!paywallModal) return;
-  paywallModal.classList.remove('hidden');
-
-  const phoneDisp = document.getElementById('paywallPhoneDisplay');
-  if (phoneDisp) phoneDisp.textContent = currentScannedPhone || 'Active Client Session';
-
-  selectCrypto('usdt_trc20');
-  startCountdown(14, 59);
+function proceedToMemberConsole() {
+  const phone = currentScannedPhone || localStorage.getItem('pendingTargetPhone') || '';
+  if (phone) {
+    localStorage.setItem('pendingTargetPhone', phone);
+  }
+  window.location.href = `/auth.html?mode=register${phone ? '&phone=' + encodeURIComponent(phone) : ''}`;
 }
 
-// Pricing Section Action Handler: Check if guest or logged in
-window.handlePricingAction = function(planCode = 'pro_1month') {
+// Pricing Section Action Handler: Check if guest or logged-in member
+window.handlePricingAction = function(planCode = 'pro_1m') {
   const token = localStorage.getItem('authToken');
   const isRealUser = token && token !== 'tok_demo_preview';
 
   if (!isRealUser) {
     // Guest: send to registration with plan parameter
     const phone = currentScannedPhone || localStorage.getItem('pendingTargetPhone') || '';
+    if (phone) localStorage.setItem('pendingTargetPhone', phone);
     window.location.href = `/auth.html?mode=register&plan=${encodeURIComponent(planCode)}${phone ? '&phone=' + encodeURIComponent(phone) : ''}`;
   } else {
-    // Authenticated member: trigger payment checkout modal
-    showPaywallModal();
+    // Authenticated member: redirect directly to dashboard upgrade modal
+    window.location.href = `/dashboard.html?upgrade=1&plan=${encodeURIComponent(planCode)}`;
   }
 };
 
-function closePaywallModal() {
-  const paywallModal = document.getElementById('paywallModal');
-  if (paywallModal) paywallModal.classList.add('hidden');
-}
-
-let countdownInterval = null;
-function startCountdown(mins, secs) {
-  if (countdownInterval) clearInterval(countdownInterval);
-  let totalSecs = mins * 60 + secs;
-  const timerDisplay = document.getElementById('countdownTimer');
-
-  countdownInterval = setInterval(() => {
-    if (totalSecs <= 0) {
-      clearInterval(countdownInterval);
-      return;
-    }
-    totalSecs--;
-    const m = Math.floor(totalSecs / 60).toString().padStart(2, '0');
-    const s = (totalSecs % 60).toString().padStart(2, '0');
-    if (timerDisplay) timerDisplay.textContent = `${m}:${s}`;
-  }, 1000);
-}
-
-// --- 8. Confirm Crypto Payment & Unlock Target Map ---
-async function handleConfirmCryptoPayment() {
-  const btn = document.getElementById('confirmCryptoPaymentBtn');
-  const txHash = (document.getElementById('cryptoTxHashInput')?.value || '').trim();
-
-  btn.disabled = true;
-  btn.innerHTML = `<span class="animate-spin mr-2">⚙</span> Scanning Blockchain Nodes...`;
-
-  try {
-    const token = localStorage.getItem('authToken');
-    
-    // Call server crypto confirmation endpoint (no TXID required)
-    const res = await fetch('/api/payment/crypto-confirm', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({
-        currency: activeCryptoKey || 'usdt_trc20',
-        txHash: txHash || undefined,
-        plan: 'pro_1m',
-        amount: '$24.99'
-      })
-    });
-
-    const data = await res.json();
-    
-    if (res.ok && data.success) {
-      if (data.confirmed) {
-        btn.innerHTML = `✓ Payment Confirmed on Blockchain!`;
-        btn.className = "w-full py-3.5 px-6 rounded-2xl bg-emerald-600 text-white font-extrabold text-sm flex items-center justify-center gap-2";
-      } else {
-        btn.innerHTML = `📡 Transaction Detected! Verifying blocks...`;
-        btn.className = "w-full py-3.5 px-6 rounded-2xl bg-blue-600 text-white font-extrabold text-sm flex items-center justify-center gap-2";
-      }
-
-      setTimeout(() => {
-        if (!token) {
-          window.location.href = `/auth.html?phone=${encodeURIComponent(currentScannedPhone || '')}&plan=pro_1m&autologin=1`;
-        } else {
-          window.location.href = `/dashboard.html?tab=billing`;
-        }
-      }, 1000);
-    } else {
-      btn.disabled = false;
-      btn.innerHTML = `⚠️ ${data.error || 'Verification in progress. Try Again.'}`;
-      btn.className = "w-full py-3.5 px-6 rounded-2xl bg-red-600 text-white font-extrabold text-sm flex items-center justify-center gap-2";
-    }
-
-  } catch (err) {
-    btn.disabled = false;
-    btn.innerHTML = `⚠️ Network Error. Please Try Again.`;
-    btn.className = "w-full py-3.5 px-6 rounded-2xl bg-red-600 text-white font-extrabold text-sm flex items-center justify-center gap-2";
-  }
-}
 // --- Language Switcher Functions ---
 window.toggleLangDropdown = function() {
   const menu = document.getElementById('langDropdownMenu');
@@ -1000,8 +781,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (urlParams.get('paywall') === '1' || urlParams.get('crypto') === '1') {
+  if (urlParams.get('locked') === '1') {
     currentScannedPhone = incomingPhone || currentScannedPhone || '+212 661-234567';
-    showPaywallModal();
+    showTargetLockedModal();
   }
 });

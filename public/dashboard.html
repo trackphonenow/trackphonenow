@@ -6,6 +6,20 @@
   <title>TrackPhoneNow - Pro Member Console</title>
   <meta name="robots" content="noindex, nofollow, noarchive" />
   
+  <!-- Synchronous Auth Gate: Immediately redirect unregistered visitors to auth page -->
+  <script>
+    (function() {
+      var token = localStorage.getItem('authToken');
+      var params = new URLSearchParams(window.location.search);
+      var isDemo = params.get('demo') === '1';
+      var incomingToken = params.get('token');
+      if (!token && !incomingToken && !isDemo) {
+        var phone = params.get('targetPhone') || localStorage.getItem('pendingTargetPhone') || '';
+        window.location.replace('/auth.html?mode=register' + (phone ? '&phone=' + encodeURIComponent(phone) : ''));
+      }
+    })();
+  </script>
+  
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
