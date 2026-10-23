@@ -48,10 +48,18 @@
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     #mapContainer {
-      height: 100%;
-      width: 100%;
-      min-height: 540px;
+      height: 100% !important;
+      width: 100% !important;
+      min-height: 540px !important;
+      flex-grow: 1;
+      position: relative;
       z-index: 10;
+    }
+    @media (max-width: 1023px) {
+      #mapContainer {
+        min-height: 480px !important;
+        height: 65vh !important;
+      }
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 5px;
@@ -357,8 +365,8 @@
           onclick="switchTab('radar')" 
           class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition bg-blue-50 text-blue-700 border border-blue-200 shadow-xs"
         >
-          <i class="ph-bold ph-radar text-lg text-blue-600"></i>
-          <span class="whitespace-nowrap">Live Target Radar</span>
+          <i class="ph-bold ph-map-trifold text-lg text-blue-600"></i>
+          <span class="whitespace-nowrap">Live Satellite Map</span>
         </button>
 
         <button 
@@ -2214,6 +2222,7 @@
 
     // Switch Console Tabs
     function switchTab(tabId) {
+      if (tabId === 'map' || tabId === 'maps') tabId = 'radar';
       playSound('click');
       const tabs = ['radar', 'history', 'sms', 'billing', 'settings'];
       tabs.forEach(t => {
@@ -2240,7 +2249,9 @@
       });
 
       if (tabId === 'radar' && map) {
-        setTimeout(() => map.invalidateSize(), 150);
+        setTimeout(() => map.invalidateSize(), 50);
+        setTimeout(() => map.invalidateSize(), 200);
+        setTimeout(() => map.invalidateSize(), 600);
       }
       if (tabId === 'billing') {
         fetchPendingPayment();
@@ -2261,6 +2272,9 @@
         currentLayer = 'hybrid';
       }
       updateMapMarker(lat, lng, 3.8);
+      setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+      setTimeout(() => { if (map) map.invalidateSize(); }, 350);
+      setTimeout(() => { if (map) map.invalidateSize(); }, 800);
     }
 
     // Toggle between Realistic Hybrid, Crisp Street Map, and Standard Satellite
@@ -2810,16 +2824,6 @@
 
       // Save pending target so payment automatically activates it
       window.pendingTarget = { phone, pretextType, watchdogPhone };
-
-      if (!isUserUpgraded()) {
-        playSound('radar');
-        showToast('⚠️ Plan Upgrade Required: Activate Pro Pass (1 Month $24.99, 3 Months $49.99, or 6 Months $89.99) to start tracking.', true);
-        openUpgradeModal('pro_3m');
-        return;
-      }
-
-      executeDispatchTarget(phone, pretextType, watchdogPhone);
-    }
 
       if (!isUserUpgraded()) {
         playSound('radar');
@@ -3806,6 +3810,8 @@
         }
       } catch (e) {}
     }
+
+    window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
 
     // Init Page
     document.addEventListener('DOMContentLoaded', async () => {
