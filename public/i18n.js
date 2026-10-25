@@ -80,7 +80,7 @@ const I18N_TRANSLATIONS = {
       feature2: 'Pinpoint GPS accuracy (±3.5m on Satellite Maps)',
       feature3: 'Offline Auto-Wake Watchdog + WhatsApp alarms',
       feature4: 'Multi-operator SS7 routing (194 countries)',
-      feature5: 'SHA-256 Forensic Audit Dossier (Police & Insurance)'
+      feature5: 'SHA-256 Forensic Audit Dossier (Insurance & Official Claims)'
     },
     footer: {
       copyright: '© 2026 TrackPhoneNow Telecom Systems. GSMA & 3GPP Compliant Protocol Infrastructure. All rights reserved.'
@@ -162,7 +162,7 @@ const I18N_TRANSLATIONS = {
       feature2: 'Précision GPS extrême (±3.5m sur Satellite)',
       feature3: 'Veilleur Automatique Hors-Ligne + Alertes WhatsApp',
       feature4: 'Routage SS7 multi-opérateurs (194 pays)',
-      feature5: 'Dossier Forensic SHA-256 (Police & Assurances)'
+      feature5: 'Dossier Forensic SHA-256 (Assurances & Rapports Officiels)'
     },
     footer: {
       copyright: '© 2026 TrackPhoneNow Telecom Systems. Conforme aux protocoles GSMA & 3GPP. Tous droits réservés.'

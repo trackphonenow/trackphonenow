@@ -32,6 +32,10 @@ app.get('/blog', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'blog', 'index.html'));
 });
 
+app.get(['/blog/how-to-present-phone-location-proof-to-police', '/blog/how-to-present-phone-location-proof-to-police.html'], (req, res) => {
+  res.redirect(301, '/blog/how-to-generate-phone-location-report.html');
+});
+
 app.get('/blog/:slug', (req, res, next) => {
   const cleanSlug = req.params.slug.replace(/\.html$/, '');
   const filePath = path.join(__dirname, 'public', 'blog', `${cleanSlug}.html`);
