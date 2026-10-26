@@ -744,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navConsoleBtn) navConsoleBtn.style.display = 'none';
     if (bottomCtaBtn) {
       bottomCtaBtn.textContent = 'Activate Pro Pass ($24.99)';
-      bottomCtaBtn.onclick = () => { handlePricingAction('pro_1month'); };
+      bottomCtaBtn.onclick = () => { handlePricingAction('pro_1m'); };
     }
   }
 
@@ -769,7 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const planParam = urlParams.get('plan');
 
   if (incomingPhone) {
-    const input = document.getElementById('phoneInput');
+    const input = document.getElementById('phoneNumberInput') || document.getElementById('phoneInput');
     if (input) {
       input.value = incomingPhone;
       currentScannedPhone = incomingPhone;

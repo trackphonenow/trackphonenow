@@ -3,6 +3,7 @@ const cors = require('cors');
 const compression = require('compression');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const Store = require('./data/db');
 
@@ -75,7 +76,7 @@ const sessions = new Map();
 const sseClients = new Map(); // sessionId -> Set of res objects
 
 // Populate sessions map from persistent Store
-const existingSessions = Store.getUserSessions();
+const existingSessions = Store.getAllSessions ? Store.getAllSessions() : [];
 existingSessions.forEach(s => {
   sessions.set(s.id, s);
 });
@@ -480,7 +481,7 @@ async function scanWalletForRecentDeposits(currencyKey, walletAddress) {
           const trc20Data = await trc20Res.json();
           const transfers = trc20Data.token_transfers || [];
           for (const tx of transfers) {
-            if (tx.to_address === walletAddress && tx.confirmed) {
+            if (tx.to_address === walletAddress && tx.confirmed && (!Store.isTxAlreadyRedeemed || !Store.isTxAlreadyRedeemed(tx.transaction_id))) {
               const amountUSDT = (parseFloat(tx.quant || '0') / 1e6).toFixed(2);
               return {
                 detected: true,

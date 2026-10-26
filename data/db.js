@@ -536,6 +536,16 @@ const DB = {
   },
 
   // --- CRYPTO PAYMENTS ---
+  isTxAlreadyRedeemed(txHash) {
+    if (!txHash) return false;
+    try {
+      const row = db.prepare(`SELECT id FROM payments WHERE tx_hash = ? AND status = 'CONFIRMED' LIMIT 1`).get(txHash.trim());
+      return Boolean(row);
+    } catch (e) {
+      return false;
+    }
+  },
+
   recordCryptoPayment({ userId, currency, txHash, plan, amount, walletAddress }) {
     const paymentId = 'pay_' + crypto.randomBytes(8).toString('hex');
     const createdAt = new Date().toISOString();
