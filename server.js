@@ -1191,11 +1191,6 @@ app.get('/api/geo-ip', async (req, res) => {
 
       if (geo && geo.status === 'success') {
         const cCode = (geo.countryCode || cfCountry || 'US').toUpperCase();
-        let defaultLang = 'en';
-        if (['MA', 'DZ', 'TN', 'EG', 'SA', 'AE', 'QA', 'KW', 'OM', 'BH'].includes(cCode)) defaultLang = 'ar';
-        else if (['FR', 'BE', 'CH', 'SN', 'CI', 'CM'].includes(cCode)) defaultLang = 'fr';
-        else if (['ES', 'MX', 'AR', 'CO', 'CL'].includes(cCode)) defaultLang = 'es';
-        else if (['DE', 'AT'].includes(cCode)) defaultLang = 'de';
 
         return res.json({
           success: true,
@@ -1207,7 +1202,7 @@ app.get('/api/geo-ip', async (req, res) => {
           lat: geo.lat || (cfLat ? parseFloat(cfLat) : 33.5731),
           lng: geo.lon || (cfLong ? parseFloat(cfLong) : -7.5898),
           isp: geo.isp || geo.org || 'Broadband ISP',
-          lang: defaultLang
+          lang: 'en'
         });
       }
     } catch (apiErr) {}
@@ -1215,14 +1210,13 @@ app.get('/api/geo-ip', async (req, res) => {
     // Fallback if ip-api rate-limited or local dev
     if (cfCountry && cfCountry !== 'XX' && cfCountry !== 'T1') {
       const cCode = cfCountry.toUpperCase();
-      let defaultLang = ['MA', 'DZ', 'TN'].includes(cCode) ? 'ar' : ['FR', 'BE'].includes(cCode) ? 'fr' : 'en';
       return res.json({
         success: true,
         countryCode: cCode,
         city: cfCity || 'Metropolitan Area',
         lat: cfLat ? parseFloat(cfLat) : 33.5731,
         lng: cfLong ? parseFloat(cfLong) : -7.5898,
-        lang: defaultLang
+        lang: 'en'
       });
     }
 
@@ -1235,7 +1229,7 @@ app.get('/api/geo-ip', async (req, res) => {
       lat: 33.5898,
       lng: -7.6325,
       isp: 'Maroc Telecom / Orange',
-      lang: 'ar'
+      lang: 'en'
     });
   } catch (err) {
     res.json({

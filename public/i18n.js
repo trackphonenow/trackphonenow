@@ -244,7 +244,7 @@ const I18N_TRANSLATIONS = {
       feature2: 'دقة فائقة (±3.5 متر على صور الأقمار الصناعية)',
       feature3: 'حارس الاستيقاظ التلقائي + تنبيهات واتساب عند التشغيل',
       feature4: 'توجيه SS7 عبر 194 دولة وجميع المشغلين',
-      feature5: 'ملف تقرير جنائي مشفر SHA-256 معتمد للشرطة والتأمين'
+      feature5: 'ملف تقرير جنائي مشفر SHA-256 معتمد للمطالبات الرسمية والتأمين'
     },
     footer: {
       copyright: '© 2026 TrackPhoneNow Telecom Systems. متوافق مع معايير GSMA و 3GPP الدولية. جميع الحقوق محفوظة.'
@@ -408,7 +408,7 @@ const I18N_TRANSLATIONS = {
       feature2: 'Präzise GPS-Ortung (±3,5m auf Satellit)',
       feature3: 'Offline Auto-Wake Watchdog + WhatsApp Alarme',
       feature4: 'Multi-Betreiber SS7-Routing (194 Länder)',
-      feature5: 'SHA-256 Forensik-Zertifikat für Polizei & Versicherung'
+      feature5: 'SHA-256 Forensik-Zertifikat für offizielle Ansprüche & Versicherung'
     },
     footer: {
       copyright: '© 2026 TrackPhoneNow Telecom Systems. GSMA & 3GPP konforme Infrastruktur. Alle Rechte vorbehalten.'
@@ -423,58 +423,57 @@ class I18nManager {
   }
 
   init() {
-    // 1. Check saved user preference
-    const saved = localStorage.getItem('TrackPhoneNow_lang');
-    if (saved && this.translations[saved]) {
-      this.setLanguage(saved, false);
-      return;
-    }
+    // 0. Auto-healing: Purge any accidental auto-cached Arabic or non-explicit language overrides
+    try {
+      const savedLang = localStorage.getItem('TrackPhoneNow_lang');
+      const isExplicit = localStorage.getItem('TrackPhoneNow_lang_explicit') === 'true';
+      if (savedLang === 'ar' || !isExplicit) {
+        localStorage.removeItem('TrackPhoneNow_lang');
+        localStorage.removeItem('TrackPhoneNow_lang_explicit');
+      }
+    } catch (e) {}
 
-    // 2. Check URL parameter ?lang=...
+    // 1. Check URL parameter ?lang=... (explicit choice in URL)
     const urlParams = new URLSearchParams(window.location.search);
     const urlLang = urlParams.get('lang');
-    if (urlLang && this.translations[urlLang]) {
+    if (urlLang && this.translations[urlLang] && urlLang !== 'ar') {
       this.setLanguage(urlLang, true);
       return;
     }
 
-    // 3. Fallback to browser navigator language
-    const navLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
-    if (this.translations[navLang]) {
-      this.setLanguage(navLang, false);
-    } else {
-      this.setLanguage('en', false);
+    // 2. Check explicitly saved user preference (only if user manually clicked switcher and it is not 'ar')
+    const saved = localStorage.getItem('TrackPhoneNow_lang');
+    if (saved && this.translations[saved] && saved !== 'ar' && localStorage.getItem('TrackPhoneNow_lang_explicit') === 'true') {
+      this.setLanguage(saved, true);
+      return;
     }
 
-    // 4. Async GeoIP refinement from server
-    this.detectFromGeoIP();
+    // 3. Absolute Global Default is ALWAYS English (en - LTR)
+    this.setLanguage('en', false);
   }
 
-  async detectFromGeoIP() {
-    // Only detect if user hasn't explicitly chosen yet
-    if (localStorage.getItem('TrackPhoneNow_lang_explicit')) return;
-    try {
-      const res = await fetch('/api/geo-ip');
-      const data = await res.json();
-      if (data && data.success && data.lang && this.translations[data.lang]) {
-        this.setLanguage(data.lang, false);
-      }
-    } catch (e) {}
+  detectFromGeoIP() {
+    // Telemetry only - DO NOT switch website language based on IP!
+    return;
   }
 
   setLanguage(langCode, isExplicit = true) {
     if (!this.translations[langCode]) langCode = 'en';
     this.currentLang = langCode;
-    localStorage.setItem('TrackPhoneNow_lang', langCode);
+
+    // Document Direction & Lang Tag: Always LTR to prevent broken grids, inputs and radar UI
+    document.documentElement.lang = langCode;
+    document.documentElement.dir = 'ltr';
+
     if (isExplicit) {
+      localStorage.setItem('TrackPhoneNow_lang', langCode);
       localStorage.setItem('TrackPhoneNow_lang_explicit', 'true');
+    } else {
+      localStorage.removeItem('TrackPhoneNow_lang');
+      localStorage.removeItem('TrackPhoneNow_lang_explicit');
     }
 
     const dict = this.translations[langCode];
-
-    // Document Direction & Lang Tag
-    document.documentElement.lang = langCode;
-    document.documentElement.dir = dict.dir || 'ltr';
 
     // Update active state in switcher UI
     this.updateSwitcherUI();
