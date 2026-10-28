@@ -934,7 +934,7 @@ def create_github_repo_resilient(repo_name, description, max_retries=6):
             
         err = res.get("error", "")
         if "secondary rate limit" in err.lower() or "403" in err or "closed connection" in err.lower():
-            wait_time = 45 if "closed connection" not in err.lower() else 10
+            wait_time = 60 if "secondary rate limit" in err.lower() else 20
             print(f"  [RATE-LIMIT] GitHub burst limit encountered. Waiting {wait_time}s before retry ({attempt}/{max_retries})...")
             time.sleep(wait_time)
         else:
@@ -1037,7 +1037,8 @@ if __name__ == "__main__":
             else:
                 print(f"  [WARNING] Push warning: {push_msg}")
                 
-            # Rate-limiting safety sleep (5 seconds between repos)
-            time.sleep(5)
+            # Rate-limiting safety sleep: 12 seconds for newly created, 2 seconds for existing
+            sleep_time = 2 if create_res.get("already_exists") else 12
+            time.sleep(sleep_time)
             
         print("\n=== Deployment completed successfully! ===")
