@@ -1497,4 +1497,13 @@ app.listen(PORT, () => {
   console.log(`🔐 Inscription / Connexion: http://localhost:${PORT}/auth.html`);
   console.log(`📊 Client Pro Dashboard:    http://localhost:${PORT}/dashboard.html`);
   console.log(`====================================================`);
+
+  // 24/7 Render Anti-Sleep Keep-Alive Engine
+  // Automatically pings the service every 8 minutes to guarantee 0ms cold starts for Googlebot & visitors
+  const KEEP_ALIVE_URL = process.env.RENDER_EXTERNAL_URL || 'https://www.trackphonenow.com';
+  setInterval(async () => {
+    try {
+      await fetch(`${KEEP_ALIVE_URL}/api/geo-ip`);
+    } catch (e) {}
+  }, 8 * 60 * 1000);
 });
