@@ -61,8 +61,9 @@ app.get([`/${ADMIN_SLUG}`, `/${ADMIN_SLUG}.html`], (req, res) => {
   res.sendFile(path.join(__dirname, 'private', 'admin.html'));
 });
 
-// Static assets with smart caching
+// Static assets with smart caching & clean URL support (.html extension resolution)
 app.use(express.static(path.join(__dirname, 'public'), {
+  extensions: ['html', 'htm'],
   maxAge: '1d',
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html')) {
