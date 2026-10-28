@@ -38,167 +38,284 @@
   <!-- Google Rich Snippet E-Commerce Schema (Product + SoftwareApplication + AggregateOffer + AggregateRating) -->
   <script type="application/ld+json">
   {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": "https://trackphonenow.com/#organization",
-        "name": "TrackPhoneNow Telecom Systems",
-        "url": "https://trackphonenow.com/",
-        "logo": "https://trackphonenow.com/google-maps-phone-tracker.jpeg",
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "Customer Support",
-          "availableLanguage": ["English", "French", "Arabic", "Spanish", "German"]
-        }
-      },
-      {
-        "@type": ["SoftwareApplication", "Product"],
-        "@id": "https://trackphonenow.com/#product",
-        "name": "TrackPhoneNow Pro Geolocation Pass",
-        "alternateName": "TrackPhoneNow Stolen Phone Tracker",
-        "description": "Professional mobile phone location service utilizing high-precision satellite GPS telemetry and carrier lookup to recover lost or stolen handsets without app installation.",
-        "sku": "TPN-PRO-PASS-TIERS",
-        "mpn": "TPN-2026-GPS",
-        "image": [
-          "https://trackphonenow.com/google-maps-phone-tracker.jpeg"
-        ],
-        "brand": {
-          "@type": "Brand",
-          "name": "TrackPhoneNow"
-        },
-        "operatingSystem": "iOS, Android, Windows, macOS, Web",
-        "applicationCategory": "UtilitiesApplication",
-        "browserRequirements": "Requires HTML5 & modern browser",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.9",
-          "reviewCount": "12480",
-          "bestRating": "5",
-          "worstRating": "1"
-        },
-        "offers": {
-          "@type": "AggregateOffer",
-          "priceCurrency": "USD",
-          "lowPrice": "24.99",
-          "highPrice": "89.99",
-          "offerCount": "3",
-          "priceValidUntil": "2027-12-31",
-          "offers": [
-            {
-              "@type": "Offer",
-              "@id": "https://trackphonenow.com/#offer-1month",
-              "name": "TrackPhoneNow Pro 1-Month Pass",
-              "description": "30 days unlimited phone lookups and real-time GPS tracking.",
-              "price": "24.99",
-              "priceCurrency": "USD",
-              "priceValidUntil": "2027-12-31",
-              "availability": "https://schema.org/InStock",
-              "url": "https://trackphonenow.com/#pricing",
-              "seller": {
-                "@type": "Organization",
-                "name": "TrackPhoneNow Telecom Systems"
-              }
-            },
-            {
-              "@type": "Offer",
-              "@id": "https://trackphonenow.com/#offer-3month",
-              "name": "TrackPhoneNow Pro 3-Month Pass",
-              "description": "90 days access with 33% discount and priority SS7 gateway access.",
-              "price": "49.99",
-              "priceCurrency": "USD",
-              "priceValidUntil": "2027-12-31",
-              "availability": "https://schema.org/InStock",
-              "url": "https://trackphonenow.com/#pricing",
-              "seller": {
-                "@type": "Organization",
-                "name": "TrackPhoneNow Telecom Systems"
-              }
-            },
-            {
-              "@type": "Offer",
-              "@id": "https://trackphonenow.com/#offer-6month",
-              "name": "TrackPhoneNow Pro 6-Month Pass",
-              "description": "180 days access with 40% discount and certified forensic telemetry dossiers.",
-              "price": "89.99",
-              "priceCurrency": "USD",
-              "priceValidUntil": "2027-12-31",
-              "availability": "https://schema.org/InStock",
-              "url": "https://trackphonenow.com/#pricing",
-              "seller": {
-                "@type": "Organization",
-                "name": "TrackPhoneNow Telecom Systems"
-              }
-            }
-          ]
-        }
-      },
-      {
-        "@type": "HowTo",
-        "@id": "https://trackphonenow.com/#howto-stolen-phone",
-        "name": "How to Locate a Stolen or Lost Mobile Phone by Phone Number",
-        "description": "Step-by-step procedure to locate and recover a lost or stolen mobile phone using TrackPhoneNow's satellite geolocation protocol.",
-        "step": [
-          {
-            "@type": "HowToStep",
-            "position": 1,
-            "name": "Enter the Stolen Mobile Number",
-            "text": "Input the telephone number of the stolen or missing handset including country code (+212 for Morocco, +33 for France, etc.)."
-          },
-          {
-            "@type": "HowToStep",
-            "position": 2,
-            "name": "Engage Carrier Network & Satellite Geolocation",
-            "text": "The platform resolves active carrier routing and deploys an encrypted geolocation hook to capture doorstep coordinates without requiring phone passcode access."
-          },
-          {
-            "@type": "HowToStep",
-            "position": 3,
-            "name": "Inspect Live Coordinates & Receive Offline Alerts",
-            "text": "Review live street coordinates on interactive satellite maps. If the handset was switched off, the Offline Watchdog queues a trigger alert sent to your WhatsApp the instant it powers on."
-          }
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://trackphonenow.com/#organization",
+      "name": "TrackPhoneNow Telecom Systems",
+      "url": "https://trackphonenow.com/",
+      "logo": "https://trackphonenow.com/google-maps-phone-tracker.jpeg",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Support",
+        "availableLanguage": [
+          "English",
+          "French",
+          "Arabic",
+          "Spanish",
+          "German"
         ]
+      }
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "Product"
+      ],
+      "@id": "https://trackphonenow.com/#product",
+      "name": "TrackPhoneNow Pro Geolocation Pass",
+      "alternateName": "TrackPhoneNow Stolen Phone Tracker",
+      "description": "Professional mobile phone location service utilizing high-precision satellite GPS telemetry and carrier lookup to recover lost or stolen handsets without app installation.",
+      "sku": "TPN-PRO-PASS-TIERS",
+      "mpn": "TPN-2026-GPS",
+      "image": [
+        "https://trackphonenow.com/google-maps-phone-tracker.jpeg"
+      ],
+      "brand": {
+        "@type": "Brand",
+        "name": "TrackPhoneNow"
       },
-      {
-        "@type": "FAQPage",
-        "@id": "https://trackphonenow.com/#faq-schema",
-        "mainEntity": [
+      "operatingSystem": "iOS, Android, Windows, macOS, Web",
+      "applicationCategory": "UtilitiesApplication",
+      "browserRequirements": "Requires HTML5 & modern browser",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "12480",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "USD",
+        "lowPrice": "24.99",
+        "highPrice": "89.99",
+        "offerCount": "3",
+        "priceValidUntil": "2027-12-31",
+        "offers": [
           {
-            "@type": "Question",
-            "name": "Can I locate a phone if it was stolen and turned off?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. TrackPhoneNow features an Offline Auto-Wake Watchdog. When a lost phone is turned off, our system queues an encrypted geolocation hook. The moment the phone is powered back on and connects to the internet or cellular network, exact GPS coordinates are dispatched immediately to your WhatsApp or registered email."
+            "@type": "Offer",
+            "@id": "https://trackphonenow.com/#offer-1month",
+            "name": "TrackPhoneNow Pro 1-Month Pass",
+            "description": "30 days unlimited phone lookups and real-time GPS tracking.",
+            "price": "24.99",
+            "priceCurrency": "USD",
+            "priceValidUntil": "2027-12-31",
+            "availability": "https://schema.org/InStock",
+            "url": "https://trackphonenow.com/#pricing",
+            "seller": {
+              "@type": "Organization",
+              "name": "TrackPhoneNow Telecom Systems"
+            },
+            "itemCondition": "https://schema.org/NewCondition",
+            "shippingDetails": {
+              "@type": "OfferShippingDetails",
+              "shippingRate": {
+                "@type": "MonetaryAmount",
+                "value": "0.00",
+                "currency": "USD"
+              },
+              "shippingDestination": {
+                "@type": "DefinedRegion",
+                "addressCountry": "US"
+              },
+              "deliveryTime": {
+                "@type": "ShippingDeliveryTime",
+                "handlingTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 0,
+                  "maxValue": 0,
+                  "unitCode": "DAY"
+                },
+                "transitTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 0,
+                  "maxValue": 0,
+                  "unitCode": "DAY"
+                }
+              }
+            },
+            "hasMerchantReturnPolicy": {
+              "@type": "MerchantReturnPolicy",
+              "applicableCountry": "US",
+              "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+              "merchantReturnDays": 14,
+              "returnMethod": "https://schema.org/ReturnByMail",
+              "returnFees": "https://schema.org/FreeReturn"
             }
           },
           {
-            "@type": "Question",
-            "name": "Can I track my stolen phone without iCloud or Google Find My Device passwords?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. Unlike Apple iCloud or Google Find My which require account logins and two-factor SMS codes that theft victims cannot access, TrackPhoneNow operates at the carrier core network level. You only need the mobile phone number."
+            "@type": "Offer",
+            "@id": "https://trackphonenow.com/#offer-3month",
+            "name": "TrackPhoneNow Pro 3-Month Pass",
+            "description": "90 days access with 33% discount and priority SS7 gateway access.",
+            "price": "49.99",
+            "priceCurrency": "USD",
+            "priceValidUntil": "2027-12-31",
+            "availability": "https://schema.org/InStock",
+            "url": "https://trackphonenow.com/#pricing",
+            "seller": {
+              "@type": "Organization",
+              "name": "TrackPhoneNow Telecom Systems"
+            },
+            "itemCondition": "https://schema.org/NewCondition",
+            "shippingDetails": {
+              "@type": "OfferShippingDetails",
+              "shippingRate": {
+                "@type": "MonetaryAmount",
+                "value": "0.00",
+                "currency": "USD"
+              },
+              "shippingDestination": {
+                "@type": "DefinedRegion",
+                "addressCountry": "US"
+              },
+              "deliveryTime": {
+                "@type": "ShippingDeliveryTime",
+                "handlingTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 0,
+                  "maxValue": 0,
+                  "unitCode": "DAY"
+                },
+                "transitTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 0,
+                  "maxValue": 0,
+                  "unitCode": "DAY"
+                }
+              }
+            },
+            "hasMerchantReturnPolicy": {
+              "@type": "MerchantReturnPolicy",
+              "applicableCountry": "US",
+              "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+              "merchantReturnDays": 14,
+              "returnMethod": "https://schema.org/ReturnByMail",
+              "returnFees": "https://schema.org/FreeReturn"
             }
           },
           {
-            "@type": "Question",
-            "name": "What happens if the thief removes or changes the SIM card?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "When a new SIM is inserted or the device reconnects to a network, our carrier lookup engine identifies the active operator (IAM, Orange, Inwi, SFR, Vodafone) and line status, while our geolocation hook captures exact satellite coordinates."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I submit the location report for insurance claims or device recovery?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. TrackPhoneNow generates a Cryptographic Forensic Telemetry Dossier displaying exact latitude, longitude, reverse-geocoded street address, timestamp, and cell tower ID, which can be presented directly to insurance providers and carrier claims."
+            "@type": "Offer",
+            "@id": "https://trackphonenow.com/#offer-6month",
+            "name": "TrackPhoneNow Pro 6-Month Pass",
+            "description": "180 days access with 40% discount and certified forensic telemetry dossiers.",
+            "price": "89.99",
+            "priceCurrency": "USD",
+            "priceValidUntil": "2027-12-31",
+            "availability": "https://schema.org/InStock",
+            "url": "https://trackphonenow.com/#pricing",
+            "seller": {
+              "@type": "Organization",
+              "name": "TrackPhoneNow Telecom Systems"
+            },
+            "itemCondition": "https://schema.org/NewCondition",
+            "shippingDetails": {
+              "@type": "OfferShippingDetails",
+              "shippingRate": {
+                "@type": "MonetaryAmount",
+                "value": "0.00",
+                "currency": "USD"
+              },
+              "shippingDestination": {
+                "@type": "DefinedRegion",
+                "addressCountry": "US"
+              },
+              "deliveryTime": {
+                "@type": "ShippingDeliveryTime",
+                "handlingTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 0,
+                  "maxValue": 0,
+                  "unitCode": "DAY"
+                },
+                "transitTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 0,
+                  "maxValue": 0,
+                  "unitCode": "DAY"
+                }
+              }
+            },
+            "hasMerchantReturnPolicy": {
+              "@type": "MerchantReturnPolicy",
+              "applicableCountry": "US",
+              "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+              "merchantReturnDays": 14,
+              "returnMethod": "https://schema.org/ReturnByMail",
+              "returnFees": "https://schema.org/FreeReturn"
             }
           }
         ]
       }
-    ]
-  }
+    },
+    {
+      "@type": "HowTo",
+      "@id": "https://trackphonenow.com/#howto-stolen-phone",
+      "name": "How to Locate a Stolen or Lost Mobile Phone by Phone Number",
+      "description": "Step-by-step procedure to locate and recover a lost or stolen mobile phone using TrackPhoneNow's satellite geolocation protocol.",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Enter the Stolen Mobile Number",
+          "text": "Input the telephone number of the stolen or missing handset including country code (+212 for Morocco, +33 for France, etc.)."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Engage Carrier Network & Satellite Geolocation",
+          "text": "The platform resolves active carrier routing and deploys an encrypted geolocation hook to capture doorstep coordinates without requiring phone passcode access."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Inspect Live Coordinates & Receive Offline Alerts",
+          "text": "Review live street coordinates on interactive satellite maps. If the handset was switched off, the Offline Watchdog queues a trigger alert sent to your WhatsApp the instant it powers on."
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://trackphonenow.com/#faq-schema",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Can I locate a phone if it was stolen and turned off?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. TrackPhoneNow features an Offline Auto-Wake Watchdog. When a lost phone is turned off, our system queues an encrypted geolocation hook. The moment the phone is powered back on and connects to the internet or cellular network, exact GPS coordinates are dispatched immediately to your WhatsApp or registered email."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I track my stolen phone without iCloud or Google Find My Device passwords?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Unlike Apple iCloud or Google Find My which require account logins and two-factor SMS codes that theft victims cannot access, TrackPhoneNow operates at the carrier core network level. You only need the mobile phone number."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens if the thief removes or changes the SIM card?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "When a new SIM is inserted or the device reconnects to a network, our carrier lookup engine identifies the active operator (IAM, Orange, Inwi, SFR, Vodafone) and line status, while our geolocation hook captures exact satellite coordinates."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I submit the location report for insurance claims or device recovery?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. TrackPhoneNow generates a Cryptographic Forensic Telemetry Dossier displaying exact latitude, longitude, reverse-geocoded street address, timestamp, and cell tower ID, which can be presented directly to insurance providers and carrier claims."
+          }
+        }
+      ]
+    }
+  ]
+}
   </script>
   
   <!-- Tailwind CSS -->
